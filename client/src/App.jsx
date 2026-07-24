@@ -125,10 +125,10 @@ export default function App() {
           <Route path="credit-notes" element={<ProtectedRoute permission="sales.view_own"><CreditNoteList /></ProtectedRoute>} />
           <Route path="credit-notes/new" element={<ProtectedRoute permission="sales.create"><CreditNoteCreate /></ProtectedRoute>} />
 
-          {/* Delivery — sales_rep and driver both need access */}
-          <Route path="deliveries" element={<ProtectedRoute permission="sales.view_own"><DeliveryList /></ProtectedRoute>} />
+          {/* Delivery — driver role may have sales.view_all instead of sales.view_own */}
+          <Route path="deliveries" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><DeliveryList /></ProtectedRoute>} />
           <Route path="deliveries/new" element={<ProtectedRoute permission="sales.create"><DeliveryCreate /></ProtectedRoute>} />
-          <Route path="deliveries/:id" element={<ProtectedRoute permission="sales.view_own"><DeliveryDetail /></ProtectedRoute>} />
+          <Route path="deliveries/:id" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><DeliveryDetail /></ProtectedRoute>} />
 
           {/* Van Sales */}
           <Route path="loading-sheets" element={<ProtectedRoute permission="sales.create"><LoadingSheetList /></ProtectedRoute>} />
