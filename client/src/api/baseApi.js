@@ -52,6 +52,8 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   tagTypes: [
     'Auth', 'User', 'Role', 'Branch',
     'Account', 'Journal', 'Period',
