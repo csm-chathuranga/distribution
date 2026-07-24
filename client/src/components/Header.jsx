@@ -7,7 +7,7 @@ import Breadcrumb from './ui/Breadcrumb';
 import GettingStartedGuide from './GettingStartedGuide';
 import { useNotifications } from '../contexts/NotificationContext';
 
-export default function Header() {
+export default function Header({ minimal = false }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
@@ -38,6 +38,54 @@ export default function Header() {
     if (!n.is_read) markRead?.(n.id);
     if (n.link) { setBellOpen(false); navigate(n.link); }
   };
+
+  if (minimal) {
+    return (
+      <header className="h-12 bg-sidebar flex items-center justify-between px-4 flex-shrink-0 z-10">
+        <span className="text-white font-semibold text-sm tracking-wide">Lanka Dist</span>
+        <div className="relative" ref={bellRef}>
+          <button
+            onClick={() => setBellOpen(v => !v)}
+            className="relative p-2 rounded-lg text-white/70 hover:text-white transition-colors"
+          >
+            <Bell size={20} />
+            {unread > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </button>
+          {bellOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <p className="text-sm font-semibold text-gray-800">Notifications {unread > 0 && <span className="ml-1 text-xs text-red-500 font-bold">({unread})</span>}</p>
+                {unread > 0 && (
+                  <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                    <CheckCheck size={12} /> Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                {(!notifications || notifications.length === 0) ? (
+                  <p className="text-sm text-gray-400 text-center py-8">No notifications</p>
+                ) : notifications.slice(0, 20).map(n => (
+                  <button key={n.id} onClick={() => handleNotifClick(n)}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex gap-3 items-start ${!n.is_read ? 'bg-blue-50/40' : ''}`}
+                  >
+                    <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-gray-800 leading-snug truncate">{n.title}</p>
+                      {n.body && <p className="text-xs text-gray-500 mt-0.5 truncate">{n.body}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+    );
+  }
 
   return (
     <>

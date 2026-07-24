@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 
 // Inventory
 import ProductList from './pages/products/ProductList';
@@ -89,6 +90,7 @@ export default function App() {
         <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="profile" element={<Profile />} />
 
           {/* Inventory */}
           <Route path="products" element={<ProtectedRoute permission="inventory.view"><ProductList /></ProtectedRoute>} />
