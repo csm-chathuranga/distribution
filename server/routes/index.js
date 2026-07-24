@@ -1,0 +1,36 @@
+const router = require('express').Router();
+const auth = require('../middleware/auth');
+
+router.use('/auth', require('./auth'));
+router.use('/users', auth, require('./users'));
+router.use('/roles', auth, require('./roles'));
+router.use('/branches', auth, require('./branches'));
+router.use('/accounts', auth, require('./accounts'));
+router.use('/categories', auth, require('./categories'));
+router.use('/products', auth, require('./products'));
+router.use('/warehouses', auth, require('./warehouses'));
+router.use('/suppliers', auth, require('./suppliers'));
+router.use('/customers', auth, require('./customers'));
+router.use('/routes', auth, require('./routes_api'));
+router.use('/purchase-orders', auth, require('./purchaseOrders'));
+router.use('/goods-received', auth, require('./goodsReceived'));
+router.use('/sales-orders', auth, require('./salesOrders'));
+router.use('/invoices', auth, require('./invoices'));
+router.use('/receipts', auth, require('./receipts'));
+router.use('/payments', auth, require('./payments'));
+router.use('/cheques', auth, require('./cheques'));
+router.use('/journals', auth, require('./journals'));
+router.use('/reports', auth, require('./reports'));
+router.use('/expenses', auth, require('./expenses'));
+router.use('/dashboard', auth, require('./dashboard'));
+router.use('/deliveries', auth, require('./deliveries'));
+router.use('/loading-sheets', auth, require('./loadingSheets'));
+router.use('/supplier-returns', auth, require('./supplierReturns'));
+router.use('/stock-adjustments', auth, require('./stockAdjustments'));
+router.use('/stock-transfers', auth, require('./stockTransfers'));
+router.use('/price-lists', auth, require('./priceLists'));
+router.use('/periods', auth, require('./periods'));
+router.use('/stock', auth, require('./stock'));
+router.use('/notifications', auth, require('./notifications'));
+
+module.exports = router;
