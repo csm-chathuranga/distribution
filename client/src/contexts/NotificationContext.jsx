@@ -20,9 +20,9 @@ const INVALIDATION_MAP = {
 
 const NotificationContext = createContext(null);
 
-// Connect to current origin — Vite proxies /socket.io → backend in dev,
-// and in production the Express server serves both HTTP and socket on the same port.
-const SOCKET_URL = window.location.origin;
+// In Capacitor APK window.location.origin is "https://localhost" (the webview),
+// so use the absolute production URL when VITE_API_BASE is set.
+const SOCKET_URL = import.meta.env.VITE_API_BASE || window.location.origin;
 
 export function NotificationProvider({ children }) {
   const user     = useSelector(selectCurrentUser);
