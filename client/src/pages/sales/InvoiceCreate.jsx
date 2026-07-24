@@ -118,7 +118,7 @@ export default function InvoiceCreate() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 pb-28">
+    <div className="max-w-2xl mx-auto md:max-w-5xl space-y-4 pb-28 md:pb-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/invoices')} className="p-2 text-gray-500 hover:text-gray-900 active:opacity-70">
@@ -174,85 +174,101 @@ export default function InvoiceCreate() {
         </div>
 
         {/* Line Items */}
-        <div className="card p-4 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Items</h2>
-            <button
-              type="button"
-              onClick={() => append({ ...BLANK_LINE })}
-              className="flex items-center gap-1 text-sm text-primary-600 font-semibold hover:text-primary-800"
-            >
+            <button type="button" onClick={() => append({ ...BLANK_LINE })}
+              className="flex items-center gap-1 text-sm text-primary-600 font-semibold hover:text-primary-800">
               <Plus size={16} /> Add item
             </button>
           </div>
 
           {errors.lines?.message && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{errors.lines.message}</p>
+            <p className="text-sm text-red-600 bg-red-50 mx-4 mt-3 px-3 py-2 rounded-lg">{errors.lines.message}</p>
           )}
 
-          <div className="space-y-3">
+          {/* ── Desktop Table ── */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-left border-b border-gray-100">
+                  <th className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[35%]">Product</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-20">Qty</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">Unit Price</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-20">VAT %</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">Discount</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right w-28">Total</th>
+                  <th className="w-10" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {fields.map((field, i) => (
+                  <tr key={field.id}>
+                    <td className="px-4 py-2">
+                      <select className="input text-sm py-1.5" {...register(`lines.${i}.product_id`, { onChange: e => handleProductChange(i, e.target.value) })}>
+                        <option value="">Select product…</option>
+                        {productOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                      {errors.lines?.[i]?.product_id && <p className="text-xs text-red-500 mt-0.5">{errors.lines[i].product_id.message}</p>}
+                    </td>
+                    <td className="px-3 py-2">
+                      <input type="number" step="1" className="input text-sm py-1.5 w-full" {...register(`lines.${i}.quantity`)} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input type="number" step="0.01" className="input text-sm py-1.5 w-full" {...register(`lines.${i}.unit_price`)} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input type="number" step="0.01" className="input text-sm py-1.5 w-full" {...register(`lines.${i}.vat_rate`)} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input type="number" step="0.01" className="input text-sm py-1.5 w-full" {...register(`lines.${i}.discount_amount`)} />
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono font-semibold text-gray-900 whitespace-nowrap">
+                      {fmtCurrency(lineTotal(lines[i] || {}))}
+                    </td>
+                    <td className="px-2 py-2 text-center">
+                      {fields.length > 1 && (
+                        <button type="button" onClick={() => remove(i)} className="text-red-400 hover:text-red-600 p-1">
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Mobile Cards ── */}
+          <div className="md:hidden p-4 space-y-3">
             {fields.map((field, i) => (
               <div key={field.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
-                {/* Product + remove */}
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
-                    <SelectField
-                      options={productOpts}
-                      error={errors.lines?.[i]?.product_id?.message}
-                      {...register(`lines.${i}.product_id`, {
-                        onChange: e => handleProductChange(i, e.target.value),
-                      })}
-                    />
+                    <SelectField options={productOpts} error={errors.lines?.[i]?.product_id?.message}
+                      {...register(`lines.${i}.product_id`, { onChange: e => handleProductChange(i, e.target.value) })} />
                   </div>
                   {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(i)}
-                      className="p-2 text-red-400 hover:text-red-600 mt-1 flex-shrink-0"
-                    >
+                    <button type="button" onClick={() => remove(i)} className="p-2 text-red-400 hover:text-red-600 mt-1 flex-shrink-0">
                       <Trash2 size={16} />
                     </button>
                   )}
                 </div>
-
-                {/* Qty + Price */}
                 <div className="grid grid-cols-2 gap-2">
-                  <TextField
-                    label="Qty"
-                    type="number" step="1" inputMode="numeric"
-                    error={errors.lines?.[i]?.quantity?.message}
-                    {...register(`lines.${i}.quantity`)}
-                  />
-                  <TextField
-                    label="Unit Price"
-                    type="number" step="0.01" inputMode="decimal"
-                    error={errors.lines?.[i]?.unit_price?.message}
-                    {...register(`lines.${i}.unit_price`)}
-                  />
+                  <TextField label="Qty" type="number" step="1" inputMode="numeric"
+                    error={errors.lines?.[i]?.quantity?.message} {...register(`lines.${i}.quantity`)} />
+                  <TextField label="Unit Price" type="number" step="0.01" inputMode="decimal"
+                    error={errors.lines?.[i]?.unit_price?.message} {...register(`lines.${i}.unit_price`)} />
                 </div>
-
-                {/* VAT + Discount */}
                 <div className="grid grid-cols-2 gap-2">
-                  <TextField
-                    label="VAT %"
-                    type="number" step="0.01" inputMode="decimal"
-                    error={errors.lines?.[i]?.vat_rate?.message}
-                    {...register(`lines.${i}.vat_rate`)}
-                  />
-                  <TextField
-                    label="Discount (LKR)"
-                    type="number" step="0.01" inputMode="decimal"
-                    error={errors.lines?.[i]?.discount_amount?.message}
-                    {...register(`lines.${i}.discount_amount`)}
-                  />
+                  <TextField label="VAT %" type="number" step="0.01" inputMode="decimal"
+                    error={errors.lines?.[i]?.vat_rate?.message} {...register(`lines.${i}.vat_rate`)} />
+                  <TextField label="Discount (LKR)" type="number" step="0.01" inputMode="decimal"
+                    error={errors.lines?.[i]?.discount_amount?.message} {...register(`lines.${i}.discount_amount`)} />
                 </div>
-
-                {/* Line total */}
                 <div className="flex justify-between items-center pt-1 border-t border-gray-200">
                   <span className="text-xs text-gray-500">Line Total</span>
-                  <span className="font-bold text-gray-900 font-mono">
-                    {fmtCurrency(lineTotal(lines[i] || {}))}
-                  </span>
+                  <span className="font-bold text-gray-900 font-mono">{fmtCurrency(lineTotal(lines[i] || {}))}</span>
                 </div>
               </div>
             ))}
@@ -279,14 +295,21 @@ export default function InvoiceCreate() {
 
       </form>
 
-      {/* Sticky submit bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
-        <button
-          type="button"
-          onClick={handleSubmit(onSubmit)}
-          disabled={isLoading}
-          className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-50"
-        >
+      {/* Desktop submit button */}
+      <div className="hidden md:flex justify-end gap-3 pt-2">
+        <button type="button" onClick={() => navigate('/invoices')} className="btn-secondary px-6">
+          Cancel
+        </button>
+        <button type="button" onClick={handleSubmit(onSubmit)} disabled={isLoading}
+          className="btn btn-primary px-8 disabled:opacity-50">
+          {isLoading ? 'Creating…' : `Create Invoice · ${fmtCurrency(grandTotal)}`}
+        </button>
+      </div>
+
+      {/* Mobile sticky submit bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
+        <button type="button" onClick={handleSubmit(onSubmit)} disabled={isLoading}
+          className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-50">
           {isLoading ? 'Creating…' : `Create Invoice · ${fmtCurrency(grandTotal)}`}
         </button>
       </div>

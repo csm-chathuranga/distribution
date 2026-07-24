@@ -56,16 +56,31 @@ export default function InvoiceDetail() {
   const showStickyBar  = showPostBar || showAssignBar;
 
   return (
-    <div className={`space-y-4 max-w-2xl mx-auto ${showStickyBar ? 'pb-28' : 'pb-6'}`}>
+    <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${showStickyBar ? 'pb-28 md:pb-6' : 'pb-6'}`}>
 
       {/* Top bar */}
       <div className="flex items-center justify-between gap-2">
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 active:opacity-70">
           <ArrowLeft size={16} /> Back
         </button>
-        <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
-          <Printer size={15} /> Print
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
+            <Printer size={15} /> Print
+          </button>
+          {/* Desktop action buttons — hidden on mobile (mobile uses sticky bar) */}
+          {showPostBar && (
+            <button onClick={() => setConfirmPost(true)}
+              className="hidden md:flex items-center gap-1.5 btn btn-primary text-sm py-1.5">
+              <CheckCircle size={15} /> Post Invoice
+            </button>
+          )}
+          {showAssignBar && (
+            <button onClick={() => navigate(`/deliveries/new?invoice_id=${invoice.id}`)}
+              className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
+              <Truck size={15} /> Assign to Driver
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Status hero */}
@@ -244,9 +259,9 @@ export default function InvoiceDetail() {
         />
       )}
 
-      {/* Sticky bottom action bar */}
+      {/* Sticky bottom action bar — mobile only */}
       {showStickyBar && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
           {showPostBar && (
             <button
               onClick={() => setConfirmPost(true)}

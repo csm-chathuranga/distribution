@@ -73,7 +73,7 @@ export default function DeliveryDetail() {
   const stickyBarShown = canAct && (isPending || isDispatched) && !isDone;
 
   return (
-    <div className={`space-y-4 max-w-2xl mx-auto ${stickyBarShown ? 'pb-28' : 'pb-6'}`}>
+    <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${stickyBarShown ? 'pb-28 md:pb-6' : 'pb-6'}`}>
 
       {/* Top bar */}
       <div className="flex items-center justify-between gap-2">
@@ -85,20 +85,27 @@ export default function DeliveryDetail() {
         </button>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={handlePrint}
-            className="btn-secondary flex items-center gap-1.5 text-sm py-1.5"
-          >
+          <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
             <Printer size={15} /> Print
           </button>
-          {/* Desktop-only dispatch (drivers don't dispatch) */}
+          {/* Desktop action buttons — hidden on mobile (mobile uses sticky bar) */}
           {isPending && canCreate && (
-            <button
-              onClick={() => setActionOpen('dispatch')}
-              className="hidden sm:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
-            >
+            <button onClick={() => setActionOpen('dispatch')}
+              className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
               <Truck size={15} /> Dispatch
             </button>
+          )}
+          {isDispatched && canAct && (
+            <>
+              <button onClick={() => setActionOpen('deliver')}
+                className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
+                <CheckCircle size={15} /> Mark Delivered
+              </button>
+              <button onClick={() => setActionOpen('return')}
+                className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors">
+                <RotateCcw size={15} /> Return
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -246,9 +253,9 @@ export default function DeliveryDetail() {
         />
       )}
 
-      {/* Sticky bottom action bar — thumb-friendly for drivers on mobile */}
+      {/* Sticky bottom action bar — mobile only */}
       {stickyBarShown && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
           {isPending && canCreate && (
             <button
               onClick={() => setActionOpen('dispatch')}
