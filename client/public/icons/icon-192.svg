@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="36" fill="#0f172a"/>
+  <rect x="16" y="16" width="160" height="160" rx="28" fill="#1e293b"/>
+  <!-- Truck icon centered -->
+  <g transform="translate(32, 56)" fill="none" stroke="#3b82f6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <!-- truck body -->
+    <rect x="2" y="10" width="80" height="50" rx="4" fill="#1d4ed8" stroke="none"/>
+    <!-- cab -->
+    <path d="M82 38 L82 60 L110 60 L110 30 L96 10 L82 10 Z" fill="#2563eb" stroke="none"/>
+    <!-- windshield -->
+    <path d="M85 14 L95 14 L106 28 L85 28 Z" fill="#bfdbfe" stroke="none"/>
+    <!-- wheels -->
+    <circle cx="28" cy="64" r="10" fill="#0f172a" stroke="#3b82f6" stroke-width="5"/>
+    <circle cx="70" cy="64" r="10" fill="#0f172a" stroke="#3b82f6" stroke-width="5"/>
+    <circle cx="100" cy="64" r="10" fill="#0f172a" stroke="#3b82f6" stroke-width="5"/>
+  </g>
+  <!-- "LD" text -->
+  <text x="96" y="158" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#94a3b8" text-anchor="middle">Lanka Dist</text>
+</svg>

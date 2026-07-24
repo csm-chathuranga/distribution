@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <rect x="40" y="40" width="432" height="432" rx="72" fill="#1e293b"/>
+  <!-- Truck body -->
+  <rect x="60" y="180" width="240" height="150" rx="12" fill="#1d4ed8"/>
+  <!-- Cab -->
+  <path d="M300 240 L300 330 L420 330 L420 210 L370 150 L300 150 Z" fill="#2563eb"/>
+  <!-- Windshield -->
+  <path d="M308 158 L362 158 L400 205 L308 205 Z" fill="#bfdbfe" opacity="0.9"/>
+  <!-- Wheels -->
+  <circle cx="130" cy="342" r="42" fill="#0f172a" stroke="#3b82f6" stroke-width="14"/>
+  <circle cx="130" cy="342" r="16" fill="#1e293b"/>
+  <circle cx="260" cy="342" r="42" fill="#0f172a" stroke="#3b82f6" stroke-width="14"/>
+  <circle cx="260" cy="342" r="16" fill="#1e293b"/>
+  <circle cx="380" cy="342" r="42" fill="#0f172a" stroke="#3b82f6" stroke-width="14"/>
+  <circle cx="380" cy="342" r="16" fill="#1e293b"/>
+  <!-- Speed lines -->
+  <line x1="60" y1="230" x2="20" y2="230" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="60" y1="256" x2="10" y2="256" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
+  <line x1="60" y1="282" x2="25" y2="282" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" opacity="0.25"/>
+  <!-- Text -->
+  <text x="256" y="448" font-family="Arial, sans-serif" font-weight="800" font-size="52" fill="#f8fafc" text-anchor="middle" letter-spacing="2">LANKA DIST</text>
+</svg>
