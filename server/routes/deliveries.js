@@ -88,7 +88,10 @@ router.put('/:id/dispatch', authorize('sales.create'), async (req, res, next) =>
     const driverId = req.body.driver_id || dn.driver_id;
     await dn.update({ status: 'DISPATCHED', driver_id: driverId, dispatched_at: new Date() });
     const dispatched = await DeliveryNote.findByPk(dn.id, { include });
-    if (driverId) notify({ userId: driverId, type: 'DELIVERY_DISPATCHED', title: 'Delivery Dispatched', body: `Delivery ${dispatched.dn_number} has been dispatched to you`, link: `/deliveries/${dn.id}` });
+    const dispatchedBy = req.user.name || `User #${req.user.id}`;
+    if (driverId) notify({ userId: driverId, type: 'DELIVERY_DISPATCHED', title: 'Delivery Dispatched', body: `${dispatched.dn_number} has been dispatched to you`, link: `/deliveries/${dn.id}` });
+    notify({ roleName: 'admin',       type: 'DELIVERY_DISPATCHED', title: 'Delivery Dispatched', body: `${dispatched.dn_number} dispatched by ${dispatchedBy}`, link: `/deliveries/${dn.id}` });
+    notify({ roleName: 'super_admin', type: 'DELIVERY_DISPATCHED', title: 'Delivery Dispatched', body: `${dispatched.dn_number} dispatched by ${dispatchedBy}`, link: `/deliveries/${dn.id}` });
     res.json(dispatched);
   } catch (err) { next(err); }
 });

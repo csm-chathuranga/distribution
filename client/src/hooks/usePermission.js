@@ -5,7 +5,7 @@ export function usePermission(permission) {
   const user = useSelector(selectCurrentUser);
   const permissions = useSelector(selectPermissions);
   if (!user) return false;
-  if (user.Role?.name === 'super_admin') return true;
+  if (['super_admin', 'admin'].includes(user.Role?.name)) return true;
   if (!permission) return true;
   return permissions.includes(permission);
 }
@@ -14,6 +14,6 @@ export function useCanAny(...perms) {
   const user = useSelector(selectCurrentUser);
   const permissions = useSelector(selectPermissions);
   if (!user) return false;
-  if (user.Role?.name === 'super_admin') return true;
+  if (['super_admin', 'admin'].includes(user.Role?.name)) return true;
   return perms.some(p => permissions.includes(p));
 }

@@ -87,6 +87,12 @@ exports.create = async (req, res, next) => {
     );
 
     await t.commit();
+
+    // Notify admin/super_admin that a new invoice was created
+    const actorName = req.user.name || `User #${req.user.id}`;
+    notify({ roleName: 'admin',       type: 'INVOICE_CREATED', title: 'New Invoice Created', body: `${invoiceData.invoice_number} created by ${actorName}`, link: `/invoices/${invoice.id}` });
+    notify({ roleName: 'super_admin', type: 'INVOICE_CREATED', title: 'New Invoice Created', body: `${invoiceData.invoice_number} created by ${actorName}`, link: `/invoices/${invoice.id}` });
+
     res.status(201).json(await Invoice.findByPk(invoice.id, { include }));
   } catch (err) { await t.rollback(); next(err); }
 };
@@ -186,11 +192,15 @@ exports.post = async (req, res, next) => {
 
     await t.commit();
 
-    // Notify finance & cashier roles that a new invoice was posted
+    // Notify relevant roles that a new invoice was posted
     const notifType = isCreditNote ? 'CREDIT_NOTE_POSTED' : 'INVOICE_POSTED';
     const notifTitle = isCreditNote ? 'Credit Note Posted' : 'Invoice Posted';
-    notify({ roleName: 'finance',  type: notifType, title: notifTitle, body: invoice.invoice_number, link: `/invoices/${invoice.id}` });
-    notify({ roleName: 'cashier',  type: notifType, title: notifTitle, body: invoice.invoice_number, link: `/invoices/${invoice.id}` });
+    const postedBy = req.user.name || `User #${req.user.id}`;
+    const notifBody = `${invoice.invoice_number} posted by ${postedBy}`;
+    notify({ roleName: 'finance',     type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
+    notify({ roleName: 'cashier',     type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
+    notify({ roleName: 'admin',       type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
+    notify({ roleName: 'super_admin', type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
 
     res.json(await Invoice.findByPk(invoice.id, { include }));
   } catch (err) { await t.rollback(); next(err); }

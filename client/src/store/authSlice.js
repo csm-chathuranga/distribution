@@ -35,6 +35,6 @@ export const selectToken = s => s.auth.token;
 export const selectRefreshToken = s => s.auth.refreshToken;
 export const selectPermissions = s => s.auth.permissions;
 export const selectCan = (state, permission) => {
-  if (state.auth.user?.Role?.name === 'super_admin') return true;
+  if (['super_admin', 'admin'].includes(state.auth.user?.Role?.name)) return true;
   return state.auth.permissions.includes(permission);
 };
