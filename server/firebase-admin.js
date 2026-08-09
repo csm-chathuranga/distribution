@@ -5,7 +5,14 @@ try {
   const { initializeApp, getApps, cert } = require('firebase-admin/app');
   const { getFirestore }  = require('firebase-admin/firestore');
   const { getMessaging }  = require('firebase-admin/messaging');
-  const serviceAccount    = require('./serviceAccountKey.json');
+
+  // Prefer env var (Docker/prod), fall back to local file (dev)
+  let serviceAccount;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    serviceAccount = require('./serviceAccountKey.json');
+  }
 
   if (!getApps().length) {
     initializeApp({ credential: cert(serviceAccount) });
