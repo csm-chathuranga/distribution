@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Printer, MapPin, Truck, CheckCircle, RotateCcw, Package, User, Route } from 'lucide-react';
 import MapModal from '../../components/MapModal';
-import { useReactToPrint } from 'react-to-print';
 import toast from 'react-hot-toast';
 import {
   useGetDeliveryQuery, useDispatchDeliveryMutation,
@@ -15,12 +14,12 @@ import { selectCurrentUser } from '../../store/authSlice';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import DeliveryNotePrint from '../../components/print/DeliveryNotePrint';
+import { printComponent } from '../../utils/print';
 import { fmtCurrency, fmtDate } from '../../utils/format';
 
 export default function DeliveryDetail() {
   const { id }      = useParams();
   const navigate    = useNavigate();
-  const printRef    = useRef(null);
   const currentUser = useSelector(selectCurrentUser);
   const canCreate   = usePermission('sales.create');
   const isDriver    = currentUser?.Role?.name === 'delivery';
@@ -35,7 +34,7 @@ export default function DeliveryDetail() {
   const [deliverDn,  { isLoading: delivering  }] = useDeliverDeliveryMutation();
   const [returnDn,   { isLoading: returning   }] = useReturnDeliveryMutation();
 
-  const handlePrint = useReactToPrint({ contentRef: printRef });
+  const handlePrint = () => printComponent(<DeliveryNotePrint delivery={delivery} company={company} />);
 
   const handleAction = async () => {
     try {
@@ -237,11 +236,6 @@ export default function DeliveryDetail() {
           )}
         </div>
       )}
-
-      {/* Hidden print template */}
-      <div ref={printRef} style={{ position: 'absolute', left: '-9999px', top: 0, width: '210mm' }}>
-        <DeliveryNotePrint delivery={delivery} company={company} />
-      </div>
 
       {/* In-app map navigation */}
       {mapOpen && invoice?.latitude && invoice?.longitude && (

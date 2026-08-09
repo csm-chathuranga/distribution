@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
     entry_number: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     entry_date: { type: DataTypes.DATEONLY, allowNull: false },
     source_type: {
-      type: DataTypes.ENUM('MANUAL', 'INVOICE', 'RECEIPT', 'PAYMENT', 'GRN', 'STOCK_ADJ', 'TRANSFER', 'EXPENSE'),
+      type: DataTypes.ENUM('MANUAL', 'INVOICE', 'RECEIPT', 'PAYMENT', 'GRN', 'STOCK_ADJ', 'TRANSFER', 'EXPENSE', 'SUPPLIER_RETURN'),
       allowNull: false,
     },
     source_id: DataTypes.INTEGER,

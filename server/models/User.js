@@ -13,6 +13,7 @@ module.exports = (sequelize) => {
     employee_id: DataTypes.STRING(50),
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     last_login: DataTypes.DATE,
+    fcm_token: { type: DataTypes.STRING(500), allowNull: true },
   }, {
     tableName: 'users',
     defaultScope: { attributes: { exclude: ['password_hash'] } },

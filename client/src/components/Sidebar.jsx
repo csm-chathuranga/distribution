@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Package, Users, ShoppingCart, FileText, Truck,
   CreditCard, BarChart2, Settings, ChevronDown, Warehouse, BookOpen,
   Receipt, ArrowLeftRight, Building2, LogOut, MapPin, ClipboardList,
-  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap,
+  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car,
 } from 'lucide-react';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import { usePermission, useCanAny } from '../hooks/usePermission';
@@ -64,6 +64,7 @@ export default function Sidebar() {
   const canJournals = usePermission('finance.journals');
   const canReports = usePermission('reports.sales');
   const canSettings = usePermission('settings.users');
+  const canMasterData = usePermission('settings.company');
 
   const [openGroup, setOpenGroup] = useState(null);
   const toggle = (name) => setOpenGroup(prev => prev === name ? null : name);
@@ -105,6 +106,7 @@ export default function Sidebar() {
             <p className="sidebar-section-label">Inventory</p>
             <NavGroup icon={Package} label="Products & Stock" isOpen={openGroup === 'products'} onToggle={() => toggle('products')}>
               <NavItem to="/products" icon={Package} label="Products" />
+              <NavItem to="/stock" icon={ClipboardList} label="Stock Overview" />
               <NavItem to="/categories" icon={ClipboardList} label="Categories" />
               <NavItem to="/units" icon={Scale} label="Units" />
               <NavItem to="/warehouses" icon={Warehouse} label="Warehouses" />
@@ -143,6 +145,8 @@ export default function Sidebar() {
           <>
             <p className="sidebar-section-label">Van Sales</p>
             <NavItem to="/loading-sheets" icon={Navigation} label="Loading Sheets" />
+            <NavItem to="/tracking" icon={MapPin} label="Rep Tracking" />
+            <NavItem to="/reports/daily-collections" icon={Zap} label="Daily Collections" />
           </>
         )}
 
@@ -182,6 +186,13 @@ export default function Sidebar() {
               <NavItem to="/reports/profit-loss" label="Profit & Loss" />
             </NavGroup>
             <NavItem to="/analytics" icon={Zap} label="Analytics" />
+          </>
+        )}
+
+        {canMasterData && (
+          <>
+            <p className="sidebar-section-label">Master Data</p>
+            <NavItem to="/master-data/vehicles" icon={Car} label="Vehicles" />
           </>
         )}
 

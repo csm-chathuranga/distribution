@@ -48,6 +48,10 @@ export const inventoryApi = baseApi.injectEndpoints({
       query: body => ({ url: '/stock/opening', method: 'POST', body }),
       invalidatesTags: ['Stock', 'StockAdjustment'],
     }),
+    getStockOnHand: b.query({
+      query: params => ({ url: '/stock/on-hand', params }),
+      providesTags: ['Stock'],
+    }),
   }),
 });
 
@@ -56,5 +60,5 @@ export const {
   useCreateStockAdjustmentMutation, useApproveStockAdjustmentMutation, useCancelStockAdjustmentMutation,
   useGetStockTransfersQuery, useGetStockTransferQuery,
   useCreateStockTransferMutation, useDispatchStockTransferMutation, useReceiveStockTransferMutation,
-  useSetOpeningStockMutation,
+  useSetOpeningStockMutation, useGetStockOnHandQuery,
 } = inventoryApi;

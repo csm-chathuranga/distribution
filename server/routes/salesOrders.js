@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse } = require('../models');
 const crud = require('../controllers/crudFactory')(SalesOrder, {
@@ -6,12 +7,24 @@ const crud = require('../controllers/crudFactory')(SalesOrder, {
   order: [['order_date', 'DESC']],
 });
 
+async function generateOrderNumber() {
+  const today = new Date();
+  const datePart = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const like = `SO-${datePart}-%`;
+  const last = await SalesOrder.findOne({ where: { order_number: { [Op.like]: like } }, order: [['id', 'DESC']] });
+  const seq = last ? parseInt(last.order_number.split('-').pop()) + 1 : 1;
+  return `SO-${datePart}-${String(seq).padStart(3, '0')}`;
+}
+
 router.get('/', authorize('sales.view_own'), crud.list);
 router.get('/:id', authorize('sales.view_own'), crud.get);
 router.post('/', authorize('sales.create'), async (req, res, next) => {
   try {
     const { lines, ...data } = req.body;
     data.created_by = req.user.id;
+    if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
+    if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
+    if (!data.order_number) data.order_number = await generateOrderNumber();
     const { sequelize } = require('../models');
     const t = await sequelize.transaction();
     try {

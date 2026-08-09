@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Plus, Trash2 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useCreateStockTransferMutation } from '../../api/inventoryApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
+import SearchableSelect from '../../components/ui/SearchableSelect';
 import { today } from '../../utils/format';
 
 const lineSchema = yup.object({
@@ -88,7 +89,19 @@ export default function StockTransferCreate() {
               {fields.map((field, i) => (
                 <tr key={field.id}>
                   <td className="py-2 pr-2">
-                    <SelectField options={productOpts} error={errors.lines?.[i]?.product_id?.message} {...register(`lines.${i}.product_id`)} />
+                    <Controller
+                      control={control}
+                      name={`lines.${i}.product_id`}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          options={productOpts}
+                          placeholder="Search product…"
+                          error={errors.lines?.[i]?.product_id?.message}
+                        />
+                      )}
+                    />
                   </td>
                   <td className="py-2 px-2">
                     <TextField type="number" step="0.01" error={errors.lines?.[i]?.requested_quantity?.message} {...register(`lines.${i}.requested_quantity`)} />

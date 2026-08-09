@@ -26,15 +26,15 @@ export default function SupplierReturnList() {
   };
 
   const columns = [
-    { header: 'Return #', render: r => <span className="font-mono text-xs font-semibold text-gray-800">{r.return_number}</span> },
-    { header: 'Date', render: r => fmtDate(r.return_date) },
-    { header: 'Supplier', render: r => r.Supplier?.name || '—' },
-    { header: 'GRN Ref', render: r => r.GoodsReceived?.grn_number || '—' },
-    { header: 'Total Amount', render: r => <span className="font-semibold text-red-600">{fmtCurrency(r.total_amount)}</span> },
-    { header: 'Status', render: r => <StatusBadge status={r.status} /> },
+    { key: 'return_number', header: 'Return #',     cell: r => <span className="font-mono text-xs font-semibold text-primary-700 cursor-pointer hover:underline" onClick={() => navigate(`/supplier-returns/${r.id}`)}>{r.return_number}</span> },
+    { key: 'return_date',   header: 'Date',          cell: r => fmtDate(r.return_date) },
+    { key: 'supplier',      header: 'Supplier',      cell: r => r.Supplier?.name || '—' },
+    { key: 'grn_ref',       header: 'GRN Ref',       cell: r => r.GoodsReceived?.grn_number || '—' },
+    { key: 'total_amount',  header: 'Total Amount',  cell: r => <span className="font-semibold text-red-600">{fmtCurrency(r.total_amount)}</span> },
+    { key: 'status',        header: 'Status',        cell: r => <StatusBadge status={r.status} /> },
     {
-      header: 'Actions',
-      render: r => r.status === 'DRAFT' && canApprove ? (
+      key: 'actions', header: 'Actions',
+      cell: r => r.status === 'DRAFT' && canApprove ? (
         <button onClick={() => setPostTarget(r)} className="btn btn-sm btn-primary">Post</button>
       ) : null,
     },
@@ -59,6 +59,7 @@ export default function SupplierReturnList() {
           columns={columns}
           data={rows}
           loading={isLoading}
+          onRowClick={r => navigate(`/supplier-returns/${r.id}`)}
           emptyComponent={<EmptyState icon={RotateCcw} title="No supplier returns" description="Create a return to credit a supplier for goods sent back" action={canCreate ? { label: 'New Supplier Return', onClick: () => navigate('/supplier-returns/new') } : null} />}
         />
       </div>

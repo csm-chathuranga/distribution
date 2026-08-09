@@ -17,6 +17,7 @@ router.get('/', authorize('finance.view'), async (req, res, next) => {
       where, limit: parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
       order: [['entry_date', 'DESC']],
+      include: [{ model: JournalLine, as: 'Lines', include: [{ model: Account, attributes: ['id', 'code', 'name'] }] }],
     });
     res.json({ data: rows, total: count });
   } catch (err) { next(err); }

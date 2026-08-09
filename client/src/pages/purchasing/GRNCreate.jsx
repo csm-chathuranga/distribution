@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Plus, Trash2 } from 'lucide-react';
@@ -9,6 +9,7 @@ import { useGetSuppliersQuery } from '../../api/suppliersApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
+import SearchableSelect from '../../components/ui/SearchableSelect';
 import { today, fmtCurrency } from '../../utils/format';
 
 const lineSchema = yup.object({
@@ -20,8 +21,8 @@ const lineSchema = yup.object({
 const schema = yup.object({
   supplier_id: yup.number().required('Supplier is required').typeError('Select supplier'),
   warehouse_id: yup.number().required('Warehouse is required').typeError('Select warehouse'),
-  purchase_order_id: yup.number().nullable().transform(v => v === '' ? null : Number(v)),
-  received_date: yup.string().required('Date required'),
+  purchase_order_id: yup.number().nullable().transform((_, orig) => orig === '' || orig == null ? null : Number(orig)),
+  grn_date: yup.string().required('Date required'),
   invoice_number: yup.string().nullable().max(100),
   notes: yup.string().nullable(),
   lines: yup.array().of(lineSchema).min(1, 'Add at least one item'),
@@ -35,17 +36,27 @@ export default function GRNCreate() {
   const { data: products } = useGetProductsQuery({ limit: 500, is_active: true });
   const { data: warehouses } = useGetWarehousesQuery({});
 
-  const { register, control, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { received_date: today(), lines: [{ product_id: '', quantity_received: 1, unit_cost: 0 }] },
+    defaultValues: { grn_date: today(), lines: [{ product_id: '', quantity_received: 1, unit_cost: 0 }] },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const lines = watch('lines') || [];
 
   const supplierOpts = suppliers?.data?.map(s => ({ value: s.id, label: s.name })) || [];
   const poOpts = approvedPOs?.data?.map(p => ({ value: p.id, label: `${p.po_number} — ${p.Supplier?.name}` })) || [];
-  const productOpts = products?.data?.map(p => ({ value: p.id, label: `${p.sku} — ${p.name}` })) || [];
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
+
+  const productCostMap = {};
+  const productOpts = (products?.data || []).map(p => {
+    productCostMap[p.id] = parseFloat(p.cost_price || 0);
+    return { value: p.id, label: `${p.sku} — ${p.name}` };
+  });
+
+  const handleProductChange = (idx, productId) => {
+    const cost = productCostMap[Number(productId)];
+    if (cost !== undefined) setValue(`lines.${idx}.unit_cost`, cost);
+  };
 
   const subtotal = lines.reduce((s, l) => s + (Number(l.quantity_received) || 0) * (Number(l.unit_cost) || 0), 0);
 
@@ -65,7 +76,7 @@ export default function GRNCreate() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="card space-y-4">
+        <div className="card p-6 space-y-4">
           <h2 className="font-semibold text-gray-700 border-b pb-2">Receipt Details</h2>
           <div className="grid grid-cols-2 gap-4">
             <SelectField label="Supplier" required options={supplierOpts} error={errors.supplier_id?.message} {...register('supplier_id')} />
@@ -75,11 +86,11 @@ export default function GRNCreate() {
             <SelectField label="Against PO (optional)" options={[{ value: '', label: '— No PO —' }, ...poOpts]} error={errors.purchase_order_id?.message} {...register('purchase_order_id')} />
             <TextField label="Supplier Invoice No." error={errors.invoice_number?.message} {...register('invoice_number')} />
           </div>
-          <TextField label="Received Date" required type="date" error={errors.received_date?.message} {...register('received_date')} />
+          <TextField label="Received Date" required type="date" error={errors.grn_date?.message} {...register('grn_date')} />
           <TextareaField label="Notes" rows={2} error={errors.notes?.message} {...register('notes')} />
         </div>
 
-        <div className="card space-y-4">
+        <div className="card p-6 space-y-4">
           <div className="flex items-center justify-between border-b pb-2">
             <h2 className="font-semibold text-gray-700">Items Received</h2>
             <button type="button" onClick={() => append({ product_id: '', quantity_received: 1, unit_cost: 0 })} className="btn-secondary text-sm flex items-center gap-1"><Plus size={14} /> Add Item</button>
@@ -99,7 +110,19 @@ export default function GRNCreate() {
               {fields.map((field, i) => (
                 <tr key={field.id}>
                   <td className="py-2 pr-2">
-                    <SelectField options={productOpts} error={errors.lines?.[i]?.product_id?.message} {...register(`lines.${i}.product_id`)} />
+                    <Controller
+                    control={control}
+                    name={`lines.${i}.product_id`}
+                    render={({ field }) => (
+                      <SearchableSelect
+                        value={field.value}
+                        onChange={val => { field.onChange(val); handleProductChange(i, val); }}
+                        options={productOpts}
+                        placeholder="Search product…"
+                        error={errors.lines?.[i]?.product_id?.message}
+                      />
+                    )}
+                  />
                   </td>
                   <td className="py-2 px-2">
                     <TextField type="number" step="1" error={errors.lines?.[i]?.quantity_received?.message} {...register(`lines.${i}.quantity_received`)} />

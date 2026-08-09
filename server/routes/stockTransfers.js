@@ -55,8 +55,8 @@ router.post('/', authorize('inventory.view'), async (req, res, next) => {
       return res.status(400).json({ message: 'Source and destination warehouses must be different' });
     }
     data.created_by = req.user.id;
-    data.company_id = req.user.company_id;
-    data.branch_id = req.user.branch_id;
+    data.company_id = req.user.Branch?.company_id ?? req.user.company_id ?? 1;
+    data.branch_id  = req.user.branch_id ?? 1;
     data.transfer_number = await nextTrfNumber(t);
     const trf = await StockTransfer.create(data, { transaction: t });
     if (lines?.length) {

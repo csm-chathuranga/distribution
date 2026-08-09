@@ -45,6 +45,8 @@ router.post('/', authorize('purchase.create'), async (req, res, next) => {
     const return_number = `SR-${year}-${String(count + 1).padStart(5, '0')}`;
     const ret = await SupplierReturn.create({
       ...retData, return_number, total_amount: total, created_by: req.user.id,
+      company_id: retData.company_id ?? req.user.Branch?.company_id ?? 1,
+      branch_id:  retData.branch_id  ?? req.user.branch_id ?? 1,
     }, { transaction: t });
     await SupplierReturnLine.bulkCreate(
       lines.map(l => ({ ...l, return_id: ret.id, line_total: Number(l.quantity) * Number(l.unit_cost) })),
@@ -67,31 +69,44 @@ router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) =>
     if (ret.status !== 'DRAFT') return res.status(400).json({ message: 'Already posted' });
 
     const now = new Date();
-    const period = await AccountingPeriod.findOne({
+    let period = await AccountingPeriod.findOne({
       where: { year: now.getFullYear(), month: now.getMonth() + 1, is_open: true },
       transaction: t,
     });
-    if (!period) return res.status(400).json({ message: 'No open accounting period' });
+    if (!period) {
+      try {
+        period = await AccountingPeriod.create({
+          company_id: ret.company_id,
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+          is_open: true,
+          name: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+        }, { transaction: t });
+      } catch { period = null; }
+    }
 
     // System accounts: DR Creditors (Supplier), CR Stock
     const creditorAcc = await Account.findOne({ where: { is_system: true, sub_type: 'TRADE_CREDITORS' }, transaction: t });
-    const stockAcc = await Account.findOne({ where: { is_system: true, sub_type: 'STOCK' }, transaction: t });
+    const stockAcc    = await Account.findOne({ where: { is_system: true, sub_type: 'STOCK'           }, transaction: t });
 
-    const journal = await JournalEntry.create({
-      company_id: ret.company_id, branch_id: ret.branch_id, period_id: period.id,
-      entry_number: `SR-JE-${ret.return_number}`,
-      entry_date: ret.return_date,
-      source_type: 'SUPPLIER_RETURN', source_id: ret.id,
-      description: `Supplier Return ${ret.return_number} — ${ret.Supplier?.name}`,
-      total_debit: ret.total_amount, total_credit: ret.total_amount, is_posted: true,
-      created_by: req.user.id,
-    }, { transaction: t });
+    let journal = null;
+    if (period && creditorAcc && stockAcc) {
+      journal = await JournalEntry.create({
+        company_id: ret.company_id, branch_id: ret.branch_id, period_id: period.id,
+        entry_number: `SR-JE-${ret.return_number}`,
+        entry_date: ret.return_date,
+        source_type: 'SUPPLIER_RETURN', source_id: ret.id,
+        description: `Supplier Return ${ret.return_number} — ${ret.Supplier?.name}`,
+        total_debit: ret.total_amount, total_credit: ret.total_amount, is_posted: true,
+        created_by: req.user.id,
+      }, { transaction: t });
 
-    // DR Creditors (reduces what we owe the supplier), CR Stock (reduces stock value)
-    await JournalLine.bulkCreate([
-      { journal_id: journal.id, account_id: creditorAcc?.id, debit_amount: ret.total_amount, credit_amount: 0, narration: 'Supplier credit for returned goods' },
-      { journal_id: journal.id, account_id: stockAcc?.id, debit_amount: 0, credit_amount: ret.total_amount, narration: 'Stock value reduced on return' },
-    ], { transaction: t });
+      // DR Creditors (reduces what we owe the supplier), CR Stock (reduces stock value)
+      await JournalLine.bulkCreate([
+        { journal_id: journal.id, account_id: creditorAcc.id, debit_amount: ret.total_amount, credit_amount: 0, narration: 'Supplier credit for returned goods' },
+        { journal_id: journal.id, account_id: stockAcc.id,    debit_amount: 0, credit_amount: ret.total_amount, narration: 'Stock value reduced on return' },
+      ], { transaction: t });
+    }
 
     // Deduct stock for each returned line
     for (const line of ret.Lines) {
@@ -116,7 +131,7 @@ router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) =>
       }
     }
 
-    await ret.update({ status: 'POSTED', journal_entry_id: journal.id }, { transaction: t });
+    await ret.update({ status: 'POSTED', journal_entry_id: journal?.id ?? null }, { transaction: t });
     await t.commit();
     res.json(await SupplierReturn.findByPk(ret.id, { include }));
   } catch (err) { await t.rollback(); next(err); }

@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
     customer_id: { type: DataTypes.INTEGER, allowNull: false },
     sales_rep_id: DataTypes.INTEGER,
     order_id: DataTypes.INTEGER,
+    loading_sheet_id: DataTypes.INTEGER,
     invoice_number: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     invoice_date: { type: DataTypes.DATEONLY, allowNull: false },
     due_date: DataTypes.DATEONLY,

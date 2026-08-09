@@ -1,6 +1,16 @@
 const router = require('express').Router();
+const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 const { PurchaseOrder, PurchaseOrderLine, Supplier, Product, Warehouse } = require('../models');
+
+async function generatePONumber() {
+  const today = new Date();
+  const datePart = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const like = `PO-${datePart}-%`;
+  const last = await PurchaseOrder.findOne({ where: { po_number: { [Op.like]: like } }, order: [['id', 'DESC']] });
+  const seq = last ? parseInt(last.po_number.split('-').pop()) + 1 : 1;
+  return `PO-${datePart}-${String(seq).padStart(3, '0')}`;
+}
 const crud = require('../controllers/crudFactory')(PurchaseOrder, {
   include: [{ model: Supplier, attributes: ['id', 'name'] }, { model: Warehouse, attributes: ['id', 'name'] }],
   order: [['po_date', 'DESC']],
@@ -12,6 +22,9 @@ router.post('/', authorize('purchase.create'), async (req, res, next) => {
   try {
     const { lines, ...data } = req.body;
     data.created_by = req.user.id;
+    if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
+    if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
+    if (!data.po_number)  data.po_number  = await generatePONumber();
     const { sequelize } = require('../models');
     const t = await sequelize.transaction();
     try {

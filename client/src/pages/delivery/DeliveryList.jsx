@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Plus, Truck, CheckCircle, RotateCcw, ChevronRight } from 'lucide-react';
+import { Plus, Truck, CheckCircle, RotateCcw, MapPin, User, FileText } from 'lucide-react';
 import {
   useGetDeliveriesQuery, useDispatchDeliveryMutation,
   useDeliverDeliveryMutation, useReturnDeliveryMutation,
@@ -14,6 +14,14 @@ import { fmtDate } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
 const STATUSES = ['', 'PENDING', 'DISPATCHED', 'DELIVERED', 'RETURNED'];
+
+const STATUS_BORDER = {
+  PENDING:    'border-l-amber-400',
+  DISPATCHED: 'border-l-blue-500',
+  DELIVERED:  'border-l-emerald-500',
+  RETURNED:   'border-l-gray-400',
+  CANCELLED:  'border-l-red-400',
+};
 
 export default function DeliveryList() {
   const navigate    = useNavigate();
@@ -187,46 +195,69 @@ export default function DeliveryList() {
             {rows.map(dn => {
               const isAssignedDriver = currentUser?.id === dn.Driver?.id;
               const canAct = canCreate || isAssignedDriver;
+              const hasAction = (dn.status === 'PENDING' && canCreate) ||
+                                (dn.status === 'DISPATCHED' && (canCreate || isAssignedDriver));
               return (
-                <div key={dn.id} className="card overflow-hidden">
-                  <button className="w-full text-left p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                    onClick={() => navigate(`/deliveries/${dn.id}`)}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-base leading-snug truncate">{dn.Customer?.name || '—'}</p>
-                        <p className="text-xs font-mono text-gray-500 mt-0.5">{dn.dn_number}</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <StatusBadge status={dn.status} />
-                        <ChevronRight size={16} className="text-gray-400" />
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2 text-xs text-gray-500">
-                      <span>{fmtDate(dn.dn_date)}</span>
-                      {dn.Invoice?.invoice_number && <span>{dn.Invoice.invoice_number}</span>}
-                      {!isDriver && dn.Driver?.name && <span className="text-primary-600 font-medium">{dn.Driver.name}</span>}
-                      {dn.Route?.name && <span>{dn.Route.name}</span>}
-                    </div>
-                  </button>
+                <div key={dn.id}
+                  className={`bg-white rounded-2xl shadow-md overflow-hidden cursor-pointer active:opacity-75 transition-opacity border-l-4 ${STATUS_BORDER[dn.status] || 'border-l-gray-300'}`}
+                  onClick={() => navigate(`/deliveries/${dn.id}`)}>
 
-                  {canAct && dn.status === 'PENDING' && canCreate && (
-                    <div className="px-4 pb-4">
-                      <button onClick={() => setActionDn({ dn, action: 'dispatch' })}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
-                        <Truck size={16} /> Dispatch
-                      </button>
+                  <div className="p-4">
+                    {/* Customer + status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm leading-tight">{dn.Customer?.name || '—'}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-xs font-mono text-gray-400">{dn.dn_number}</span>
+                          <span className="text-gray-300 text-xs">·</span>
+                          <span className="text-xs text-gray-400">{fmtDate(dn.dn_date)}</span>
+                        </div>
+                      </div>
+                      <StatusBadge status={dn.status} />
                     </div>
-                  )}
-                  {canAct && dn.status === 'DISPATCHED' && (canCreate || isAssignedDriver) && (
-                    <div className="px-4 pb-4 flex gap-2">
-                      <button onClick={() => setActionDn({ dn, action: 'deliver' })}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm">
-                        <CheckCircle size={16} /> Mark Delivered
-                      </button>
-                      <button onClick={() => setActionDn({ dn, action: 'return' })}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm">
-                        <RotateCcw size={16} />
-                      </button>
+
+                    {/* Details row */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-2.5 border-t border-gray-100">
+                      {dn.Invoice?.invoice_number && (
+                        <span className="flex items-center gap-1 text-xs text-gray-500">
+                          <FileText size={11} className="text-gray-400" />
+                          {dn.Invoice.invoice_number}
+                        </span>
+                      )}
+                      {!isDriver && dn.Driver?.name && (
+                        <span className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                          <User size={11} /> {dn.Driver.name}
+                        </span>
+                      )}
+                      {dn.Route?.name && (
+                        <span className="flex items-center gap-1 text-xs text-gray-500">
+                          <MapPin size={11} className="text-gray-400" /> {dn.Route.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  {canAct && hasAction && (
+                    <div className="px-4 pb-4" onClick={e => e.stopPropagation()}>
+                      {dn.status === 'PENDING' && canCreate && (
+                        <button onClick={() => setActionDn({ dn, action: 'dispatch' })}
+                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm transition-colors">
+                          <Truck size={16} /> Dispatch
+                        </button>
+                      )}
+                      {dn.status === 'DISPATCHED' && (
+                        <div className="flex gap-2">
+                          <button onClick={() => setActionDn({ dn, action: 'deliver' })}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm transition-colors">
+                            <CheckCircle size={16} /> Mark Delivered
+                          </button>
+                          <button onClick={() => setActionDn({ dn, action: 'return' })}
+                            className="w-12 flex items-center justify-center rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-colors">
+                            <RotateCcw size={17} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

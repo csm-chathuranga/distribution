@@ -19,6 +19,7 @@ export const reportsApi = baseApi.injectEndpoints({
     getBestRoutes: b.query({ query: params => ({ url: '/reports/best-routes', params }), providesTags: ['Report'] }),
     getCustomerRanking: b.query({ query: params => ({ url: '/reports/customer-ranking', params }), providesTags: ['Report'] }),
     getAgedCreditors: b.query({ query: () => '/reports/aged-creditors', providesTags: ['Report'] }),
+    getDailyCollections: b.query({ query: params => ({ url: '/reports/daily-collections', params }), providesTags: ['Report', 'Invoice', 'Receipt'] }),
     getPeriods: b.query({ query: () => '/periods', providesTags: ['Period'] }),
     createPeriod: b.mutation({ query: body => ({ url: '/periods', method: 'POST', body }), invalidatesTags: ['Period'] }),
     closePeriod: b.mutation({ query: id => ({ url: `/periods/${id}/close`, method: 'PUT' }), invalidatesTags: ['Period'] }),
@@ -35,7 +36,7 @@ export const {
   useGetVatSummaryQuery, useGetCustomerStatementQuery,
   useGetProductProfitabilityQuery, useGetReorderSuggestionsQuery, useGetSalesRepKpiQuery,
   useGetStockMatrixQuery, useGetFastMoversQuery, useGetBestRoutesQuery, useGetCustomerRankingQuery,
-  useGetAgedCreditorsQuery,
+  useGetAgedCreditorsQuery, useGetDailyCollectionsQuery,
   useGetPeriodsQuery, useCreatePeriodMutation, useClosePeriodMutation, useReopenPeriodMutation,
   useGetCompanyQuery, useUpdateCompanyMutation,
 } = reportsApi;

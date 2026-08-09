@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck, Truck, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,7 +16,7 @@ export default function Header({ minimal = false }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
-  const { notifications, unread, markRead, markAllRead } = useNotifications() || {};
+  const { notifications, unread, markRead, markAllRead, clearAll } = useNotifications() || {};
 
   const initials = user?.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
@@ -41,47 +41,79 @@ export default function Header({ minimal = false }) {
 
   if (minimal) {
     return (
-      <header className="h-12 bg-sidebar flex items-center justify-between px-4 flex-shrink-0 z-10">
-        <span className="text-white font-semibold text-sm tracking-wide">Lanka Dist</span>
-        <div className="relative" ref={bellRef}>
-          <button
-            onClick={() => setBellOpen(v => !v)}
-            className="relative p-2 rounded-lg text-white/70 hover:text-white transition-colors"
-          >
-            <Bell size={20} />
-            {unread > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                {unread > 9 ? '9+' : unread}
-              </span>
+      <header className="h-14 bg-gray-900 flex items-center justify-between px-4 flex-shrink-0 z-10 shadow-lg">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+            <Truck size={15} className="text-white" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm leading-tight">Lanka Dist</p>
+            <p className="text-gray-400 text-[10px] leading-tight tracking-wide">Distribution System</p>
+          </div>
+        </div>
+
+        {/* Right: bell + avatar */}
+        <div className="flex items-center gap-1.5">
+          {/* Bell */}
+          <div className="relative" ref={bellRef}>
+            <button
+              onClick={() => setBellOpen(v => !v)}
+              className="relative p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <Bell size={20} />
+              {unread > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none shadow">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-semibold text-gray-800">
+                    Notifications
+                    {unread > 0 && <span className="ml-1.5 text-xs text-white bg-red-500 font-bold px-1.5 py-0.5 rounded-full">{unread}</span>}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {unread > 0 && (
+                      <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                        <CheckCheck size={12} /> Mark all read
+                      </button>
+                    )}
+                    {notifications?.length > 0 && (
+                      <button onClick={() => { clearAll?.(); setBellOpen(false); }}
+                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-medium transition-colors">
+                        <X size={12} /> Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                  {(!notifications || notifications.length === 0) ? (
+                    <p className="text-sm text-gray-400 text-center py-8">No notifications</p>
+                  ) : notifications.slice(0, 20).map(n => (
+                    <button key={n.id} onClick={() => handleNotifClick(n)}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex gap-3 items-start transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+                    >
+                      <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-gray-800 leading-snug">{n.title}</p>
+                        {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
+          </div>
+
+          {/* User avatar */}
+          <button onClick={() => navigate('/profile')}
+            className="w-8 h-8 bg-primary-600 hover:bg-primary-700 rounded-xl flex items-center justify-center transition-colors shadow-md active:opacity-80">
+            <span className="text-white text-xs font-bold">{initials}</span>
           </button>
-          {bellOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-800">Notifications {unread > 0 && <span className="ml-1 text-xs text-red-500 font-bold">({unread})</span>}</p>
-                {unread > 0 && (
-                  <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 font-medium">
-                    <CheckCheck size={12} /> Mark all read
-                  </button>
-                )}
-              </div>
-              <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
-                {(!notifications || notifications.length === 0) ? (
-                  <p className="text-sm text-gray-400 text-center py-8">No notifications</p>
-                ) : notifications.slice(0, 20).map(n => (
-                  <button key={n.id} onClick={() => handleNotifClick(n)}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex gap-3 items-start ${!n.is_read ? 'bg-blue-50/40' : ''}`}
-                  >
-                    <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-primary-500' : 'bg-gray-200'}`} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-gray-800 leading-snug truncate">{n.title}</p>
-                      {n.body && <p className="text-xs text-gray-500 mt-0.5 truncate">{n.body}</p>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </header>
     );
@@ -121,11 +153,19 @@ export default function Header({ minimal = false }) {
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <p className="text-sm font-semibold text-gray-800">Notifications {unread > 0 && <span className="ml-1 text-xs text-red-500 font-bold">({unread})</span>}</p>
-                {unread > 0 && (
-                  <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-medium">
-                    <CheckCheck size={12} /> Mark all read
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {unread > 0 && (
+                    <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 font-medium">
+                      <CheckCheck size={12} /> Mark all read
+                    </button>
+                  )}
+                  {notifications?.length > 0 && (
+                    <button onClick={() => { clearAll?.(); setBellOpen(false); }}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-medium transition-colors">
+                      <X size={12} /> Clear
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* List */}

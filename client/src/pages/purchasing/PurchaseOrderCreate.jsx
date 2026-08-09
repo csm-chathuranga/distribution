@@ -34,7 +34,7 @@ export default function PurchaseOrderCreate() {
   const { data: products } = useGetProductsQuery({ limit: 500, is_active: true });
   const { data: warehouses } = useGetWarehousesQuery({});
 
-  const { register, control, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: { order_date: today(), lines: [{ product_id: '', quantity: 1, unit_cost: 0 }] },
   });
@@ -44,6 +44,7 @@ export default function PurchaseOrderCreate() {
   const supplierOpts = suppliers?.data?.map(s => ({ value: s.id, label: s.name })) || [];
   const productOpts = products?.data?.map(p => ({ value: p.id, label: `${p.sku} — ${p.name}` })) || [];
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
+  const productCostMap = Object.fromEntries((products?.data || []).map(p => [p.id, p.cost_price]));
 
   const subtotal = lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.unit_cost) || 0), 0);
 
@@ -69,7 +70,7 @@ export default function PurchaseOrderCreate() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="card space-y-4">
+        <div className="card p-6 space-y-4">
           <h2 className="font-semibold text-gray-700 border-b pb-2">Order Details</h2>
           <div className="grid grid-cols-2 gap-4">
             <SelectField label="Supplier" required options={supplierOpts} error={errors.supplier_id?.message} {...register('supplier_id')} />
@@ -82,7 +83,7 @@ export default function PurchaseOrderCreate() {
           <TextareaField label="Notes" rows={2} error={errors.notes?.message} {...register('notes')} />
         </div>
 
-        <div className="card space-y-4">
+        <div className="card p-6 space-y-4">
           <div className="flex items-center justify-between border-b pb-2">
             <h2 className="font-semibold text-gray-700">Order Lines</h2>
             <button type="button" onClick={() => append({ product_id: '', quantity: 1, unit_cost: 0 })} className="btn-secondary text-sm flex items-center gap-1"><Plus size={14} /> Add Item</button>
@@ -103,7 +104,21 @@ export default function PurchaseOrderCreate() {
                 {fields.map((field, i) => (
                   <tr key={field.id}>
                     <td className="py-2 pr-2">
-                      <SelectField options={productOpts} error={errors.lines?.[i]?.product_id?.message} {...register(`lines.${i}.product_id`)} />
+                      {(() => {
+                        const reg = register(`lines.${i}.product_id`);
+                        return (
+                          <SelectField
+                            options={productOpts}
+                            error={errors.lines?.[i]?.product_id?.message}
+                            {...reg}
+                            onChange={(e) => {
+                              reg.onChange(e);
+                              const cost = productCostMap[Number(e.target.value)];
+                              if (cost !== undefined) setValue(`lines.${i}.unit_cost`, Number(cost));
+                            }}
+                          />
+                        );
+                      })()}
                     </td>
                     <td className="py-2 px-2">
                       <TextField type="number" step="1" className="text-right" error={errors.lines?.[i]?.quantity?.message} {...register(`lines.${i}.quantity`)} />

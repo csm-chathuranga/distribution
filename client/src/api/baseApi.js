@@ -61,7 +61,7 @@ export const baseApi = createApi({
     'Supplier', 'Customer', 'Route',
     'PurchaseOrder', 'GoodsReceived',
     'SalesOrder', 'Invoice', 'Receipt', 'Payment', 'Cheque', 'Expense',
-    'Dashboard', 'Report', 'StockAdjustment', 'Notification',
+    'Dashboard', 'Report', 'StockAdjustment', 'Notification', 'Vehicle',
   ],
   endpoints: () => ({}),
 });

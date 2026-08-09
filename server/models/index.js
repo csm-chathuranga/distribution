@@ -42,6 +42,7 @@ const StockTransferLine = require('./StockTransferLine')(sequelize);
 const PriceList = require('./PriceList')(sequelize);
 const PriceListItem = require('./PriceListItem')(sequelize);
 const Notification = require('./Notification')(sequelize);
+const Vehicle = require('./Vehicle')(sequelize);
 
 // Junction tables
 const RolePermission = sequelize.define('RolePermission', {}, { tableName: 'role_permissions', timestamps: false });
@@ -160,6 +161,8 @@ Invoice.belongsTo(JournalEntry, { foreignKey: 'journal_id' });
 Invoice.hasMany(InvoiceLine, { as: 'Lines', foreignKey: 'invoice_id' });
 InvoiceLine.belongsTo(Invoice, { foreignKey: 'invoice_id' });
 InvoiceLine.belongsTo(Product, { foreignKey: 'product_id' });
+Invoice.belongsTo(LoadingSheet, { foreignKey: 'loading_sheet_id', as: 'VanSheet' });
+LoadingSheet.hasMany(Invoice, { foreignKey: 'loading_sheet_id', as: 'Invoices' });
 
 // ── Receipts ─────────────────────────────────────────────
 Customer.hasMany(Receipt, { foreignKey: 'customer_id' });
@@ -193,6 +196,7 @@ DeliveryNote.belongsTo(User, { as: 'Driver', foreignKey: 'driver_id' });
 DeliveryNote.belongsTo(Route, { foreignKey: 'route_id' });
 
 // ── Loading Sheets ────────────────────────────────────────
+LoadingSheet.belongsTo(Vehicle, { foreignKey: 'vehicle_id' });
 LoadingSheet.belongsTo(Branch, { foreignKey: 'branch_id' });
 LoadingSheet.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
 LoadingSheet.belongsTo(Route, { foreignKey: 'route_id' });
@@ -259,4 +263,5 @@ module.exports = {
   StockTransfer, StockTransferLine,
   PriceList, PriceListItem,
   Notification,
+  Vehicle,
 };

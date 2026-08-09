@@ -12,6 +12,7 @@ export const purchasingApi = baseApi.injectEndpoints({
     getGRN: b.query({ query: id => `/goods-received/${id}`, providesTags: (r,e,id) => [{ type:'GoodsReceived', id }] }),
     createGRN: b.mutation({ query: body => ({ url: '/goods-received', method: 'POST', body }), invalidatesTags: ['GoodsReceived', 'Stock'] }),
     postGRN: b.mutation({ query: id => ({ url: `/goods-received/${id}/post`, method: 'POST' }), invalidatesTags: ['GoodsReceived', 'Stock'] }),
+    deleteGRN: b.mutation({ query: id => ({ url: `/goods-received/${id}`, method: 'DELETE' }), invalidatesTags: ['GoodsReceived'] }),
 
     getSupplierReturns: b.query({ query: params => ({ url: '/supplier-returns', params }), providesTags: ['SupplierReturn'] }),
     getSupplierReturn: b.query({ query: id => `/supplier-returns/${id}`, providesTags: (r,e,id) => [{ type:'SupplierReturn', id }] }),
@@ -28,7 +29,7 @@ export const purchasingApi = baseApi.injectEndpoints({
 
 export const {
   useGetPOsQuery, useGetPOQuery, useCreatePOMutation, useUpdatePOMutation, useApprovePOMutation,
-  useGetGRNsQuery, useGetGRNQuery, useCreateGRNMutation, usePostGRNMutation,
+  useGetGRNsQuery, useGetGRNQuery, useCreateGRNMutation, usePostGRNMutation, useDeleteGRNMutation,
   useGetSupplierReturnsQuery, useGetSupplierReturnQuery, useCreateSupplierReturnMutation, usePostSupplierReturnMutation,
   useGetSupplierPaymentsQuery, useGetSupplierPaymentQuery, useCreateSupplierPaymentMutation,
   useCancelSupplierPaymentMutation, useGetOpenGRNsQuery,

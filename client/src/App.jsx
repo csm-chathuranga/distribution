@@ -10,6 +10,7 @@ import ProductList from './pages/products/ProductList';
 import CategoryList from './pages/categories/CategoryList';
 import WarehouseList from './pages/warehouses/WarehouseList';
 import UnitList from './pages/products/UnitList';
+import StockOverview from './pages/inventory/StockOverview';
 import StockAdjustmentList from './pages/inventory/StockAdjustmentList';
 import StockAdjustmentCreate from './pages/inventory/StockAdjustmentCreate';
 import StockTransferList from './pages/inventory/StockTransferList';
@@ -21,16 +22,20 @@ import PriceListCreate from './pages/pricing/PriceListCreate';
 import SupplierList from './pages/suppliers/SupplierList';
 import PurchaseOrderList from './pages/purchasing/PurchaseOrderList';
 import PurchaseOrderCreate from './pages/purchasing/PurchaseOrderCreate';
+import PurchaseOrderDetail from './pages/purchasing/PurchaseOrderDetail';
 import GRNList from './pages/purchasing/GRNList';
 import GRNCreate from './pages/purchasing/GRNCreate';
+import GRNDetail from './pages/purchasing/GRNDetail';
 import SupplierReturnList from './pages/purchasing/SupplierReturnList';
 import SupplierReturnCreate from './pages/purchasing/SupplierReturnCreate';
+import SupplierReturnDetail from './pages/purchasing/SupplierReturnDetail';
 import SupplierPaymentList from './pages/purchasing/SupplierPaymentList';
 import SupplierPaymentCreate from './pages/purchasing/SupplierPaymentCreate';
 import SupplierPaymentDetail from './pages/purchasing/SupplierPaymentDetail';
 
 // Sales
 import CustomerList from './pages/customers/CustomerList';
+import CustomerProfile from './pages/customers/CustomerProfile';
 import RouteList from './pages/routes/RouteList';
 import SalesOrderList from './pages/sales/SalesOrderList';
 import SalesOrderCreate from './pages/sales/SalesOrderCreate';
@@ -53,6 +58,9 @@ import DeliveryDetail from './pages/delivery/DeliveryDetail';
 import LoadingSheetList from './pages/vanSales/LoadingSheetList';
 import LoadingSheetCreate from './pages/vanSales/LoadingSheetCreate';
 import LoadingSheetDetail from './pages/vanSales/LoadingSheetDetail';
+import VanStock from './pages/vanSales/VanStock';
+import SalesRepMap from './pages/tracking/SalesRepMap';
+import LocationTracker from './components/LocationTracker';
 
 // Finance / Accounting
 import AccountList from './pages/finance/AccountList';
@@ -60,6 +68,9 @@ import JournalList from './pages/finance/JournalList';
 import OpeningBalance from './pages/finance/OpeningBalance';
 import TrialBalance from './pages/finance/TrialBalance';
 import OpeningStock from './pages/inventory/OpeningStock';
+
+// Master Data
+import VehicleList from './pages/masterData/VehicleList';
 
 // Settings
 import UserList from './pages/settings/UserList';
@@ -69,6 +80,7 @@ import CompanySettings from './pages/settings/CompanySettings';
 import PeriodsManagement from './pages/settings/PeriodsManagement';
 
 // Reports
+import DailyCollections from './pages/reports/DailyCollections';
 import SalesSummary from './pages/reports/SalesSummary';
 import AgedDebtors from './pages/reports/AgedDebtors';
 import AgedCreditors from './pages/reports/AgedCreditors';
@@ -97,6 +109,7 @@ export default function App() {
           <Route path="categories" element={<ProtectedRoute permission="inventory.view"><CategoryList /></ProtectedRoute>} />
           <Route path="warehouses" element={<ProtectedRoute permission="inventory.view"><WarehouseList /></ProtectedRoute>} />
           <Route path="units" element={<ProtectedRoute permission="inventory.view"><UnitList /></ProtectedRoute>} />
+          <Route path="stock" element={<ProtectedRoute permission="inventory.view"><StockOverview /></ProtectedRoute>} />
           <Route path="stock-adjustments" element={<ProtectedRoute permission="inventory.view"><StockAdjustmentList /></ProtectedRoute>} />
           <Route path="stock-adjustments/new" element={<ProtectedRoute permission="inventory.create"><StockAdjustmentCreate /></ProtectedRoute>} />
           <Route path="stock-transfers" element={<ProtectedRoute permission="inventory.view"><StockTransferList /></ProtectedRoute>} />
@@ -108,16 +121,20 @@ export default function App() {
           <Route path="suppliers" element={<ProtectedRoute permission="purchase.view"><SupplierList /></ProtectedRoute>} />
           <Route path="purchase-orders" element={<ProtectedRoute permission="purchase.view"><PurchaseOrderList /></ProtectedRoute>} />
           <Route path="purchase-orders/new" element={<ProtectedRoute permission="purchase.create"><PurchaseOrderCreate /></ProtectedRoute>} />
+          <Route path="purchase-orders/:id" element={<ProtectedRoute permission="purchase.view"><PurchaseOrderDetail /></ProtectedRoute>} />
           <Route path="grn" element={<ProtectedRoute permission="purchase.view"><GRNList /></ProtectedRoute>} />
           <Route path="grn/new" element={<ProtectedRoute permission="purchase.create"><GRNCreate /></ProtectedRoute>} />
+          <Route path="grn/:id" element={<ProtectedRoute permission="purchase.view"><GRNDetail /></ProtectedRoute>} />
           <Route path="supplier-returns" element={<ProtectedRoute permission="purchase.view"><SupplierReturnList /></ProtectedRoute>} />
           <Route path="supplier-returns/new" element={<ProtectedRoute permission="purchase.create"><SupplierReturnCreate /></ProtectedRoute>} />
+          <Route path="supplier-returns/:id" element={<ProtectedRoute permission="purchase.view"><SupplierReturnDetail /></ProtectedRoute>} />
           <Route path="supplier-payments" element={<ProtectedRoute permission="finance.payments"><SupplierPaymentList /></ProtectedRoute>} />
           <Route path="supplier-payments/new" element={<ProtectedRoute permission="finance.payments"><SupplierPaymentCreate /></ProtectedRoute>} />
           <Route path="supplier-payments/:id" element={<ProtectedRoute permission="finance.payments"><SupplierPaymentDetail /></ProtectedRoute>} />
 
           {/* Sales — sales.view_own is enough to enter; backend filters data per role */}
           <Route path="customers" element={<ProtectedRoute permission="sales.view_own"><CustomerList /></ProtectedRoute>} />
+          <Route path="customers/:id" element={<ProtectedRoute permission="sales.view_own"><CustomerProfile /></ProtectedRoute>} />
           <Route path="routes" element={<ProtectedRoute permission="sales.view_all"><RouteList /></ProtectedRoute>} />
           <Route path="sales-orders" element={<ProtectedRoute permission="sales.view_own"><SalesOrderList /></ProtectedRoute>} />
           <Route path="sales-orders/new" element={<ProtectedRoute permission="sales.create"><SalesOrderCreate /></ProtectedRoute>} />
@@ -133,9 +150,11 @@ export default function App() {
           <Route path="deliveries/:id" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><DeliveryDetail /></ProtectedRoute>} />
 
           {/* Van Sales */}
+          <Route path="van" element={<ProtectedRoute permission="sales.create"><VanStock /></ProtectedRoute>} />
           <Route path="loading-sheets" element={<ProtectedRoute permission="sales.create"><LoadingSheetList /></ProtectedRoute>} />
           <Route path="loading-sheets/new" element={<ProtectedRoute permission="sales.create"><LoadingSheetCreate /></ProtectedRoute>} />
           <Route path="loading-sheets/:id" element={<ProtectedRoute permission="sales.create"><LoadingSheetDetail /></ProtectedRoute>} />
+          <Route path="tracking" element={<ProtectedRoute permission="sales.approve"><SalesRepMap /></ProtectedRoute>} />
 
           {/* Finance */}
           <Route path="receipts" element={<ProtectedRoute permission="finance.receipts"><ReceiptList /></ProtectedRoute>} />
@@ -151,6 +170,7 @@ export default function App() {
           <Route path="opening-stock" element={<ProtectedRoute permission="inventory.adjust"><OpeningStock /></ProtectedRoute>} />
 
           {/* Reports — canonical paths from sidebar/breadcrumb */}
+          <Route path="reports/daily-collections" element={<ProtectedRoute permission="sales.view_all"><DailyCollections /></ProtectedRoute>} />
           <Route path="reports/sales-summary" element={<ProtectedRoute permission="reports.sales"><SalesSummary /></ProtectedRoute>} />
           <Route path="reports/aged-debtors" element={<ProtectedRoute permission="reports.finance"><AgedDebtors /></ProtectedRoute>} />
           <Route path="reports/aged-creditors" element={<ProtectedRoute permission="reports.finance"><AgedCreditors /></ProtectedRoute>} />
@@ -167,6 +187,9 @@ export default function App() {
           <Route path="reports/sales" element={<Navigate to="/reports/sales-summary" replace />} />
           <Route path="reports/stock" element={<Navigate to="/reports/stock-movement" replace />} />
           <Route path="reports/pl" element={<Navigate to="/reports/profit-loss" replace />} />
+
+          {/* Master Data */}
+          <Route path="master-data/vehicles" element={<ProtectedRoute permission="settings.company"><VehicleList /></ProtectedRoute>} />
 
           {/* Settings */}
           <Route path="settings/users" element={<ProtectedRoute permission="settings.users"><UserList /></ProtectedRoute>} />

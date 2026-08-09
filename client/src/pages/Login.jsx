@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
-import { Package } from 'lucide-react';
+import { Package, Eye, EyeOff } from 'lucide-react';
 import { useLoginMutation } from '../api/settingsApi';
 import { setCredentials } from '../store/authSlice';
 
@@ -17,6 +18,7 @@ export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
+  const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(schema) });
 
   const onSubmit = async (data) => {
@@ -50,7 +52,13 @@ export default function Login() {
             </div>
             <div>
               <label className="label">Password</label>
-              <input type="password" className="input" placeholder="••••••••" {...register('password')} />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} className="input pr-10" placeholder="••••••••" {...register('password')} />
+                <button type="button" onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
             <button type="submit" disabled={isLoading} className="btn-primary w-full justify-center py-2.5">

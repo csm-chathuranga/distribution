@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useCreateDeliveryMutation, useGetInvoicesQuery } from '../../api/salesApi';
 import { useGetUsersQuery } from '../../api/settingsApi';
 import { useGetRoutesQuery } from '../../api/customersApi';
+import { usePermission } from '../../hooks/usePermission';
 import FormField from '../../components/ui/FormField';
 import PageHeader from '../../components/ui/PageHeader';
 import { today } from '../../utils/format';
@@ -26,13 +27,16 @@ export default function DeliveryCreate() {
   const [searchParams] = useSearchParams();
   const preInvoiceId = searchParams.get('invoice_id');
 
+  const canManageUsers = usePermission('settings.users');
+  const canApprove     = usePermission('sales.approve');
+
   const [create, { isLoading }] = useCreateDeliveryMutation();
   // Load both POSTED and PARTIAL invoices — partial means partly paid but still needs delivery
   const { data: p1 } = useGetInvoicesQuery({ status: 'POSTED',  limit: 500 });
   const { data: p2 } = useGetInvoicesQuery({ status: 'PARTIAL', limit: 500 });
   const invoicesData = { data: [...(p1?.data || []), ...(p2?.data || [])] };
-  const { data: usersData }    = useGetUsersQuery({ limit: 200 });
-  const { data: routesData }   = useGetRoutesQuery({ limit: 200 });
+  const { data: usersData }  = useGetUsersQuery({ limit: 200 }, { skip: !canManageUsers });
+  const { data: routesData } = useGetRoutesQuery({ limit: 200 }, { skip: !canApprove });
 
   const invoices = invoicesData?.data || [];
   const drivers  = (usersData?.data || []).filter(u => u.Role?.name === 'delivery');

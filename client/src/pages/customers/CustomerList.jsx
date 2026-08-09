@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Pencil, Plus, Search, Phone, User, ChevronRight } from 'lucide-react';
+import { Pencil, Plus, Search, Phone, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
@@ -19,10 +20,17 @@ const CUSTOMER_TYPES = [
 ];
 
 const TYPE_COLORS = {
-  WHOLESALER:  'bg-blue-100 text-blue-800',
-  RETAILER:    'bg-green-100 text-green-800',
-  DIRECT:      'bg-purple-100 text-purple-800',
-  INSTITUTION: 'bg-amber-100 text-amber-800',
+  WHOLESALER:  'bg-blue-100 text-blue-700',
+  RETAILER:    'bg-emerald-100 text-emerald-700',
+  DIRECT:      'bg-violet-100 text-violet-700',
+  INSTITUTION: 'bg-amber-100 text-amber-700',
+};
+
+const TYPE_AVATAR = {
+  WHOLESALER:  'from-blue-400 to-blue-600',
+  RETAILER:    'from-emerald-400 to-emerald-600',
+  DIRECT:      'from-violet-400 to-violet-600',
+  INSTITUTION: 'from-amber-400 to-amber-600',
 };
 
 const schema = yup.object({
@@ -116,6 +124,7 @@ function CustomerForm({ onClose, editing }) {
 
 export default function CustomerList() {
   const canCreate = usePermission('sales.create');
+  const navigate = useNavigate();
   const [formKey,  setFormKey]  = useState(0);
   const [page,     setPage]     = useState(1);
   const [search,   setSearch]   = useState('');
@@ -155,17 +164,45 @@ export default function CustomerList() {
 
       {/* Card list */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="card animate-pulse p-4 space-y-2">
-              <div className="flex justify-between">
-                <div className="skeleton h-5 w-44" />
-                <div className="skeleton h-5 w-16" />
+        <>
+          {/* Desktop skeleton */}
+          <div className="hidden md:block space-y-2">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="card animate-pulse p-4 space-y-2">
+                <div className="flex justify-between">
+                  <div className="skeleton h-5 w-44" />
+                  <div className="skeleton h-5 w-16" />
+                </div>
+                <div className="skeleton h-4 w-32" />
               </div>
-              <div className="skeleton h-4 w-32" />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          {/* Mobile skeleton */}
+          <div className="md:hidden space-y-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+                <div className="h-1.5 bg-gray-200 w-full" />
+                <div className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-gray-200 flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-4 w-40" />
+                      <div className="skeleton h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="skeleton h-3 w-32" />
+                  <div className="pt-2 border-t border-gray-100 space-y-2">
+                    <div className="flex justify-between">
+                      <div className="skeleton h-3 w-36" />
+                      <div className="skeleton h-5 w-24 rounded-full" />
+                    </div>
+                    <div className="skeleton h-1.5 w-full rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       ) : customers.length === 0 ? (
         <div className="card p-10 text-center">
           <User size={32} className="mx-auto text-gray-300 mb-3" />
@@ -173,51 +210,140 @@ export default function CustomerList() {
           {search && <p className="text-sm text-gray-400 mt-1">Try a different search</p>}
         </div>
       ) : (
-        <div className="space-y-2">
-          {customers.map(c => (
-            <div key={c.id} className="card p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-gray-900 leading-snug">{c.name}</p>
-                    {c.customer_type && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[c.customer_type] || 'bg-gray-100 text-gray-600'}`}>
-                        {c.customer_type}
-                      </span>
-                    )}
+        <>
+          {/* ── Desktop: original card design ── */}
+          <div className="hidden md:block space-y-2">
+            {customers.map(c => (
+              <div key={c.id} className="card p-4 cursor-pointer active:opacity-80" onClick={() => navigate(`/customers/${c.id}`)}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-gray-900 leading-snug">{c.name}</p>
+                      {c.customer_type && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[c.customer_type] || 'bg-gray-100 text-gray-600'}`}>
+                          {c.customer_type}
+                        </span>
+                      )}
+                    </div>
+                    {c.code && <p className="text-xs font-mono text-gray-400 mt-0.5">{c.code}</p>}
                   </div>
-                  {c.code && <p className="text-xs font-mono text-gray-400 mt-0.5">{c.code}</p>}
+                  {canCreate && (
+                    <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg flex-shrink-0">
+                      <Pencil size={15} />
+                    </button>
+                  )}
                 </div>
-                {canCreate && (
-                  <button onClick={() => openEdit(c)} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg flex-shrink-0">
-                    <Pencil size={15} />
-                  </button>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600">
-                {c.phone && (
-                  <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-primary-600">
-                    <Phone size={13} /> {c.phone}
-                  </a>
-                )}
-                {c.contact_person && <span>{c.contact_person}</span>}
-              </div>
-
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                <div className="text-xs text-gray-500">
-                  Credit limit: <span className="font-semibold text-gray-700">{fmtCurrency(c.credit_limit)}</span>
-                  {c.credit_days > 0 && <span className="ml-2">· {c.credit_days} days</span>}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600">
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-primary-600">
+                      <Phone size={13} /> {c.phone}
+                    </a>
+                  )}
+                  {c.contact_person && <span>{c.contact_person}</span>}
                 </div>
-                {parseFloat(c.outstanding_balance || 0) > 0 && (
-                  <span className="text-xs font-semibold text-red-600">
-                    Due: {fmtCurrency(c.outstanding_balance)}
-                  </span>
-                )}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="text-xs text-gray-500">
+                    Credit limit: <span className="font-semibold text-gray-700">{fmtCurrency(c.credit_limit)}</span>
+                    {c.credit_days > 0 && <span className="ml-2">· {c.credit_days} days</span>}
+                  </div>
+                  {parseFloat(c.outstanding_balance || 0) > 0 && (
+                    <span className="text-xs font-semibold text-red-600">
+                      Due: {fmtCurrency(c.outstanding_balance)}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* ── Mobile: new colorful card design ── */}
+          <div className="md:hidden space-y-3">
+            {customers.map(c => {
+              const outstanding = parseFloat(c.outstanding_balance || 0);
+              const creditLimit = parseFloat(c.credit_limit || 0);
+              const utilPct     = creditLimit > 0 ? Math.min(100, Math.round((outstanding / creditLimit) * 100)) : 0;
+              const initials    = c.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+              return (
+                <div key={c.id}
+                  className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden cursor-pointer active:opacity-75 transition-opacity"
+                  onClick={() => navigate(`/customers/${c.id}`)}>
+
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-11 h-11 rounded-xl flex-shrink-0 bg-gradient-to-br ${TYPE_AVATAR[c.customer_type] || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-sm`}>
+                        <span className="text-white font-bold text-sm">{initials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm leading-tight">{c.name}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {c.code && <span className="text-xs font-mono text-gray-400">{c.code}</span>}
+                          {c.customer_type && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${TYPE_COLORS[c.customer_type] || 'bg-gray-100 text-gray-600'}`}>
+                              {c.customer_type}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {canCreate && (
+                        <button onClick={e => { e.stopPropagation(); openEdit(c); }}
+                          className="p-1.5 -mt-0.5 -mr-1 text-gray-300 hover:text-primary-600 hover:bg-primary-50 rounded-lg flex-shrink-0 transition-colors">
+                          <Pencil size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    {(c.phone || c.contact_person) && (
+                      <div className="flex items-center gap-4 mt-2.5 flex-wrap">
+                        {c.phone && (
+                          <a href={`tel:${c.phone}`} onClick={e => e.stopPropagation()}
+                            className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                            <Phone size={12} /> {c.phone}
+                          </a>
+                        )}
+                        {c.contact_person && (
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <User size={11} className="text-gray-400" /> {c.contact_person}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-gray-500">
+                          Limit: <span className="font-semibold text-gray-700">{fmtCurrency(creditLimit)}</span>
+                          {c.credit_days > 0 && <span className="text-gray-400"> · {c.credit_days}d</span>}
+                        </span>
+                        {outstanding > 0 ? (
+                          <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full flex-shrink-0">
+                            Due {fmtCurrency(outstanding)}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex-shrink-0">
+                            Clear
+                          </span>
+                        )}
+                      </div>
+                      {creditLimit > 0 && (
+                        <div>
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all ${
+                              utilPct > 90 ? 'bg-red-500' : utilPct > 70 ? 'bg-amber-400' : 'bg-emerald-400'
+                            }`} style={{ width: `${utilPct}%` }} />
+                          </div>
+                          {utilPct > 0 && (
+                            <p className="text-[10px] text-gray-400 mt-0.5 text-right">{utilPct}% credit used</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Pagination */}

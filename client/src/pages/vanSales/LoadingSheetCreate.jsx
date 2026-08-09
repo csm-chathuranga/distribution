@@ -1,4 +1,4 @@
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,10 @@ import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetRoutesQuery } from '../../api/customersApi';
 import { useGetUsersQuery } from '../../api/settingsApi';
+import { useGetVehiclesQuery } from '../../api/vehiclesApi';
+import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import FormField from '../../components/ui/FormField';
+import SearchableSelect from '../../components/ui/SearchableSelect';
 import { today, fmtCurrency } from '../../utils/format';
 
 const schema = yup.object({
@@ -16,7 +19,7 @@ const schema = yup.object({
   route_id: yup.number().required('Route is required').typeError('Select a route'),
   warehouse_id: yup.number().required('Warehouse is required').typeError('Select a warehouse'),
   sales_rep_id: yup.number().required('Sales rep is required').typeError('Select a sales rep'),
-  vehicle_number: yup.string().required('Vehicle number is required'),
+  vehicle_id: yup.number().required('Vehicle is required').typeError('Select a vehicle'),
   lines: yup.array().of(yup.object({
     product_id: yup.number().required().typeError('Select a product'),
     loaded_quantity: yup.number().positive('Must be > 0').required(),
@@ -31,11 +34,13 @@ export default function LoadingSheetCreate() {
   const { data: warehousesData } = useGetWarehousesQuery({});
   const { data: routesData } = useGetRoutesQuery({});
   const { data: usersData } = useGetUsersQuery({ limit: 200 });
+  const { data: vehiclesData } = useGetVehiclesQuery({});
 
   const products = productsData?.data || [];
   const warehouses = warehousesData?.data || [];
   const routes = routesData?.data || [];
   const users = usersData?.data || [];
+  const vehicles = (vehiclesData?.data || []).filter(v => v.status === 'active');
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -43,7 +48,18 @@ export default function LoadingSheetCreate() {
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
-  const lines = watch('lines');
+  const lines       = watch('lines');
+  const warehouseId = watch('warehouse_id');
+
+  const { data: stockData } = useGetStockOnHandQuery(
+    { warehouse_id: warehouseId, limit: 1000 },
+    { skip: !warehouseId },
+  );
+  // Map product_id → available quantity for fast lookup
+  const stockMap = (stockData?.data || []).reduce((m, s) => {
+    m[s.product_id] = parseFloat(s.quantity || 0);
+    return m;
+  }, {});
 
   const handleProductChange = (index, productId) => {
     const product = products.find(p => p.id === Number(productId));
@@ -52,7 +68,11 @@ export default function LoadingSheetCreate() {
     }
   };
 
-  const totalValue = lines.reduce((s, l) => s + (parseFloat(l.loaded_quantity) || 0) * (parseFloat(l.unit_cost) || 0), 0);
+  const totalValue  = lines.reduce((s, l) => s + (parseFloat(l.loaded_quantity) || 0) * (parseFloat(l.unit_cost) || 0), 0);
+  const hasOverStock = lines.some(l => {
+    const avail = stockMap[Number(l.product_id)];
+    return avail !== undefined && (parseFloat(l.loaded_quantity) || 0) > avail;
+  });
 
   const onSubmit = async (values) => {
     await create(values).unwrap();
@@ -73,8 +93,15 @@ export default function LoadingSheetCreate() {
             <FormField label="Date" error={errors.sheet_date?.message} required>
               <input type="date" {...register('sheet_date')} className="input" />
             </FormField>
-            <FormField label="Vehicle Number" error={errors.vehicle_number?.message} required>
-              <input {...register('vehicle_number')} className="input" placeholder="ABC-1234" />
+            <FormField label="Vehicle" error={errors.vehicle_id?.message} required>
+              <select {...register('vehicle_id')} className="input">
+                <option value="">-- Select Vehicle --</option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.registration_number}{v.make ? ` — ${v.make} ${v.model || ''}`.trimEnd() : ''}
+                  </option>
+                ))}
+              </select>
             </FormField>
             <FormField label="Route" error={errors.route_id?.message} required>
               <select {...register('route_id')} className="input">
@@ -112,7 +139,8 @@ export default function LoadingSheetCreate() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="table-th">Product</th>
-                    <th className="table-th text-right">Qty</th>
+                    <th className="table-th text-right">Available</th>
+                    <th className="table-th text-right">Qty to Load</th>
                     <th className="table-th text-right">Unit Cost (LKR)</th>
                     <th className="table-th text-right">Total</th>
                     <th className="table-th" />
@@ -120,27 +148,48 @@ export default function LoadingSheetCreate() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {fields.map((field, i) => {
-                    const lineTotal = (parseFloat(lines[i]?.loaded_quantity) || 0) * (parseFloat(lines[i]?.unit_cost) || 0);
+                    const lineTotal  = (parseFloat(lines[i]?.loaded_quantity) || 0) * (parseFloat(lines[i]?.unit_cost) || 0);
+                    const productId  = Number(lines[i]?.product_id);
+                    const available  = productId ? (stockMap[productId] ?? null) : null;
+                    const loadQty    = parseFloat(lines[i]?.loaded_quantity) || 0;
+                    const overStock  = available !== null && loadQty > available;
                     return (
-                      <tr key={field.id}>
+                      <tr key={field.id} className={overStock ? 'bg-red-50' : ''}>
                         <td className="table-td">
-                          <select
-                            {...register(`lines.${i}.product_id`)}
-                            className="input-sm w-52"
-                            onChange={e => {
-                              register(`lines.${i}.product_id`).onChange(e);
-                              handleProductChange(i, e.target.value);
-                            }}
-                          >
-                            <option value="">-- Product --</option>
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                          </select>
+                          <Controller
+                            name={`lines.${i}.product_id`}
+                            control={control}
+                            render={({ field }) => (
+                              <SearchableSelect
+                                value={field.value}
+                                onChange={val => {
+                                  field.onChange(val);
+                                  handleProductChange(i, val);
+                                }}
+                                options={products.map(p => ({ value: p.id, label: `${p.sku} — ${p.name}` }))}
+                                placeholder="-- Product --"
+                                error={errors.lines?.[i]?.product_id?.message}
+                              />
+                            )}
+                          />
+                        </td>
+                        <td className="table-td text-right">
+                          {available === null ? (
+                            <span className="text-gray-300 text-xs">—</span>
+                          ) : (
+                            <span className={`text-xs font-semibold ${available === 0 ? 'text-red-600' : overStock ? 'text-amber-600' : 'text-emerald-600'}`}>
+                              {available}
+                            </span>
+                          )}
                         </td>
                         <td className="table-td">
-                          <input type="number" step="0.001" {...register(`lines.${i}.loaded_quantity`)} className="input-sm w-24 text-right" />
+                          <input type="number" step="0.001" {...register(`lines.${i}.loaded_quantity`)}
+                            className={`input-sm w-24 text-right ${overStock ? 'border-red-400 focus:ring-red-400' : ''}`}
+                            onFocus={e => e.target.select()} />
+                          {overStock && <p className="text-red-500 text-[10px] mt-0.5">Exceeds stock</p>}
                         </td>
                         <td className="table-td">
-                          <input type="number" step="0.01" {...register(`lines.${i}.unit_cost`)} className="input-sm w-28 text-right" />
+                          <input type="number" step="0.01" {...register(`lines.${i}.unit_cost`)} className="input-sm w-28 text-right" onFocus={e => e.target.select()} />
                         </td>
                         <td className="table-td text-right font-semibold">{fmtCurrency(lineTotal)}</td>
                         <td className="table-td">
@@ -166,9 +215,10 @@ export default function LoadingSheetCreate() {
 
         <div className="flex justify-end gap-3">
           <button type="button" onClick={() => navigate('/loading-sheets')} className="btn btn-secondary">Cancel</button>
-          <button type="submit" disabled={isLoading} className="btn btn-primary">
+          <button type="submit" disabled={isLoading || hasOverStock} className="btn btn-primary disabled:opacity-50">
             {isLoading ? 'Creating...' : 'Create Loading Sheet'}
           </button>
+          {hasOverStock && <p className="text-sm text-red-600 self-center">Fix quantities exceeding available stock</p>}
         </div>
       </form>
     </div>

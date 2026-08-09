@@ -116,14 +116,14 @@ export default function JournalList() {
   const { data: accountData } = useGetAccountsQuery({});
   const accounts = accountData?.data || [];
 
-  const SOURCE_COLORS = { MANUAL: 'bg-gray-100 text-gray-700', INVOICE: 'bg-blue-100 text-blue-700', RECEIPT: 'bg-green-100 text-green-700', PAYMENT: 'bg-red-100 text-red-700', GRN: 'bg-amber-100 text-amber-700' };
+  const SOURCE_COLORS = { MANUAL: 'bg-gray-100 text-gray-700', INVOICE: 'bg-blue-100 text-blue-700', RECEIPT: 'bg-green-100 text-green-700', PAYMENT: 'bg-red-100 text-red-700', GRN: 'bg-amber-100 text-amber-700', EXPENSE: 'bg-orange-100 text-orange-700', SUPPLIER_RETURN: 'bg-purple-100 text-purple-700' };
 
   const columns = [
     { key: 'entry_number', header: 'Entry #', cell: r => <span className="font-mono font-medium text-primary-700">{r.entry_number}</span> },
     { key: 'entry_date', header: 'Date', cell: r => fmtDate(r.entry_date) },
     { key: 'description', header: 'Description', cell: r => <span className="text-sm">{r.description}</span> },
     { key: 'source_type', header: 'Source', cell: r => <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${SOURCE_COLORS[r.source_type] || 'bg-gray-100 text-gray-700'}`}>{r.source_type}</span> },
-    { key: 'total_debit', header: 'Debit', cell: r => fmtCurrency(r.JournalLines?.reduce((s, l) => s + parseFloat(l.debit_amount || 0), 0)), className: 'text-right' },
+    { key: 'total_debit', header: 'Debit', cell: r => fmtCurrency(r.Lines?.reduce((s, l) => s + parseFloat(l.debit_amount || 0), 0)), className: 'text-right' },
     {
       key: 'actions', header: '', className: 'text-right',
       cell: r => <button onClick={() => setViewEntry(r)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={14} /></button>,
@@ -142,7 +142,7 @@ export default function JournalList() {
           <table className="w-full text-sm">
             <thead><tr className="border-b"><th className="text-left p-2 text-gray-600">Account</th><th className="text-right p-2 text-gray-600">Debit</th><th className="text-right p-2 text-gray-600">Credit</th></tr></thead>
             <tbody className="divide-y">
-              {viewEntry.JournalLines?.map((l, i) => (
+              {viewEntry.Lines?.map((l, i) => (
                 <tr key={i}><td className="p-2">{l.Account?.code} — {l.Account?.name}</td><td className="p-2 text-right">{parseFloat(l.debit_amount) > 0 ? fmtCurrency(l.debit_amount) : ''}</td><td className="p-2 text-right">{parseFloat(l.credit_amount) > 0 ? fmtCurrency(l.credit_amount) : ''}</td></tr>
               ))}
             </tbody>

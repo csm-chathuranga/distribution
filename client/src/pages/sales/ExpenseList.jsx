@@ -20,9 +20,16 @@ const EXPENSE_CATS = [
   { value: 'OTHER', label: 'Other' },
 ];
 
+const PAYMENT_METHODS = [
+  { value: 'CASH', label: 'Cash (Petty Cash)' },
+  { value: 'CHEQUE', label: 'Cheque' },
+  { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+];
+
 const schema = yup.object({
   description: yup.string().required('Description is required').max(255),
   category: yup.string().required('Category required'),
+  payment_method: yup.string().required('Payment method required'),
   amount: yup.number().positive('Must be > 0').required('Amount required').typeError('Enter amount'),
   expense_date: yup.string().required('Date required'),
   reference: yup.string().nullable().max(100),
@@ -33,7 +40,7 @@ function ExpenseForm({ open, onClose }) {
   const [create, { isLoading }] = useCreateExpenseMutation();
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { expense_date: today() },
+    defaultValues: { expense_date: today(), payment_method: 'CASH' },
   });
 
   const onSubmit = async (data) => {
@@ -51,12 +58,13 @@ function ExpenseForm({ open, onClose }) {
         <TextField label="Description" required error={errors.description?.message} {...register('description')} />
         <div className="grid grid-cols-2 gap-4">
           <SelectField label="Category" required options={EXPENSE_CATS} error={errors.category?.message} {...register('category')} />
-          <TextField label="Amount (LKR)" required type="number" step="0.01" error={errors.amount?.message} {...register('amount')} />
+          <SelectField label="Payment Method" required options={PAYMENT_METHODS} error={errors.payment_method?.message} {...register('payment_method')} />
         </div>
         <div className="grid grid-cols-2 gap-4">
+          <TextField label="Amount (LKR)" required type="number" step="0.01" error={errors.amount?.message} {...register('amount')} />
           <TextField label="Date" required type="date" error={errors.expense_date?.message} {...register('expense_date')} />
-          <TextField label="Reference" error={errors.reference?.message} {...register('reference')} />
         </div>
+        <TextField label="Reference" error={errors.reference?.message} {...register('reference')} />
         <TextareaField label="Notes" rows={2} error={errors.notes?.message} {...register('notes')} />
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>

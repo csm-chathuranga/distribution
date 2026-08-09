@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
     sales_rep_id: DataTypes.INTEGER,
     driver_id: DataTypes.INTEGER,
     vehicle_number: DataTypes.STRING(50),
+    vehicle_id: DataTypes.INTEGER,
     sheet_number: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     sheet_date: { type: DataTypes.DATEONLY, allowNull: false },
     status: {
@@ -17,6 +18,7 @@ module.exports = (sequelize) => {
     },
     total_loaded_value: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0 },
     total_sales_amount: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0 },
+    cash_collected:     { type: DataTypes.DECIMAL(15, 2), defaultValue: 0 },
     notes: DataTypes.TEXT,
     created_by: { type: DataTypes.INTEGER, allowNull: false },
   }, { tableName: 'loading_sheets' });

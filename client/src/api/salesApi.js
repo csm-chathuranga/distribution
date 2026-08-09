@@ -13,7 +13,10 @@ export const salesApi = baseApi.injectEndpoints({
     postInvoice: b.mutation({ query: id => ({ url: `/invoices/${id}/post`, method: 'POST' }), invalidatesTags: ['Invoice', 'Stock', 'Journal'] }),
 
     getReceipts: b.query({ query: params => ({ url: '/receipts', params }), providesTags: ['Receipt'] }),
+    getReceipt: b.query({ query: id => `/receipts/${id}`, providesTags: (r,e,id) => [{ type: 'Receipt', id }] }),
     createReceipt: b.mutation({ query: body => ({ url: '/receipts', method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice', 'Journal'] }),
+    getCustomerAdvance: b.query({ query: customerId => `/receipts/advance/${customerId}`, providesTags: ['Receipt'] }),
+    allocateReceipt: b.mutation({ query: ({ id, ...body }) => ({ url: `/receipts/${id}/allocate`, method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice'] }),
 
     getCheques: b.query({ query: params => ({ url: '/cheques', params }), providesTags: ['Cheque'] }),
     depositCheque: b.mutation({ query: id => ({ url: `/cheques/${id}/deposit`, method: 'PUT' }), invalidatesTags: ['Cheque'] }),
@@ -35,19 +38,22 @@ export const salesApi = baseApi.injectEndpoints({
 
     getLoadingSheets: b.query({ query: params => ({ url: '/loading-sheets', params }), providesTags: ['LoadingSheet'] }),
     getLoadingSheet: b.query({ query: id => `/loading-sheets/${id}`, providesTags: (r,e,id) => [{ type:'LoadingSheet', id }] }),
+    getActiveSheet: b.query({ query: () => '/loading-sheets/active', providesTags: ['LoadingSheet'] }),
+    getVanStock: b.query({ query: id => `/loading-sheets/${id}/van-stock`, providesTags: (r,e,id) => [{ type:'LoadingSheet', id }] }),
     createLoadingSheet: b.mutation({ query: body => ({ url: '/loading-sheets', method: 'POST', body }), invalidatesTags: ['LoadingSheet', 'Stock'] }),
     loadLoadingSheet: b.mutation({ query: id => ({ url: `/loading-sheets/${id}/load`, method: 'PUT' }), invalidatesTags: ['LoadingSheet', 'Stock'] }),
     closeLoadingSheet: b.mutation({ query: ({ id, ...body }) => ({ url: `/loading-sheets/${id}/close`, method: 'PUT', body }), invalidatesTags: ['LoadingSheet', 'Stock', 'Invoice'] }),
+    deleteLoadingSheet: b.mutation({ query: id => ({ url: `/loading-sheets/${id}`, method: 'DELETE' }), invalidatesTags: ['LoadingSheet'] }),
   }),
 });
 
 export const {
   useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useConfirmSalesOrderMutation,
   useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation,
-  useGetReceiptsQuery, useCreateReceiptMutation,
+  useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
   useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation,
   useGetPaymentsQuery, useCreatePaymentMutation,
   useGetExpensesQuery, useCreateExpenseMutation,
   useGetDeliveriesQuery, useGetDeliveryQuery, useCreateDeliveryMutation, useDispatchDeliveryMutation, useDeliverDeliveryMutation, useReturnDeliveryMutation,
-  useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation,
+  useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation,
 } = salesApi;

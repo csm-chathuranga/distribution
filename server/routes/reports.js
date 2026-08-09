@@ -361,6 +361,58 @@ router.get('/customer-ranking', authorize('reports.sales'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
+// ── Daily Collections ────────────────────────────────────────────
+router.get('/daily-collections', async (req, res, next) => {
+  try {
+    const canViewAll = req.user?.permissions?.some(p => ['sales.view_all','reports.sales'].includes(p));
+    const { date, sales_rep_id } = req.query;
+    const targetDate = date || new Date().toISOString().slice(0, 10);
+    const repId = canViewAll ? (sales_rep_id || null) : req.user.id;
+
+    const rows = await sequelize.query(`
+      SELECT
+        i.id, i.invoice_number, i.invoice_date, i.due_date,
+        ROUND(i.total_amount, 2) AS total_amount,
+        ROUND(i.paid_amount,  2) AS paid_amount,
+        ROUND(i.balance_due,  2) AS balance_due,
+        i.status,
+        c.id   AS customer_id,
+        c.name AS customer_name,
+        c.phone AS customer_phone,
+        COALESCE(u.id,   0)   AS sales_rep_id,
+        COALESCE(u.name,'—') AS sales_rep_name,
+        COALESCE(rt.name,'—') AS route_name
+      FROM invoices i
+      JOIN customers c  ON c.id  = i.customer_id
+      LEFT JOIN users u ON u.id  = i.sales_rep_id
+      LEFT JOIN loading_sheets ls ON ls.id = i.loading_sheet_id
+      LEFT JOIN routes rt ON rt.id = ls.route_id
+      WHERE DATE(i.invoice_date) = :date
+        AND i.status IN ('POSTED','PARTIAL','OVERDUE','PAID')
+        AND i.invoice_type != 'CREDIT_NOTE'
+        ${repId ? 'AND i.sales_rep_id = :repId' : ''}
+      ORDER BY u.name, i.status DESC, c.name
+    `, { type: QueryTypes.SELECT, replacements: { date: targetDate, repId } });
+
+    const totalInvoiced  = rows.reduce((s, r) => s + parseFloat(r.total_amount), 0);
+    const totalCollected = rows.reduce((s, r) => s + parseFloat(r.paid_amount),  0);
+    const totalPending   = rows.reduce((s, r) => s + parseFloat(r.balance_due),  0);
+
+    res.json({
+      date: targetDate,
+      summary: {
+        invoice_count:   rows.length,
+        paid_count:      rows.filter(r => r.status === 'PAID').length,
+        total_invoiced:  totalInvoiced,
+        total_collected: totalCollected,
+        total_pending:   totalPending,
+        collection_rate: totalInvoiced > 0 ? Math.round((totalCollected / totalInvoiced) * 100) : 0,
+      },
+      rows,
+    });
+  } catch (err) { next(err); }
+});
+
 router.get('/aged-creditors', authorize('reports.finance'), async (req, res, next) => {
   try {
     const result = await sequelize.query(`
