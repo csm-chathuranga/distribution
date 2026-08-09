@@ -195,7 +195,7 @@ export default function InvoiceCreate() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto md:max-w-5xl space-y-4 pb-28 md:pb-6">
+    <div className="max-w-2xl mx-auto md:max-w-5xl space-y-4 pb-40 md:pb-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(isVanMode ? `/loading-sheets/${effectiveSheetId}` : '/invoices')} className="p-2 text-gray-500 hover:text-gray-900 active:opacity-70">
@@ -516,7 +516,7 @@ export default function InvoiceCreate() {
       </div>
 
       {/* Mobile sticky submit bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
+      <div className="md:hidden fixed bottom-16 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3">
         <button type="button" onClick={handleSubmit(onSubmit)} disabled={isLoading}
           className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-50">
           {isLoading ? 'Creating…' : `Create Invoice · ${fmtCurrency(grandTotal)}`}
