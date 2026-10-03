@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -29,14 +29,25 @@ const schema = yup.object({
 
 export default function PurchaseOrderCreate() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefill = location.state || {};
+
   const [createPO, { isLoading }] = useCreatePOMutation();
   const { data: suppliers } = useGetSuppliersQuery({ limit: 200 });
   const { data: products } = useGetProductsQuery({ limit: 500, is_active: true });
   const { data: warehouses } = useGetWarehousesQuery({});
 
+  const defaultLines = prefill.lines?.length
+    ? prefill.lines.map(l => ({ product_id: l.product_id, quantity: l.quantity, unit_cost: l.unit_cost, notes: '' }))
+    : [{ product_id: '', quantity: 1, unit_cost: 0 }];
+
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { order_date: today(), lines: [{ product_id: '', quantity: 1, unit_cost: 0 }] },
+    defaultValues: {
+      order_date: today(),
+      warehouse_id: prefill.warehouse_id || '',
+      lines: defaultLines,
+    },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const lines = watch('lines') || [];
@@ -68,6 +79,12 @@ export default function PurchaseOrderCreate() {
         <h1 className="text-2xl font-bold text-gray-900">New Purchase Order</h1>
         <button onClick={() => navigate('/purchase-orders')} className="btn-secondary">Cancel</button>
       </div>
+
+      {prefill.lines?.length > 0 && (
+        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-700">
+          Pre-filled with {prefill.lines.length} item{prefill.lines.length > 1 ? 's' : ''} from Reorder Suggestions. Review quantities and add a supplier before submitting.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="card p-6 space-y-4">

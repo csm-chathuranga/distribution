@@ -164,6 +164,11 @@ export default function InvoiceCreate() {
       };
       if (isVanMode) payload.loading_sheet_id = parseInt(effectiveSheetId);
       const inv = await createInvoice(payload).unwrap();
+      if (inv.__queued) {
+        toast.success('Saved offline — will sync when connected');
+        navigate(isVanMode ? `/loading-sheets/${effectiveSheetId}` : '/invoices');
+        return;
+      }
       toast.success('Invoice created');
       navigate(`/invoices/${inv.id}`);
     } catch (e) { toast.error(e.data?.message || 'Failed'); }

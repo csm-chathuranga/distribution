@@ -26,6 +26,12 @@ export const reportsApi = baseApi.injectEndpoints({
     reopenPeriod: b.mutation({ query: id => ({ url: `/periods/${id}/reopen`, method: 'PUT' }), invalidatesTags: ['Period'] }),
     getCompany: b.query({ query: () => '/branches/company', providesTags: ['Company'] }),
     updateCompany: b.mutation({ query: body => ({ url: '/branches/company', method: 'PUT', body }), invalidatesTags: ['Company'] }),
+
+    getCommissions: b.query({ query: params => ({ url: '/commission', params }), providesTags: ['Commission'] }),
+    generateCommission: b.mutation({ query: body => ({ url: '/commission/generate', method: 'POST', body }), invalidatesTags: ['Commission'] }),
+    approveCommission: b.mutation({ query: id => ({ url: `/commission/${id}/approve`, method: 'PUT' }), invalidatesTags: ['Commission'] }),
+    payCommission: b.mutation({ query: ({ id, ...body }) => ({ url: `/commission/${id}/pay`, method: 'PUT', body }), invalidatesTags: ['Commission'] }),
+    cancelCommission: b.mutation({ query: id => ({ url: `/commission/${id}/cancel`, method: 'PUT' }), invalidatesTags: ['Commission'] }),
   }),
 });
 
@@ -39,4 +45,5 @@ export const {
   useGetAgedCreditorsQuery, useGetDailyCollectionsQuery,
   useGetPeriodsQuery, useCreatePeriodMutation, useClosePeriodMutation, useReopenPeriodMutation,
   useGetCompanyQuery, useUpdateCompanyMutation,
+  useGetCommissionsQuery, useGenerateCommissionMutation, useApproveCommissionMutation, usePayCommissionMutation, useCancelCommissionMutation,
 } = reportsApi;

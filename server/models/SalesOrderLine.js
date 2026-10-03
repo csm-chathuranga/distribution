@@ -10,6 +10,7 @@ module.exports = (sequelize) => {
     unit_price: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     discount_rate: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
     vat_rate: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
+    free_quantity: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0.0000 },
     line_total: { type: DataTypes.DECIMAL(15, 2), allowNull: false },
   }, { tableName: 'sales_order_lines', timestamps: false });
 };

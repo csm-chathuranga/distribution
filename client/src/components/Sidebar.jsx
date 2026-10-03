@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Package, Users, ShoppingCart, FileText, Truck,
   CreditCard, BarChart2, Settings, ChevronDown, Warehouse, BookOpen,
   Receipt, ArrowLeftRight, Building2, LogOut, MapPin, ClipboardList,
-  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car,
+  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car, DollarSign,
 } from 'lucide-react';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import { usePermission, useCanAny } from '../hooks/usePermission';
@@ -137,6 +137,8 @@ export default function Sidebar() {
             <NavItem to="/sales-orders" icon={ClipboardList} label="Sales Orders" />
             <NavItem to="/invoices" icon={FileText} label="Invoices" />
             <NavItem to="/credit-notes" icon={RotateCcw} label="Credit Notes" />
+            <NavItem to="/customer-returns" icon={RotateCcw} label="Customer Returns" />
+            <NavItem to="/commission" icon={DollarSign} label="Commission" />
             <NavItem to="/deliveries" icon={Truck} label="Deliveries" />
           </>
         )}

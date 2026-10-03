@@ -43,6 +43,9 @@ const PriceList = require('./PriceList')(sequelize);
 const PriceListItem = require('./PriceListItem')(sequelize);
 const Notification = require('./Notification')(sequelize);
 const Vehicle = require('./Vehicle')(sequelize);
+const CustomerReturn = require('./CustomerReturn')(sequelize);
+const CustomerReturnLine = require('./CustomerReturnLine')(sequelize);
+const SalesCommission = require('./SalesCommission')(sequelize);
 
 // Junction tables
 const RolePermission = sequelize.define('RolePermission', {}, { tableName: 'role_permissions', timestamps: false });
@@ -186,6 +189,8 @@ GoodsReceived.belongsToMany(Payment, { through: PaymentAllocation, foreignKey: '
 Expense.belongsTo(Account, { foreignKey: 'account_id' });
 Expense.belongsTo(Branch, { foreignKey: 'branch_id' });
 Expense.belongsTo(JournalEntry, { foreignKey: 'journal_id' });
+Expense.belongsTo(LoadingSheet, { foreignKey: 'loading_sheet_id', as: 'LoadingSheet' });
+LoadingSheet.hasMany(Expense, { foreignKey: 'loading_sheet_id', as: 'Expenses' });
 
 // ── Delivery Notes ────────────────────────────────────────
 DeliveryNote.belongsTo(Invoice, { foreignKey: 'invoice_id' });
@@ -236,6 +241,25 @@ PriceList.hasMany(PriceListItem, { as: 'Items', foreignKey: 'price_list_id' });
 PriceListItem.belongsTo(PriceList, { foreignKey: 'price_list_id' });
 PriceListItem.belongsTo(Product, { foreignKey: 'product_id' });
 
+// ── Sales Commissions ─────────────────────────────────────
+SalesCommission.belongsTo(User, { as: 'SalesRep', foreignKey: 'sales_rep_id' });
+User.hasMany(SalesCommission, { foreignKey: 'sales_rep_id' });
+SalesCommission.belongsTo(Branch, { foreignKey: 'branch_id' });
+
+// ── Customer Returns ──────────────────────────────────────
+CustomerReturn.belongsTo(Customer, { foreignKey: 'customer_id' });
+Customer.hasMany(CustomerReturn, { foreignKey: 'customer_id' });
+CustomerReturn.belongsTo(Invoice, { foreignKey: 'invoice_id', as: 'OriginalInvoice' });
+CustomerReturn.belongsTo(Invoice, { foreignKey: 'credit_note_id', as: 'CreditNote' });
+CustomerReturn.belongsTo(Branch, { foreignKey: 'branch_id' });
+CustomerReturn.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
+CustomerReturn.belongsTo(User, { as: 'Driver', foreignKey: 'driver_id' });
+CustomerReturn.belongsTo(User, { as: 'SalesRep', foreignKey: 'sales_rep_id' });
+CustomerReturn.belongsTo(Route, { foreignKey: 'route_id' });
+CustomerReturn.hasMany(CustomerReturnLine, { as: 'Lines', foreignKey: 'return_id' });
+CustomerReturnLine.belongsTo(CustomerReturn, { foreignKey: 'return_id' });
+CustomerReturnLine.belongsTo(Product, { foreignKey: 'product_id' });
+
 // ── Notifications ─────────────────────────────────────────
 User.hasMany(Notification, { foreignKey: 'user_id' });
 Notification.belongsTo(User, { foreignKey: 'user_id' });
@@ -264,4 +288,6 @@ module.exports = {
   PriceList, PriceListItem,
   Notification,
   Vehicle,
+  CustomerReturn, CustomerReturnLine,
+  SalesCommission,
 };

@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse } = require('../models');
+const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, sequelize: db } = require('../models');
 const crud = require('../controllers/crudFactory')(SalesOrder, {
   include: [{ model: Customer, attributes: ['id', 'name', 'code'] }, { model: Warehouse, attributes: ['id', 'name'] }],
   order: [['order_date', 'DESC']],
@@ -25,8 +25,21 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
     if (!data.order_number) data.order_number = await generateOrderNumber();
-    const { sequelize } = require('../models');
-    const t = await sequelize.transaction();
+
+    // Credit limit check — block order if customer is over their credit limit
+    if (data.customer_id) {
+      const customer = await Customer.findByPk(data.customer_id, { attributes: ['credit_limit', 'outstanding_balance', 'name'] });
+      if (customer && parseFloat(customer.credit_limit) > 0) {
+        if (parseFloat(customer.outstanding_balance) >= parseFloat(customer.credit_limit)) {
+          return res.status(422).json({
+            message: `Credit limit exceeded for ${customer.name}. Outstanding: ${parseFloat(customer.outstanding_balance).toFixed(2)}, Limit: ${parseFloat(customer.credit_limit).toFixed(2)}`,
+            code: 'CREDIT_LIMIT_EXCEEDED',
+          });
+        }
+      }
+    }
+
+    const t = await db.transaction();
     try {
       const order = await SalesOrder.create(data, { transaction: t });
       if (lines?.length) {
@@ -35,6 +48,7 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
       await t.commit();
       res.status(201).json(order);
     } catch (e) { await t.rollback(); throw e; }
+
   } catch (err) { next(err); }
 });
 router.put('/:id', authorize('sales.approve'), crud.update);

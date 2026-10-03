@@ -10,6 +10,8 @@ export const customersApi = baseApi.injectEndpoints({
     getRoutes: b.query({ query: params => ({ url: '/routes', params }), providesTags: ['Route'] }),
     createRoute: b.mutation({ query: body => ({ url: '/routes', method: 'POST', body }), invalidatesTags: ['Route'] }),
     updateRoute: b.mutation({ query: ({ id, ...body }) => ({ url: `/routes/${id}`, method: 'PUT', body }), invalidatesTags: ['Route'] }),
+    getRouteCustomers: b.query({ query: id => `/routes/${id}/customers`, providesTags: (r,e,id) => [{ type:'Route', id }] }),
+    updateVisitOrder: b.mutation({ query: ({ id, order }) => ({ url: `/routes/${id}/visit-order`, method: 'PUT', body: { order } }), invalidatesTags: ['Route', 'Customer'] }),
   }),
 });
 
@@ -17,4 +19,5 @@ export const {
   useGetCustomersQuery, useGetCustomerQuery, useGetCustomerProfileQuery,
   useCreateCustomerMutation, useUpdateCustomerMutation,
   useGetRoutesQuery, useCreateRouteMutation, useUpdateRouteMutation,
+  useGetRouteCustomersQuery, useUpdateVisitOrderMutation,
 } = customersApi;

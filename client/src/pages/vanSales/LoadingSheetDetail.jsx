@@ -2,14 +2,14 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, Printer, Truck, Trash2, Plus } from 'lucide-react';
-import { useGetLoadingSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation } from '../../api/salesApi';
+import { useGetLoadingSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetExpensesQuery, useCreateExpenseMutation } from '../../api/salesApi';
 import { useGetCompanyQuery } from '../../api/reportsApi';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
 import LoadingSheetPrint from '../../components/print/LoadingSheetPrint';
 import { printComponent } from '../../utils/print';
-import { fmtCurrency, fmtDate } from '../../utils/format';
+import { fmtCurrency, fmtDate, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
 const fmtQty = v => { const n = parseFloat(v) || 0; return n % 1 === 0 ? String(n) : n.toFixed(2); };
@@ -25,7 +25,6 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
   const invoices = sheet.Invoices || [];
   const hasInvoices = invoices.filter(i => i.status === 'POSTED').length > 0;
 
-  // Pre-fill returns with expected quantity (loaded - invoiced) when invoices exist
   const initReturns = {};
   if (hasInvoices) {
     lines.forEach(line => {
@@ -33,26 +32,37 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
       if (remaining > 0) initReturns[line.id] = String(remaining);
     });
   }
-  const [returns, setReturns] = useState(initReturns);
+  const [returns,  setReturns]  = useState(initReturns);
+  const [damages,  setDamages]  = useState({});
+  const [losts,    setLosts]    = useState({});
+  const [dmgNotes, setDmgNotes] = useState({});
   const [cash, setCash] = useState('');
 
   const rows = lines.map(line => {
     const loaded   = parseFloat(line.loaded_quantity) || 0;
     const invoiced = hasInvoices ? (parseFloat(line.sold_quantity || 0)) : 0;
     const returned = parseFloat(returns[line.id] || 0);
-    const sold     = hasInvoices ? invoiced : Math.max(0, loaded - returned);
+    const damaged  = parseFloat(damages[line.id]  || 0);
+    const lost     = parseFloat(losts[line.id]    || 0);
+    const sold     = hasInvoices ? invoiced : Math.max(0, loaded - returned - damaged - lost);
+    const unaccounted = Math.max(0, loaded - sold - returned - damaged - lost);
     const value    = sold * (parseFloat(line.unit_cost) || 0);
-    return { ...line, loaded, invoiced, returned, sold, value };
+    return { ...line, loaded, invoiced, returned, damaged, lost, sold, unaccounted, value };
   });
 
   const totalSoldValue = rows.reduce((s, r) => s + r.value, 0);
+  const totalUnaccounted = rows.reduce((s, r) => s + r.unaccounted, 0);
   const cashFloat = parseFloat(cash) || 0;
   const variance = cashFloat - totalSoldValue;
 
   const handleSubmit = () => {
-    const returnPayload = rows
-      .filter(r => r.returned > 0)
-      .map(r => ({ line_id: r.id, returned_quantity: r.returned }));
+    const returnPayload = rows.map(r => ({
+      line_id:           r.id,
+      returned_quantity: r.returned,
+      damaged_quantity:  r.damaged,
+      lost_quantity:     r.lost,
+      damage_notes:      dmgNotes[r.id] || null,
+    }));
     onConfirm({ returns: returnPayload, cash_collected: cashFloat });
   };
 
@@ -72,29 +82,53 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
                 <th className="table-th">Product</th>
                 <th className="table-th text-right">Loaded</th>
                 {hasInvoices && <th className="table-th text-right">Invoiced</th>}
-                <th className="table-th text-right w-28">Returned</th>
+                <th className="table-th text-right w-24">Returned</th>
+                <th className="table-th text-right w-24 text-orange-600">Damaged</th>
+                <th className="table-th text-right w-24 text-red-600">Lost</th>
                 <th className="table-th text-right">Sold</th>
                 <th className="table-th text-right">Value</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {rows.map(row => (
-                <tr key={row.id}>
-                  <td className="table-td font-medium">{row.Product?.name}</td>
+                <tr key={row.id} className={row.unaccounted > 0 ? 'bg-yellow-50' : ''}>
+                  <td className="table-td font-medium">
+                    {row.Product?.name}
+                    {(row.damaged > 0 || row.lost > 0) && (
+                      <input
+                        type="text"
+                        value={dmgNotes[row.id] || ''}
+                        onChange={e => setDmgNotes(prev => ({ ...prev, [row.id]: e.target.value }))}
+                        placeholder="Notes (reason)…"
+                        className="input-sm w-full mt-1 text-xs text-orange-700"
+                      />
+                    )}
+                    {row.unaccounted > 0 && (
+                      <span className="block text-xs text-yellow-700 mt-0.5">⚠ {fmtQty(row.unaccounted)} unaccounted</span>
+                    )}
+                  </td>
                   <td className="table-td text-right">{fmtQty(row.loaded)}</td>
                   {hasInvoices && <td className="table-td text-right text-blue-600">{fmtQty(row.invoiced)}</td>}
                   <td className="table-td">
-                    <input
-                      type="number"
-                      min="0"
-                      max={row.loaded}
-                      step="0.001"
+                    <input type="number" min="0" max={row.loaded} step="0.001"
                       value={returns[row.id] ?? ''}
                       onChange={e => setReturns(prev => ({ ...prev, [row.id]: e.target.value }))}
                       onFocus={e => e.target.select()}
-                      className="input-sm w-24 text-right ml-auto block"
-                      placeholder="0"
-                    />
+                      className="input-sm w-20 text-right ml-auto block" placeholder="0" />
+                  </td>
+                  <td className="table-td">
+                    <input type="number" min="0" max={row.loaded} step="0.001"
+                      value={damages[row.id] ?? ''}
+                      onChange={e => setDamages(prev => ({ ...prev, [row.id]: e.target.value }))}
+                      onFocus={e => e.target.select()}
+                      className="input-sm w-20 text-right ml-auto block border-orange-300 text-orange-700" placeholder="0" />
+                  </td>
+                  <td className="table-td">
+                    <input type="number" min="0" max={row.loaded} step="0.001"
+                      value={losts[row.id] ?? ''}
+                      onChange={e => setLosts(prev => ({ ...prev, [row.id]: e.target.value }))}
+                      onFocus={e => e.target.select()}
+                      className="input-sm w-20 text-right ml-auto block border-red-300 text-red-700" placeholder="0" />
                   </td>
                   <td className="table-td text-right font-semibold">{fmtQty(row.sold)}</td>
                   <td className="table-td text-right">{fmtCurrency(row.value)}</td>
@@ -102,8 +136,15 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
               ))}
             </tbody>
             <tfoot>
+              {totalUnaccounted > 0 && (
+                <tr className="bg-yellow-50 border-t border-yellow-200">
+                  <td colSpan={hasInvoices ? 8 : 7} className="table-td text-center text-yellow-700 text-xs font-semibold">
+                    ⚠ {fmtQty(totalUnaccounted)} unit(s) unaccounted — please fill Damaged or Lost columns
+                  </td>
+                </tr>
+              )}
               <tr className="border-t-2 border-gray-200 bg-gray-50">
-                <td colSpan={hasInvoices ? 4 : 3} className="table-td text-right font-semibold text-gray-700">Expected Cash</td>
+                <td colSpan={hasInvoices ? 6 : 5} className="table-td text-right font-semibold text-gray-700">Expected Cash</td>
                 <td className="table-td text-right font-bold text-gray-900" colSpan={2}>{fmtCurrency(totalSoldValue)}</td>
               </tr>
             </tfoot>
@@ -160,6 +201,23 @@ export default function LoadingSheetDetail() {
   const [showLoad,   setShowLoad]   = useState(false);
   const [showClose,  setShowClose]  = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+
+  const { data: expenseData, refetch: refetchExpenses } = useGetExpensesQuery({ loading_sheet_id: id, limit: 50 });
+  const [createExpense, { isLoading: savingExpense }] = useCreateExpenseMutation();
+  const [expForm, setExpForm] = useState({ description: '', amount: '', category: 'TRANSPORT', expense_date: today(), payment_method: 'CASH' });
+  const [showExpForm, setShowExpForm] = useState(false);
+
+  const handleAddExpense = async () => {
+    if (!expForm.description || !expForm.amount) return toast.error('Description and amount required');
+    try {
+      await createExpense({ ...expForm, loading_sheet_id: Number(id) }).unwrap();
+      toast.success('Expense recorded');
+      setExpForm({ description: '', amount: '', category: 'TRANSPORT', expense_date: today(), payment_method: 'CASH' });
+      setShowExpForm(false);
+      refetchExpenses();
+    } catch (e) { toast.error(e.data?.message || 'Failed'); }
+  };
+  const sheetExpenses = expenseData?.data || [];
 
   const handlePrint = () => printComponent(<LoadingSheetPrint sheet={sheet} company={company} />);
 
@@ -339,6 +397,8 @@ export default function LoadingSheetDetail() {
                 <th className="table-th text-right">Loaded</th>
                 <th className="table-th text-right">Sold</th>
                 <th className="table-th text-right">Returned</th>
+                {sheet.status === 'CLOSED' && <th className="table-th text-right text-orange-600">Damaged</th>}
+                {sheet.status === 'CLOSED' && <th className="table-th text-right text-red-600">Lost</th>}
                 {sheet.status === 'LOADED' && <th className="table-th text-right">Available</th>}
                 {sheet.status !== 'LOADED' && <th className="table-th text-right">Unit Cost</th>}
                 {sheet.status !== 'LOADED' && <th className="table-th text-right">Value</th>}
@@ -350,16 +410,30 @@ export default function LoadingSheetDetail() {
                   const loaded   = parseFloat(line.loaded_quantity) || 0;
                   const sold     = parseFloat(line.sold_quantity) || 0;
                   const returned = parseFloat(line.returned_quantity) || 0;
+                  const damaged  = parseFloat(line.damaged_quantity) || 0;
+                  const lost     = parseFloat(line.lost_quantity) || 0;
                   const avail    = Math.max(0, loaded - sold - returned);
-                  return { ...line, _loaded: loaded, _sold: sold, _returned: returned, _avail: avail };
+                  return { ...line, _loaded: loaded, _sold: sold, _returned: returned, _damaged: damaged, _lost: lost, _avail: avail };
                 })
                 .sort((a, b) => sheet.status === 'LOADED' ? a._avail - b._avail : 0)
                 .map(line => (
-                <tr key={line.id} className={sheet.status === 'LOADED' && line._avail === 0 ? 'bg-red-50/40' : ''}>
-                  <td className="table-td font-medium">{line.Product?.name}</td>
+                <tr key={line.id} className={
+                  (sheet.status === 'LOADED' && line._avail === 0) ? 'bg-red-50/40' :
+                  (sheet.status === 'CLOSED' && (line._damaged > 0 || line._lost > 0)) ? 'bg-orange-50/40' : ''
+                }>
+                  <td className="table-td font-medium">
+                    {line.Product?.name}
+                    {line.damage_notes && <span className="block text-xs text-orange-600 mt-0.5">{line.damage_notes}</span>}
+                  </td>
                   <td className="table-td text-right">{fmtQty(line._loaded)}</td>
                   <td className="table-td text-right font-semibold text-blue-700">{fmtQty(line._sold)}</td>
                   <td className="table-td text-right text-gray-500">{fmtQty(line._returned)}</td>
+                  {sheet.status === 'CLOSED' && (
+                    <td className="table-td text-right text-orange-600 font-semibold">{line._damaged > 0 ? fmtQty(line._damaged) : '—'}</td>
+                  )}
+                  {sheet.status === 'CLOSED' && (
+                    <td className="table-td text-right text-red-600 font-semibold">{line._lost > 0 ? fmtQty(line._lost) : '—'}</td>
+                  )}
                   {sheet.status === 'LOADED' && (
                     <td className="table-td text-right">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${availColor(line._avail, line._loaded)}`}>
@@ -370,7 +444,7 @@ export default function LoadingSheetDetail() {
                   {sheet.status !== 'LOADED' && (
                     <>
                       <td className="table-td text-right text-gray-500">{fmtCurrency(line.unit_cost)}</td>
-                      <td className="table-td text-right">{fmtCurrency(line._loaded * parseFloat(line.unit_cost))}</td>
+                      <td className="table-td text-right">{fmtCurrency(line._sold * parseFloat(line.unit_cost))}</td>
                     </>
                   )}
                 </tr>
@@ -378,8 +452,16 @@ export default function LoadingSheetDetail() {
             </tbody>
             {sheet.status === 'CLOSED' && (
               <tfoot>
+                {lines.some(l => parseFloat(l.damaged_quantity) > 0 || parseFloat(l.lost_quantity) > 0) && (
+                  <tr className="bg-orange-50 border-t border-orange-200">
+                    <td colSpan={7} className="table-td text-xs text-orange-700 font-semibold">
+                      Damaged: {fmtQty(lines.reduce((s,l) => s + (parseFloat(l.damaged_quantity)||0), 0))} units &nbsp;|&nbsp;
+                      Lost: {fmtQty(lines.reduce((s,l) => s + (parseFloat(l.lost_quantity)||0), 0))} units
+                    </td>
+                  </tr>
+                )}
                 <tr className="border-t-2 border-gray-200 bg-gray-50">
-                  <td colSpan={5} className="table-td text-right font-semibold">Total Sales</td>
+                  <td colSpan={7} className="table-td text-right font-semibold">Total Sales</td>
                   <td className="table-td text-right font-bold text-green-700">{fmtCurrency(sheet.total_sales_amount)}</td>
                 </tr>
               </tfoot>
@@ -388,6 +470,104 @@ export default function LoadingSheetDetail() {
         </div>
       </div>
 
+
+      {/* Route Expenses */}
+      <div className="card">
+        <div className="card-header flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-800">
+            Route Expenses
+            {sheetExpenses.length > 0 && (
+              <span className="ml-2 text-gray-400 font-normal">
+                ({sheetExpenses.length}) · Total: {fmtCurrency(sheetExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0))}
+              </span>
+            )}
+          </h3>
+          {!showExpForm && (
+            <button onClick={() => setShowExpForm(true)}
+              className="flex items-center gap-1 text-xs text-primary-600 font-semibold hover:text-primary-800">
+              <Plus size={13} /> Add Expense
+            </button>
+          )}
+        </div>
+
+        {showExpForm && (
+          <div className="card-body border-b border-gray-100 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <input
+                  type="text" placeholder="Description (e.g. Fuel — Route A)"
+                  value={expForm.description}
+                  onChange={e => setExpForm(p => ({ ...p, description: e.target.value }))}
+                  className="input w-full"
+                />
+              </div>
+              <input type="number" step="0.01" placeholder="Amount (LKR)" value={expForm.amount}
+                onChange={e => setExpForm(p => ({ ...p, amount: e.target.value }))}
+                className="input" />
+              <select value={expForm.category} onChange={e => setExpForm(p => ({ ...p, category: e.target.value }))}
+                className="input">
+                <option value="TRANSPORT">Transport</option>
+                <option value="FUEL">Fuel</option>
+                <option value="MAINTENANCE">Maintenance</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <input type="date" value={expForm.expense_date}
+                onChange={e => setExpForm(p => ({ ...p, expense_date: e.target.value }))}
+                className="input" />
+              <select value={expForm.payment_method} onChange={e => setExpForm(p => ({ ...p, payment_method: e.target.value }))}
+                className="input">
+                <option value="CASH">Cash</option>
+                <option value="CHEQUE">Cheque</option>
+                <option value="BANK_TRANSFER">Bank Transfer</option>
+              </select>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowExpForm(false)} className="btn-secondary btn-sm">Cancel</button>
+              <button type="button" onClick={handleAddExpense} disabled={savingExpense}
+                className="btn btn-primary btn-sm">
+                {savingExpense ? 'Saving…' : 'Save Expense'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {sheetExpenses.length === 0 ? (
+          <div className="card-body text-sm text-gray-400 text-center py-4">No expenses recorded for this trip</div>
+        ) : (
+          <div className="card-body">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="table-th">Description</th>
+                  <th className="table-th">Category</th>
+                  <th className="table-th">Date</th>
+                  <th className="table-th">Method</th>
+                  <th className="table-th text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {sheetExpenses.map(exp => (
+                  <tr key={exp.id}>
+                    <td className="table-td font-medium">{exp.description}</td>
+                    <td className="table-td text-gray-500">{exp.category}</td>
+                    <td className="table-td text-gray-500">{fmtDate(exp.expense_date)}</td>
+                    <td className="table-td text-gray-500">{exp.payment_method}</td>
+                    <td className="table-td text-right font-semibold">{fmtCurrency(exp.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 bg-gray-50">
+                  <td colSpan={4} className="table-td text-right font-semibold">Total Expenses</td>
+                  <td className="table-td text-right font-bold text-red-600">
+                    {fmtCurrency(sheetExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0))}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
 
       <ConfirmDialog
         open={showDelete}

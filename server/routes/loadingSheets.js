@@ -135,7 +135,7 @@ router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// PUT /api/loading-sheets/:id/close — record returns, reconcile sold quantities
+// PUT /api/loading-sheets/:id/close — record returns, damage, loss and reconcile
 router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
@@ -144,27 +144,43 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'LOADED') return res.status(400).json({ message: 'Sheet must be LOADED to close' });
 
-    // If invoices have been posted against this sheet, sold_quantity is already accumulated per line.
     const invoiceCount = await Invoice.count({ where: { loading_sheet_id: sheet.id, status: 'POSTED' }, transaction: t });
     const hasInvoices = invoiceCount > 0;
 
-    const returnMap = {};
-    returns.forEach(r => { returnMap[r.line_id] = Number(r.returned_quantity); });
+    // Build maps from the returns payload
+    const returnMap   = {};
+    const damagedMap  = {};
+    const lostMap     = {};
+    const notesMap    = {};
+    returns.forEach(r => {
+      returnMap[r.line_id]  = Number(r.returned_quantity  || 0);
+      damagedMap[r.line_id] = Number(r.damaged_quantity   || 0);
+      lostMap[r.line_id]    = Number(r.lost_quantity      || 0);
+      notesMap[r.line_id]   = r.damage_notes || null;
+    });
 
     let totalSales = 0;
 
     for (const line of sheet.Lines) {
-      const returnedQty = returnMap[line.id] || 0;
-      // When invoices exist, sold_quantity was accumulated at invoice-post time — preserve it.
-      // When no invoices, derive sold from returns (original day-end flow).
+      const returnedQty = returnMap[line.id]  || 0;
+      const damagedQty  = damagedMap[line.id] || 0;
+      const lostQty     = lostMap[line.id]    || 0;
       const soldQty = hasInvoices
         ? parseFloat(line.sold_quantity || 0)
-        : parseFloat(line.loaded_quantity) - returnedQty;
-      await line.update({ returned_quantity: returnedQty, sold_quantity: soldQty }, { transaction: t });
+        : Math.max(0, parseFloat(line.loaded_quantity) - returnedQty - damagedQty - lostQty);
 
-      if (returnedQty > 0) {
-        const stock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t });
-        if (stock) {
+      await line.update({
+        returned_quantity: returnedQty,
+        sold_quantity:     soldQty,
+        damaged_quantity:  damagedQty,
+        lost_quantity:     lostQty,
+        damage_notes:      notesMap[line.id] || null,
+      }, { transaction: t });
+
+      const stock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t });
+      if (stock) {
+        // Return good stock to warehouse
+        if (returnedQty > 0) {
           const newQty = parseFloat(stock.quantity) + returnedQty;
           await stock.update({ quantity: newQty }, { transaction: t });
           await StockMovement.create({
@@ -174,8 +190,29 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
             created_by: req.user.id,
           }, { transaction: t });
         }
+
+        // Damaged/lost: stock already deducted at load — record audit-only adjustment movement
+        const curStock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t });
+        const curQty = parseFloat(curStock?.quantity || 0);
+        if (damagedQty > 0) {
+          await StockMovement.create({
+            warehouse_id: sheet.warehouse_id, product_id: line.product_id,
+            movement_type: 'ADJUSTMENT', source_type: 'VAN_DAMAGE', source_id: sheet.id,
+            quantity: damagedQty, balance_after: curQty, unit_cost: line.unit_cost,
+            created_by: req.user.id,
+          }, { transaction: t });
+        }
+        if (lostQty > 0) {
+          await StockMovement.create({
+            warehouse_id: sheet.warehouse_id, product_id: line.product_id,
+            movement_type: 'ADJUSTMENT', source_type: 'VAN_LOSS', source_id: sheet.id,
+            quantity: lostQty, balance_after: curQty, unit_cost: line.unit_cost,
+            created_by: req.user.id,
+          }, { transaction: t });
+        }
       }
-      totalSales += soldQty * (line.Product?.selling_price || 0);
+
+      totalSales += soldQty * (parseFloat(line.unit_cost) || 0);
     }
 
     await sheet.update({ status: 'CLOSED', total_sales_amount: totalSales, cash_collected: parseFloat(cash_collected) || 0 }, { transaction: t });

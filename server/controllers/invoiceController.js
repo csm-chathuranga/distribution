@@ -129,7 +129,10 @@ async function performPost(invoice, userId, t) {
 
   // Stock + COGS per line
   for (const line of invoice.Lines) {
-    const costTotal = (line.cost_price || 0) * parseFloat(line.quantity);
+    const billedQty = parseFloat(line.quantity);
+    const freeQty   = parseFloat(line.free_quantity || 0);
+    const totalShipQty = billedQty + freeQty;   // total physical units leaving warehouse
+    const costTotal = (line.cost_price || 0) * totalShipQty;
 
     if (invoice.loading_sheet_id) {
       // Van sales: stock already deducted at Load Van; accumulate sold_quantity on sheet line
@@ -138,24 +141,23 @@ async function performPost(invoice, userId, t) {
         transaction: t, lock: true,
       });
       if (sheetLine) {
-        const newSold = parseFloat(sheetLine.sold_quantity || 0) + parseFloat(line.quantity);
+        const newSold = parseFloat(sheetLine.sold_quantity || 0) + totalShipQty;
         await sheetLine.update({ sold_quantity: newSold }, { transaction: t });
       }
     } else {
-      // Regular invoice: deduct from warehouse
+      // Regular invoice: deduct total shipped qty (billed + free) from warehouse
       const stock = await Stock.findOne({
         where: { warehouse_id: invoice.warehouse_id, product_id: line.product_id },
         transaction: t, lock: true,
       });
       if (stock) {
-        const newQty = isCreditNote
-          ? parseFloat(stock.quantity) + parseFloat(line.quantity)
-          : parseFloat(stock.quantity) - parseFloat(line.quantity);
+        const deductQty = isCreditNote ? -totalShipQty : totalShipQty;
+        const newQty = parseFloat(stock.quantity) - deductQty;
         await stock.update({ quantity: newQty }, { transaction: t });
         await StockMovement.create({
           warehouse_id: invoice.warehouse_id, product_id: line.product_id,
           movement_type: isCreditNote ? 'IN' : 'OUT', source_type: 'INVOICE', source_id: invoice.id,
-          quantity: line.quantity, balance_after: newQty, unit_cost: line.cost_price,
+          quantity: totalShipQty, balance_after: newQty, unit_cost: line.cost_price,
           created_by: userId,
         }, { transaction: t });
       }

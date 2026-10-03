@@ -199,7 +199,7 @@ router.get('/product-profitability', authorize('reports.finance'), async (req, r
 router.get('/reorder-suggestions', authorize('reports.inventory'), async (req, res, next) => {
   try {
     const result = await sequelize.query(`
-      SELECT p.id, p.sku, p.name, p.reorder_point, p.reorder_quantity,
+      SELECT p.id AS product_id, p.sku, p.name, p.reorder_point, p.reorder_quantity, p.cost_price,
         s.quantity AS current_stock, w.id AS warehouse_id, w.name AS warehouse,
         COALESCE(sales.avg_monthly, 0) AS avg_monthly_sales,
         GREATEST(p.reorder_quantity, ROUND(COALESCE(sales.avg_monthly, 0) * 3 - s.quantity, 0)) AS suggested_order

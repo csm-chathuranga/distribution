@@ -23,5 +23,6 @@ module.exports = (sequelize) => {
     is_vat_registered: { type: DataTypes.BOOLEAN, defaultValue: false },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     account_id: DataTypes.INTEGER,
+    visit_order: { type: DataTypes.INTEGER, defaultValue: 0 },
   }, { tableName: 'customers' });
 };

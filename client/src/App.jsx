@@ -37,6 +37,7 @@ import SupplierPaymentDetail from './pages/purchasing/SupplierPaymentDetail';
 import CustomerList from './pages/customers/CustomerList';
 import CustomerProfile from './pages/customers/CustomerProfile';
 import RouteList from './pages/routes/RouteList';
+import RouteDetail from './pages/customers/RouteDetail';
 import SalesOrderList from './pages/sales/SalesOrderList';
 import SalesOrderCreate from './pages/sales/SalesOrderCreate';
 import InvoiceList from './pages/sales/InvoiceList';
@@ -48,6 +49,10 @@ import ChequeList from './pages/sales/ChequeList';
 import ExpenseList from './pages/sales/ExpenseList';
 import CreditNoteList from './pages/sales/CreditNoteList';
 import CreditNoteCreate from './pages/sales/CreditNoteCreate';
+import CustomerReturnList from './pages/returns/CustomerReturnList';
+import CustomerReturnCreate from './pages/returns/CustomerReturnCreate';
+import CustomerReturnDetail from './pages/returns/CustomerReturnDetail';
+import CommissionList from './pages/sales/CommissionList';
 
 // Delivery
 import DeliveryList from './pages/delivery/DeliveryList';
@@ -61,6 +66,7 @@ import LoadingSheetDetail from './pages/vanSales/LoadingSheetDetail';
 import VanStock from './pages/vanSales/VanStock';
 import SalesRepMap from './pages/tracking/SalesRepMap';
 import LocationTracker from './components/LocationTracker';
+import OfflineBanner from './components/OfflineBanner';
 
 // Finance / Accounting
 import AccountList from './pages/finance/AccountList';
@@ -97,6 +103,7 @@ import Analytics from './pages/reports/Analytics';
 export default function App() {
   return (
     <BrowserRouter>
+      <OfflineBanner />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
@@ -136,6 +143,7 @@ export default function App() {
           <Route path="customers" element={<ProtectedRoute permission="sales.view_own"><CustomerList /></ProtectedRoute>} />
           <Route path="customers/:id" element={<ProtectedRoute permission="sales.view_own"><CustomerProfile /></ProtectedRoute>} />
           <Route path="routes" element={<ProtectedRoute permission="sales.view_all"><RouteList /></ProtectedRoute>} />
+          <Route path="routes/:id" element={<ProtectedRoute permission="sales.view_all"><RouteDetail /></ProtectedRoute>} />
           <Route path="sales-orders" element={<ProtectedRoute permission="sales.view_own"><SalesOrderList /></ProtectedRoute>} />
           <Route path="sales-orders/new" element={<ProtectedRoute permission="sales.create"><SalesOrderCreate /></ProtectedRoute>} />
           <Route path="invoices" element={<ProtectedRoute permission="sales.view_own"><InvoiceList /></ProtectedRoute>} />
@@ -143,6 +151,10 @@ export default function App() {
           <Route path="invoices/:id" element={<ProtectedRoute permission="sales.view_own"><InvoiceDetail /></ProtectedRoute>} />
           <Route path="credit-notes" element={<ProtectedRoute permission="sales.view_own"><CreditNoteList /></ProtectedRoute>} />
           <Route path="credit-notes/new" element={<ProtectedRoute permission="sales.create"><CreditNoteCreate /></ProtectedRoute>} />
+          <Route path="customer-returns" element={<ProtectedRoute permission="sales.view_own"><CustomerReturnList /></ProtectedRoute>} />
+          <Route path="customer-returns/new" element={<ProtectedRoute permission="sales.create"><CustomerReturnCreate /></ProtectedRoute>} />
+          <Route path="customer-returns/:id" element={<ProtectedRoute permission="sales.view_own"><CustomerReturnDetail /></ProtectedRoute>} />
+          <Route path="commission" element={<ProtectedRoute permission="sales.view_own"><CommissionList /></ProtectedRoute>} />
 
           {/* Delivery — driver role may have sales.view_all instead of sales.view_own */}
           <Route path="deliveries" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><DeliveryList /></ProtectedRoute>} />

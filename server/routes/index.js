@@ -32,6 +32,8 @@ router.use('/price-lists', auth, require('./priceLists'));
 router.use('/periods', auth, require('./periods'));
 router.use('/stock', auth, require('./stock'));
 router.use('/notifications', auth, require('./notifications'));
-router.use('/vehicles',     auth, require('./vehicles'));
+router.use('/vehicles',         auth, require('./vehicles'));
+router.use('/customer-returns', auth, require('./customerReturns'));
+router.use('/commission',       auth, require('./commission'));
 
 module.exports = router;

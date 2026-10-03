@@ -1,7 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCredentials, logout } from '../store/authSlice';
+import { enqueueRequest, getQueueCount } from '../utils/offlineQueue';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
+// Mutations queued when offline — driver can create these without internet
+const QUEUEABLE_PATHS = ['/invoices', '/customer-returns', '/sales-orders'];
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: API_BASE,
@@ -17,6 +21,28 @@ const rawBaseQuery = fetchBaseQuery({
 let isRefreshing = false;
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
+  // --- Offline queue interception ---
+  if (!navigator.onLine) {
+    const method = typeof args === 'string' ? 'GET' : (args.method || 'GET');
+    const url    = typeof args === 'string' ? args  : args.url;
+    const isQueuable = ['POST', 'PUT'].includes(method)
+      && QUEUEABLE_PATHS.some(p => url?.startsWith(p));
+
+    if (isQueuable) {
+      try {
+        await enqueueRequest({
+          id:        crypto.randomUUID(),
+          url,
+          method,
+          body:      typeof args === 'string' ? undefined : args.body,
+          timestamp: Date.now(),
+        });
+      } catch { /* IndexedDB unavailable — fall through to network attempt */ }
+      return { data: { __queued: true } };
+    }
+  }
+  // ----------------------------------
+
   let result = await rawBaseQuery(args, api, extraOptions);
 
   if (result.error?.status === 401 && !isRefreshing) {

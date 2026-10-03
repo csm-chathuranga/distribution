@@ -20,6 +20,7 @@ module.exports = (sequelize) => {
       defaultValue: 'DRAFT',
     },
     approved_by: DataTypes.INTEGER,
-    created_by: { type: DataTypes.INTEGER, allowNull: false },
+    created_by:       { type: DataTypes.INTEGER, allowNull: false },
+    loading_sheet_id: DataTypes.INTEGER,
   }, { tableName: 'expenses', updatedAt: false });
 };

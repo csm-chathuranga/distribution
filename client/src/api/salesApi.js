@@ -44,6 +44,12 @@ export const salesApi = baseApi.injectEndpoints({
     loadLoadingSheet: b.mutation({ query: id => ({ url: `/loading-sheets/${id}/load`, method: 'PUT' }), invalidatesTags: ['LoadingSheet', 'Stock'] }),
     closeLoadingSheet: b.mutation({ query: ({ id, ...body }) => ({ url: `/loading-sheets/${id}/close`, method: 'PUT', body }), invalidatesTags: ['LoadingSheet', 'Stock', 'Invoice'] }),
     deleteLoadingSheet: b.mutation({ query: id => ({ url: `/loading-sheets/${id}`, method: 'DELETE' }), invalidatesTags: ['LoadingSheet'] }),
+
+    getCustomerReturns: b.query({ query: params => ({ url: '/customer-returns', params }), providesTags: ['CustomerReturn'] }),
+    getCustomerReturn: b.query({ query: id => `/customer-returns/${id}`, providesTags: (r,e,id) => [{ type:'CustomerReturn', id }] }),
+    createCustomerReturn: b.mutation({ query: body => ({ url: '/customer-returns', method: 'POST', body }), invalidatesTags: ['CustomerReturn'] }),
+    confirmCustomerReturn: b.mutation({ query: id => ({ url: `/customer-returns/${id}/confirm`, method: 'PUT' }), invalidatesTags: ['CustomerReturn', 'Stock'] }),
+    cancelCustomerReturn: b.mutation({ query: id => ({ url: `/customer-returns/${id}/cancel`, method: 'PUT' }), invalidatesTags: ['CustomerReturn'] }),
   }),
 });
 
@@ -56,4 +62,5 @@ export const {
   useGetExpensesQuery, useCreateExpenseMutation,
   useGetDeliveriesQuery, useGetDeliveryQuery, useCreateDeliveryMutation, useDispatchDeliveryMutation, useDeliverDeliveryMutation, useReturnDeliveryMutation,
   useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation,
+  useGetCustomerReturnsQuery, useGetCustomerReturnQuery, useCreateCustomerReturnMutation, useConfirmCustomerReturnMutation, useCancelCustomerReturnMutation,
 } = salesApi;

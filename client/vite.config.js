@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['logo.svg', 'favicon.svg'],
+        devOptions: {
+          enabled: true,        // service worker active in `vite dev` so beforeinstallprompt fires
+          type: 'module',
+        },
         manifest: {
           name: 'Lanka Dist — Distribution System',
           short_name: 'Lanka Dist',
@@ -21,13 +25,26 @@ export default defineConfig(({ mode }) => {
           orientation: 'portrait',
           start_url: '/',
           icons: [
-            { src: 'logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+            { src: 'logo.svg',     sizes: 'any',     type: 'image/svg+xml', purpose: 'any maskable' },
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
           ],
         },
         workbox: {
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,svg,woff2}'],
           runtimeCaching: [
+            // Driver critical data — long cache, served from cache when offline
+            {
+              urlPattern: /\/api\/(products|customers|routes|loading-sheets|warehouses)/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'driver-data-cache',
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 8 }, // 8 hours
+                networkTimeoutSeconds: 8,
+              },
+            },
+            // All other API calls — short cache
             {
               urlPattern: /^https?:\/\/.*\/api\//,
               handler: 'NetworkFirst',

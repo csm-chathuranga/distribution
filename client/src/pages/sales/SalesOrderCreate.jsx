@@ -15,10 +15,11 @@ import { TextField, SelectField, TextareaField } from '../../components/ui/FormF
 import { today, fmtCurrency } from '../../utils/format';
 
 const lineSchema = yup.object({
-  product_id: yup.number().required('Required').typeError('Select product'),
-  quantity:   yup.number().positive('Must be > 0').required('Required').typeError('Enter qty'),
-  unit_price: yup.number().min(0).required('Required').typeError('Enter price'),
-  discount:   yup.number().min(0).max(100).nullable().transform(v => v === '' ? 0 : Number(v)),
+  product_id:    yup.number().required('Required').typeError('Select product'),
+  quantity:      yup.number().positive('Must be > 0').required('Required').typeError('Enter qty'),
+  free_quantity: yup.number().min(0).nullable().transform(v => v === '' ? 0 : Number(v)),
+  unit_price:    yup.number().min(0).required('Required').typeError('Enter price'),
+  discount:      yup.number().min(0).max(100).nullable().transform(v => v === '' ? 0 : Number(v)),
 });
 
 const schema = yup.object({
@@ -31,7 +32,7 @@ const schema = yup.object({
   lines:        yup.array().of(lineSchema).min(1, 'Add at least one item'),
 });
 
-const BLANK_LINE = { product_id: '', quantity: 1, unit_price: 0, discount: 0 };
+const BLANK_LINE = { product_id: '', quantity: 1, free_quantity: 0, unit_price: 0, discount: 0 };
 
 export default function SalesOrderCreate() {
   const navigate    = useNavigate();
@@ -54,6 +55,13 @@ export default function SalesOrderCreate() {
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const lines = watch('lines') || [];
+  const selectedCustomerId = watch('customer_id');
+
+  const selectedCustomer = customers?.data?.find(c => String(c.id) === String(selectedCustomerId));
+  const creditLimit = parseFloat(selectedCustomer?.credit_limit || 0);
+  const outstanding = parseFloat(selectedCustomer?.outstanding_balance || 0);
+  const overLimit   = creditLimit > 0 && outstanding >= creditLimit;
+  const nearLimit   = creditLimit > 0 && !overLimit && outstanding >= creditLimit * 0.8;
 
   const customerOpts  = customers?.data?.map(c => ({ value: c.id, label: c.name })) || [];
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
@@ -76,6 +84,8 @@ export default function SalesOrderCreate() {
     try {
       const linesWithTotal = data.lines.map(l => ({
         ...l,
+        free_quantity: Number(l.free_quantity) || 0,
+        discount_rate: Number(l.discount) || 0,
         line_total: lineAmt(l),
       }));
       await create({ ...data, lines: linesWithTotal, total_amount: total }).unwrap();
@@ -106,6 +116,16 @@ export default function SalesOrderCreate() {
             error={errors.customer_id?.message}
             {...register('customer_id')}
           />
+          {overLimit && (
+            <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 font-medium">
+              ⛔ Credit limit exceeded — Outstanding: {fmtCurrency(outstanding)} / Limit: {fmtCurrency(creditLimit)}. Order may be rejected.
+            </div>
+          )}
+          {nearLimit && (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-700">
+              ⚠ Near credit limit — Outstanding: {fmtCurrency(outstanding)} / Limit: {fmtCurrency(creditLimit)}
+            </div>
+          )}
           <SelectField
             label="Warehouse" required
             options={warehouseOpts}
@@ -182,16 +202,25 @@ export default function SalesOrderCreate() {
                     />
                   </div>
 
-                  {/* Discount + line total */}
+                  {/* Free Qty + Discount */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <TextField
+                      label="Free Qty (FOC)"
+                      type="number" step="1" inputMode="numeric"
+                      error={errors.lines?.[i]?.free_quantity?.message}
+                      {...register(`lines.${i}.free_quantity`)}
+                    />
+                    <TextField
+                      label="Discount %"
+                      type="number" step="0.01" inputMode="decimal"
+                      error={errors.lines?.[i]?.discount?.message}
+                      {...register(`lines.${i}.discount`)}
+                    />
+                  </div>
+
+                  {/* Line total */}
                   <div className="flex items-end gap-3">
-                    <div className="w-28">
-                      <TextField
-                        label="Discount %"
-                        type="number" step="0.01" inputMode="decimal"
-                        error={errors.lines?.[i]?.discount?.message}
-                        {...register(`lines.${i}.discount`)}
-                      />
-                    </div>
+                    <div className="flex-1" />
                     <div className="flex-1 flex justify-between items-center border-t border-gray-200 pt-2 pb-0.5">
                       <span className="text-xs text-gray-500">Line Total</span>
                       <span className="font-bold text-gray-900 font-mono">{fmtCurrency(amt)}</span>

@@ -13,6 +13,7 @@ module.exports = (sequelize) => {
     line_subtotal: { type: DataTypes.DECIMAL(15, 2), allowNull: false },
     vat_amount: { type: DataTypes.DECIMAL(15, 2), allowNull: false },
     line_total: { type: DataTypes.DECIMAL(15, 2), allowNull: false },
+    free_quantity: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0.0000 },
     cost_price: DataTypes.DECIMAL(12, 2),
   }, { tableName: 'invoice_lines', timestamps: false });
 };
