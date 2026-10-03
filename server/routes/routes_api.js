@@ -10,8 +10,8 @@ const crud = require('../controllers/crudFactory')(Route, {
   order: [['name', 'ASC']],
 });
 
-router.get('/', authorize('sales.view_all'), crud.list);
-router.get('/:id', authorize('sales.view_all'), crud.get);
+router.get('/', authorize.any('sales.view_own', 'sales.view_all'), crud.list);
+router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), crud.get);
 router.post('/', authorize('sales.approve'), crud.create);
 router.put('/:id', authorize('sales.approve'), crud.update);
 

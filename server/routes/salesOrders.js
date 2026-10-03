@@ -2,9 +2,10 @@ const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, sequelize: db } = require('../models');
+const notify = require('../notify');
 const crud = require('../controllers/crudFactory')(SalesOrder, {
   include: [{ model: Customer, attributes: ['id', 'name', 'code'] }, { model: Warehouse, attributes: ['id', 'name'] }],
-  order: [['order_date', 'DESC']],
+  order: [['order_date', 'DESC'], ['id', 'DESC']],
 });
 
 async function generateOrderNumber() {
@@ -47,6 +48,13 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
       }
       await t.commit();
       res.status(201).json(order);
+      notify({
+        roleName: 'admin',
+        type: 'NEW_ORDER',
+        title: 'New Sales Order',
+        body: `${req.user.name} created order ${order.order_number}`,
+        link: `/sales-orders/${order.id}`,
+      });
     } catch (e) { await t.rollback(); throw e; }
 
   } catch (err) { next(err); }
@@ -58,6 +66,15 @@ router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) =>
     if (!order) return res.status(404).json({ message: 'Order not found' });
     await order.update({ status: 'CONFIRMED', approved_by: req.user.id, approved_at: new Date() });
     res.json(order);
+    if (order.created_by) {
+      notify({
+        userId: order.created_by,
+        type: 'ORDER_APPROVED',
+        title: 'Order Approved',
+        body: `Your order ${order.order_number} has been approved`,
+        link: `/sales-orders/${order.id}`,
+      });
+    }
   } catch (err) { next(err); }
 });
 

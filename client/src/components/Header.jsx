@@ -1,15 +1,24 @@
 import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck, Truck, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import Breadcrumb from './ui/Breadcrumb';
 import GettingStartedGuide from './GettingStartedGuide';
 import { useNotifications } from '../contexts/NotificationContext';
 
+const PAGE_TITLES = {
+  '/customers':  'Customers',
+  '/invoices':   'Invoices',
+  '/van':        'Van Stock',
+  '/deliveries': 'Deliveries',
+  '/profile':    'Profile',
+};
+
 export default function Header({ minimal = false }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useSelector(selectCurrentUser);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
@@ -40,81 +49,85 @@ export default function Header({ minimal = false }) {
   };
 
   if (minimal) {
+    const pageTitle = PAGE_TITLES[location.pathname] || 'Lanka Dist';
+
     return (
-      <header className="h-14 bg-gray-900 flex items-center justify-between px-4 flex-shrink-0 z-10 shadow-lg">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-            <Truck size={15} className="text-white" />
+      <header className="bg-white flex-shrink-0 z-10"
+        style={{ boxShadow: '0 1px 0 0 #f0f0f0, 0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div className="h-14 flex items-center justify-between px-4">
+          {/* Brand logo left */}
+          <div className="flex items-center gap-2 w-10">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)' }}>
+              <Truck size={16} className="text-white" />
+            </div>
           </div>
-          <div>
-            <p className="text-white font-bold text-sm leading-tight">Lanka Dist</p>
-            <p className="text-gray-400 text-[10px] leading-tight tracking-wide">Distribution System</p>
-          </div>
-        </div>
 
-        {/* Right: bell + avatar */}
-        <div className="flex items-center gap-1.5">
-          {/* Bell */}
-          <div className="relative" ref={bellRef}>
-            <button
-              onClick={() => setBellOpen(v => !v)}
-              className="relative p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <Bell size={20} />
-              {unread > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none shadow">
-                  {unread > 9 ? '9+' : unread}
-                </span>
-              )}
-            </button>
+          {/* Centered page title */}
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-gray-900 tracking-tight">{pageTitle}</h1>
 
-            {bellOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-800">
-                    Notifications
-                    {unread > 0 && <span className="ml-1.5 text-xs text-white bg-red-500 font-bold px-1.5 py-0.5 rounded-full">{unread}</span>}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {unread > 0 && (
-                      <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 font-medium">
-                        <CheckCheck size={12} /> Mark all read
+          {/* Right: bell + avatar */}
+          <div className="flex items-center gap-1">
+            <div className="relative" ref={bellRef}>
+              <button onClick={() => setBellOpen(v => !v)}
+                className="relative w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 transition-colors">
+                <Bell size={19} />
+                {unread > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </button>
+
+              {bellOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-800">
+                      Notifications
+                      {unread > 0 && <span className="ml-1.5 text-xs text-white bg-red-500 font-bold px-1.5 py-0.5 rounded-full">{unread}</span>}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {unread > 0 && (
+                        <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                          <CheckCheck size={12} /> Mark all read
+                        </button>
+                      )}
+                      {notifications?.length > 0 && (
+                        <button onClick={() => { clearAll?.(); setBellOpen(false); }}
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-medium transition-colors">
+                          <X size={12} /> Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {(!notifications || notifications.length === 0) ? (
+                      <p className="text-sm text-gray-400 text-center py-8">No notifications</p>
+                    ) : notifications.slice(0, 20).map(n => (
+                      <button key={n.id} onClick={() => handleNotifClick(n)}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex gap-3 items-start transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}>
+                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-800 leading-snug">{n.title}</p>
+                          {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}
+                        </div>
                       </button>
-                    )}
-                    {notifications?.length > 0 && (
-                      <button onClick={() => { clearAll?.(); setBellOpen(false); }}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-medium transition-colors">
-                        <X size={12} /> Clear
-                      </button>
-                    )}
+                    ))}
                   </div>
                 </div>
-                <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
-                  {(!notifications || notifications.length === 0) ? (
-                    <p className="text-sm text-gray-400 text-center py-8">No notifications</p>
-                  ) : notifications.slice(0, 20).map(n => (
-                    <button key={n.id} onClick={() => handleNotifClick(n)}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex gap-3 items-start transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
-                    >
-                      <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-primary-500' : 'bg-gray-200'}`} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-gray-800 leading-snug">{n.title}</p>
-                        {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* User avatar */}
-          <button onClick={() => navigate('/profile')}
-            className="w-8 h-8 bg-primary-600 hover:bg-primary-700 rounded-xl flex items-center justify-center transition-colors shadow-md active:opacity-80">
-            <span className="text-white text-xs font-bold">{initials}</span>
-          </button>
+            <button onClick={() => navigate('/profile')}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold transition-opacity active:opacity-70 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)' }}>
+              {initials}
+            </button>
+          </div>
         </div>
+
+        {/* Blue accent line */}
+        <div className="h-0.5 w-full" style={{ background: 'linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa)' }} />
       </header>
     );
   }

@@ -5,8 +5,8 @@ const crud = require('../controllers/crudFactory')(Branch, {
   include: [{ model: Company, attributes: ['id', 'name'] }],
 });
 
-// Company settings (before /:id to avoid collision)
-router.get('/company', authorize('settings.company'), async (req, res, next) => {
+// Company info — any authenticated user can read (needed for printing)
+router.get('/company', async (req, res, next) => {
   try {
     const companyId = req.user.Branch?.company_id ?? req.user.company_id;
     const company = await Company.findByPk(companyId);

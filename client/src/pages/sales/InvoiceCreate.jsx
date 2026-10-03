@@ -57,6 +57,7 @@ export default function InvoiceCreate() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sheetId = searchParams.get('sheet');
+  const preCustomerId = searchParams.get('customer_id') ? Number(searchParams.get('customer_id')) : null;
 
   const canViewAll = usePermission('sales.view_all');
   const canViewOwn = usePermission('sales.view_own');
@@ -91,7 +92,7 @@ export default function InvoiceCreate() {
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { invoice_date: today(), lines: [{ ...BLANK_LINE }] },
+    defaultValues: { invoice_date: today(), lines: [{ ...BLANK_LINE }], ...(preCustomerId ? { customer_id: preCustomerId } : {}) },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const lines = watch('lines') || [];
@@ -418,70 +419,86 @@ export default function InvoiceCreate() {
             {fields.map((field, i) => {
               const selProductId = Number(lines[i]?.product_id);
               const vanLine = vanStockMap[selProductId];
+              const qty = parseFloat(lines[i]?.quantity) || 0;
+              const overStock = isVanMode && vanLine !== undefined && qty > vanLine.remaining;
               return (
-                <div key={field.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <Controller
-                        control={control}
-                        name={`lines.${i}.product_id`}
-                        render={({ field }) => (
-                          <SearchableSelect
-                            value={field.value}
-                            onChange={val => { field.onChange(val); handleProductChange(i, val); }}
-                            options={productOpts.map(o => ({
-                              value: o.value,
-                              label: o.label + (isVanMode && o.remaining !== undefined ? ` · ${o.remaining} left` : ''),
-                            }))}
-                            placeholder="Search product…"
-                          />
-                        )}
-                      />
-                      {errors.lines?.[i]?.product_id && <p className="text-xs text-red-500 mt-1">{errors.lines[i].product_id.message}</p>}
-                      {isVanMode && vanLine && (
-                        <p className="text-xs text-blue-500 mt-0.5">{vanLine.remaining} available in van</p>
-                      )}
-                    </div>
+                <div key={field.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                  {/* Header bar */}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Item {i + 1}</span>
                     {fields.length > 1 && (
-                      <button type="button" onClick={() => remove(i)} className="p-2 text-red-400 hover:text-red-600 mt-1 flex-shrink-0">
-                        <Trash2 size={16} />
+                      <button type="button" onClick={() => remove(i)}
+                        className="flex items-center gap-1 text-xs text-red-500 font-semibold hover:text-red-700 transition-colors">
+                        <Trash2 size={13} /> Remove
                       </button>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Qty</p>
-                      <div className="flex items-center gap-1.5">
-                        <button type="button"
-                          onClick={() => { const v = Math.max(1, (parseFloat(lines[i]?.quantity) || 1) - 1); setValue(`lines.${i}.quantity`, v); }}
-                          className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">−</button>
-                        <input type="number" step="1" min="1"
-                          max={isVanMode && vanLine ? vanLine.remaining : undefined}
-                          className={`input text-sm py-1.5 text-center flex-1 ${isVanMode && vanLine && parseFloat(lines[i]?.quantity) > vanLine.remaining ? 'border-red-400' : ''}`}
-                          onFocus={e => e.target.select()} {...register(`lines.${i}.quantity`)} />
-                        <button type="button"
-                          onClick={() => { const max = isVanMode && vanLine ? vanLine.remaining : 9999; const v = Math.min(max, (parseFloat(lines[i]?.quantity) || 0) + 1); setValue(`lines.${i}.quantity`, v); }}
-                          className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">+</button>
+
+                  <div className="p-4 space-y-3">
+                    {/* Product — full width, overflow contained */}
+                    <div className="min-w-0">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Product {isVanMode && <span className="text-blue-500 normal-case font-medium">(van stock)</span>}
+                      </label>
+                      <div className="w-full overflow-hidden">
+                        <Controller
+                          control={control}
+                          name={`lines.${i}.product_id`}
+                          render={({ field }) => (
+                            <SearchableSelect
+                              value={field.value}
+                              onChange={val => { field.onChange(val); handleProductChange(i, val); }}
+                              options={productOpts.map(o => ({
+                                value: o.value,
+                                label: o.label + (isVanMode && o.remaining !== undefined ? ` · ${o.remaining} left` : ''),
+                              }))}
+                              placeholder="Search product…"
+                            />
+                          )}
+                        />
                       </div>
-                      {isVanMode && vanLine !== undefined && (
-                        <p className={`text-xs mt-0.5 ${parseFloat(lines[i]?.quantity) > vanLine.remaining ? 'text-red-500 font-semibold' : 'text-blue-400'}`}>
-                          avail: {vanLine.remaining}
-                        </p>
+                      {errors.lines?.[i]?.product_id && <p className="text-xs text-red-500 mt-1">{errors.lines[i].product_id.message}</p>}
+                      {isVanMode && vanLine && (
+                        <p className="text-xs text-blue-500 mt-1 font-medium">{vanLine.remaining} available in van</p>
                       )}
-                      {errors.lines?.[i]?.quantity && <p className="text-xs text-red-500 mt-0.5">{errors.lines[i].quantity.message}</p>}
                     </div>
-                    <TextField label="Unit Price" type="number" step="0.01" inputMode="decimal"
-                      error={errors.lines?.[i]?.unit_price?.message} {...register(`lines.${i}.unit_price`)} />
+
+                    {/* Qty stepper + Unit Price */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qty</label>
+                        <div className="flex items-center">
+                          <button type="button"
+                            onClick={() => { const v = Math.max(1, qty - 1); setValue(`lines.${i}.quantity`, v); }}
+                            className="w-10 h-12 flex items-center justify-center rounded-l-xl border border-gray-300 bg-gray-100 text-gray-700 text-lg font-bold active:bg-gray-200 flex-shrink-0">−</button>
+                          <input type="number" step="1" min="1"
+                            max={isVanMode && vanLine ? vanLine.remaining : undefined}
+                            className={`h-12 flex-1 border-y border-gray-300 text-center font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:z-10 w-0 ${overStock ? 'border-red-400 text-red-600' : ''}`}
+                            style={{ fontSize: 16 }}
+                            onFocus={e => e.target.select()} {...register(`lines.${i}.quantity`)} />
+                          <button type="button"
+                            onClick={() => { const max = isVanMode && vanLine ? vanLine.remaining : 9999; setValue(`lines.${i}.quantity`, Math.min(max, qty + 1)); }}
+                            className="w-10 h-12 flex items-center justify-center rounded-r-xl border border-gray-300 bg-gray-100 text-gray-700 text-lg font-bold active:bg-gray-200 flex-shrink-0">+</button>
+                        </div>
+                        {overStock && <p className="text-xs text-red-500 font-semibold mt-1">Exceeds van stock</p>}
+                      </div>
+                      <TextField label="Unit Price" type="number" step="0.01" inputMode="decimal"
+                        error={errors.lines?.[i]?.unit_price?.message} {...register(`lines.${i}.unit_price`)} />
+                    </div>
+
+                    {/* VAT + Discount */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <TextField label="VAT %" type="number" step="0.01" inputMode="decimal"
+                        error={errors.lines?.[i]?.vat_rate?.message} {...register(`lines.${i}.vat_rate`)} />
+                      <TextField label="Discount (LKR)" type="number" step="0.01" inputMode="decimal"
+                        error={errors.lines?.[i]?.discount_amount?.message} {...register(`lines.${i}.discount_amount`)} />
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <TextField label="VAT %" type="number" step="0.01" inputMode="decimal"
-                      error={errors.lines?.[i]?.vat_rate?.message} {...register(`lines.${i}.vat_rate`)} />
-                    <TextField label="Discount (LKR)" type="number" step="0.01" inputMode="decimal"
-                      error={errors.lines?.[i]?.discount_amount?.message} {...register(`lines.${i}.discount_amount`)} />
-                  </div>
-                  <div className="flex justify-between items-center pt-1 border-t border-gray-200">
-                    <span className="text-xs text-gray-500">Line Total</span>
-                    <span className="font-bold text-gray-900 font-mono">{fmtCurrency(lineTotal(lines[i] || {}))}</span>
+
+                  {/* Line total footer */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-primary-50 border-t border-primary-100">
+                    <span className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Line Total</span>
+                    <span className="font-extrabold text-primary-700 font-mono text-base">{fmtCurrency(lineTotal(lines[i] || {}))}</span>
                   </div>
                 </div>
               );

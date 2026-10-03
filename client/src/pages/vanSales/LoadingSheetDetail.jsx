@@ -67,7 +67,7 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
   };
 
   return (
-    <Modal open title="Day-End Close" onClose={onClose} size="lg">
+    <Modal open title="Day-End Close" onClose={onClose} size="xl">
       <div className="space-y-5">
         {hasInvoices && (
           <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
@@ -191,6 +191,7 @@ export default function LoadingSheetDetail() {
   const { id }    = useParams();
   const navigate  = useNavigate();
   const canCreate = usePermission('sales.create');
+  const canLoadVan = usePermission('sales.approve');
 
   const { data: sheet, isLoading } = useGetLoadingSheetQuery(id);
   const { data: company }          = useGetCompanyQuery();
@@ -271,38 +272,59 @@ export default function LoadingSheetDetail() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <button onClick={() => navigate('/loading-sheets')} className="btn btn-ghost btn-sm">
-          <ArrowLeft size={16} /> Back
-        </button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">{sheet.sheet_number}</h1>
-          <p className="text-sm text-gray-500">{fmtDate(sheet.sheet_date)} · {sheet.Route?.name}{vehicle ? ` · ${vehicle}` : ''}</p>
+      <div className="space-y-3">
+        {/* Top row: back + status */}
+        <div className="flex items-center justify-between">
+          <button onClick={() => navigate('/loading-sheets')}
+            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
+            <ArrowLeft size={16} /> Back
+          </button>
+          <StatusBadge status={sheet.status} />
         </div>
-        {sheet.status === 'DRAFT' && canCreate && (
-          <>
-            <button onClick={() => setShowDelete(true)} className="btn flex items-center gap-1.5 text-sm text-red-600 border border-red-200 hover:bg-red-50">
-              <Trash2 size={15} /> Delete
-            </button>
-            <button onClick={() => setShowLoad(true)} className="btn btn-primary flex items-center gap-1.5 text-sm">
-              <Truck size={15} /> Load Van
-            </button>
-          </>
-        )}
-        {sheet.status === 'LOADED' && canCreate && (
-          <>
-            <button onClick={() => navigate(`/invoices/create?sheet=${sheet.id}`)} className="btn btn-secondary flex items-center gap-1.5 text-sm">
-              <Plus size={15} /> Create Invoice
-            </button>
-            <button onClick={() => setShowClose(true)} className="btn flex items-center gap-1.5 text-sm bg-green-600 text-white hover:bg-green-700">
-              <RotateCcw size={15} /> Day-End Close
-            </button>
-          </>
-        )}
-        <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
-          <Printer size={15} /> Print
-        </button>
-        <StatusBadge status={sheet.status} />
+
+        {/* Title + subtitle */}
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{sheet.sheet_number}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {fmtDate(sheet.sheet_date)}
+            {sheet.Route?.name && <span> · {sheet.Route.name}</span>}
+            {vehicle && <span> · {vehicle}</span>}
+          </p>
+        </div>
+
+        {/* Action buttons — horizontally scrollable on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+          {sheet.status === 'DRAFT' && canLoadVan && (
+            <>
+              <button onClick={() => setShowLoad(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white whitespace-nowrap flex-shrink-0 shadow-sm transition-opacity active:opacity-80"
+                style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}>
+                <Truck size={15} /> Load Van
+              </button>
+              <button onClick={() => setShowDelete(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 bg-red-50 border border-red-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+                <Trash2 size={15} /> Delete
+              </button>
+            </>
+          )}
+          {sheet.status === 'LOADED' && canCreate && (
+            <>
+              <button onClick={() => setShowClose(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white whitespace-nowrap flex-shrink-0 shadow-sm transition-opacity active:opacity-80"
+                style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)' }}>
+                <RotateCcw size={15} /> Day-End Close
+              </button>
+              <button onClick={() => navigate(`/invoices/create?sheet=${sheet.id}`)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+                <Plus size={15} /> Create Invoice
+              </button>
+            </>
+          )}
+          <button onClick={handlePrint}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+            <Printer size={15} /> Print
+          </button>
+        </div>
       </div>
 
       {/* Info card */}
@@ -378,194 +400,263 @@ export default function LoadingSheetDetail() {
       )}
 
       {/* Lines */}
-      <div className="card">
-        <div className="card-header flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-800">Loaded Items</h3>
-          {sheet.status === 'LOADED' && (
-            <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> In stock</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Low (&le;25%)</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Out</span>
+      {(() => {
+        const enriched = lines
+          .map(line => {
+            const loaded   = parseFloat(line.loaded_quantity) || 0;
+            const sold     = parseFloat(line.sold_quantity) || 0;
+            const returned = parseFloat(line.returned_quantity) || 0;
+            const damaged  = parseFloat(line.damaged_quantity) || 0;
+            const lost     = parseFloat(line.lost_quantity) || 0;
+            const avail    = Math.max(0, loaded - sold - returned);
+            return { ...line, _loaded: loaded, _sold: sold, _returned: returned, _damaged: damaged, _lost: lost, _avail: avail };
+          })
+          .sort((a, b) => sheet.status === 'LOADED' ? a._avail - b._avail : 0);
+
+        return (
+          <div className="card">
+            <div className="card-header flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-sm font-semibold text-gray-800">Loaded Items <span className="text-gray-400 font-normal">({enriched.length})</span></h3>
+              {sheet.status === 'LOADED' && (
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> In stock</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Low</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Out</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="card-body">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="table-th">Product</th>
-                <th className="table-th text-right">Loaded</th>
-                <th className="table-th text-right">Sold</th>
-                <th className="table-th text-right">Returned</th>
-                {sheet.status === 'CLOSED' && <th className="table-th text-right text-orange-600">Damaged</th>}
-                {sheet.status === 'CLOSED' && <th className="table-th text-right text-red-600">Lost</th>}
-                {sheet.status === 'LOADED' && <th className="table-th text-right">Available</th>}
-                {sheet.status !== 'LOADED' && <th className="table-th text-right">Unit Cost</th>}
-                {sheet.status !== 'LOADED' && <th className="table-th text-right">Value</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {lines
-                .map(line => {
-                  const loaded   = parseFloat(line.loaded_quantity) || 0;
-                  const sold     = parseFloat(line.sold_quantity) || 0;
-                  const returned = parseFloat(line.returned_quantity) || 0;
-                  const damaged  = parseFloat(line.damaged_quantity) || 0;
-                  const lost     = parseFloat(line.lost_quantity) || 0;
-                  const avail    = Math.max(0, loaded - sold - returned);
-                  return { ...line, _loaded: loaded, _sold: sold, _returned: returned, _damaged: damaged, _lost: lost, _avail: avail };
-                })
-                .sort((a, b) => sheet.status === 'LOADED' ? a._avail - b._avail : 0)
-                .map(line => (
-                <tr key={line.id} className={
-                  (sheet.status === 'LOADED' && line._avail === 0) ? 'bg-red-50/40' :
-                  (sheet.status === 'CLOSED' && (line._damaged > 0 || line._lost > 0)) ? 'bg-orange-50/40' : ''
-                }>
-                  <td className="table-td font-medium">
-                    {line.Product?.name}
-                    {line.damage_notes && <span className="block text-xs text-orange-600 mt-0.5">{line.damage_notes}</span>}
-                  </td>
-                  <td className="table-td text-right">{fmtQty(line._loaded)}</td>
-                  <td className="table-td text-right font-semibold text-blue-700">{fmtQty(line._sold)}</td>
-                  <td className="table-td text-right text-gray-500">{fmtQty(line._returned)}</td>
-                  {sheet.status === 'CLOSED' && (
-                    <td className="table-td text-right text-orange-600 font-semibold">{line._damaged > 0 ? fmtQty(line._damaged) : '—'}</td>
-                  )}
-                  {sheet.status === 'CLOSED' && (
-                    <td className="table-td text-right text-red-600 font-semibold">{line._lost > 0 ? fmtQty(line._lost) : '—'}</td>
-                  )}
-                  {sheet.status === 'LOADED' && (
-                    <td className="table-td text-right">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${availColor(line._avail, line._loaded)}`}>
-                        {line._avail === 0 ? 'OUT' : fmtQty(line._avail)}
-                      </span>
-                    </td>
-                  )}
-                  {sheet.status !== 'LOADED' && (
-                    <>
-                      <td className="table-td text-right text-gray-500">{fmtCurrency(line.unit_cost)}</td>
-                      <td className="table-td text-right">{fmtCurrency(line._sold * parseFloat(line.unit_cost))}</td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-            {sheet.status === 'CLOSED' && (
-              <tfoot>
-                {lines.some(l => parseFloat(l.damaged_quantity) > 0 || parseFloat(l.lost_quantity) > 0) && (
-                  <tr className="bg-orange-50 border-t border-orange-200">
-                    <td colSpan={7} className="table-td text-xs text-orange-700 font-semibold">
-                      Damaged: {fmtQty(lines.reduce((s,l) => s + (parseFloat(l.damaged_quantity)||0), 0))} units &nbsp;|&nbsp;
-                      Lost: {fmtQty(lines.reduce((s,l) => s + (parseFloat(l.lost_quantity)||0), 0))} units
-                    </td>
+
+            {/* ── Desktop table ── */}
+            <div className="hidden md:block card-body">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="table-th">Product</th>
+                    <th className="table-th text-right">Loaded</th>
+                    <th className="table-th text-right">Sold</th>
+                    <th className="table-th text-right">Returned</th>
+                    {sheet.status === 'CLOSED' && <th className="table-th text-right text-orange-600">Damaged</th>}
+                    {sheet.status === 'CLOSED' && <th className="table-th text-right text-red-600">Lost</th>}
+                    {sheet.status === 'LOADED' && <th className="table-th text-right">Available</th>}
+                    {sheet.status !== 'LOADED' && <th className="table-th text-right">Unit Cost</th>}
+                    {sheet.status !== 'LOADED' && <th className="table-th text-right">Value</th>}
                   </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {enriched.map(line => (
+                    <tr key={line.id} className={
+                      (sheet.status === 'LOADED' && line._avail === 0) ? 'bg-red-50/40' :
+                      (sheet.status === 'CLOSED' && (line._damaged > 0 || line._lost > 0)) ? 'bg-orange-50/40' : ''
+                    }>
+                      <td className="table-td font-medium">
+                        {line.Product?.name}
+                        {line.damage_notes && <span className="block text-xs text-orange-600 mt-0.5">{line.damage_notes}</span>}
+                      </td>
+                      <td className="table-td text-right">{fmtQty(line._loaded)}</td>
+                      <td className="table-td text-right font-semibold text-blue-700">{fmtQty(line._sold)}</td>
+                      <td className="table-td text-right text-gray-500">{fmtQty(line._returned)}</td>
+                      {sheet.status === 'CLOSED' && <td className="table-td text-right text-orange-600 font-semibold">{line._damaged > 0 ? fmtQty(line._damaged) : '—'}</td>}
+                      {sheet.status === 'CLOSED' && <td className="table-td text-right text-red-600 font-semibold">{line._lost > 0 ? fmtQty(line._lost) : '—'}</td>}
+                      {sheet.status === 'LOADED' && (
+                        <td className="table-td text-right">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${availColor(line._avail, line._loaded)}`}>
+                            {line._avail === 0 ? 'OUT' : fmtQty(line._avail)}
+                          </span>
+                        </td>
+                      )}
+                      {sheet.status !== 'LOADED' && (
+                        <>
+                          <td className="table-td text-right text-gray-500">{fmtCurrency(line.unit_cost)}</td>
+                          <td className="table-td text-right">{fmtCurrency(line._sold * parseFloat(line.unit_cost))}</td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+                {sheet.status === 'CLOSED' && (
+                  <tfoot>
+                    {lines.some(l => parseFloat(l.damaged_quantity) > 0 || parseFloat(l.lost_quantity) > 0) && (
+                      <tr className="bg-orange-50 border-t border-orange-200">
+                        <td colSpan={7} className="table-td text-xs text-orange-700 font-semibold">
+                          Damaged: {fmtQty(lines.reduce((s,l) => s + (parseFloat(l.damaged_quantity)||0), 0))} units &nbsp;|&nbsp;
+                          Lost: {fmtQty(lines.reduce((s,l) => s + (parseFloat(l.lost_quantity)||0), 0))} units
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="border-t-2 border-gray-200 bg-gray-50">
+                      <td colSpan={7} className="table-td text-right font-semibold">Total Sales</td>
+                      <td className="table-td text-right font-bold text-green-700">{fmtCurrency(sheet.total_sales_amount)}</td>
+                    </tr>
+                  </tfoot>
                 )}
-                <tr className="border-t-2 border-gray-200 bg-gray-50">
-                  <td colSpan={7} className="table-td text-right font-semibold">Total Sales</td>
-                  <td className="table-td text-right font-bold text-green-700">{fmtCurrency(sheet.total_sales_amount)}</td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      </div>
+              </table>
+            </div>
+
+            {/* ── Mobile cards ── */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {enriched.map(line => (
+                <div key={line.id} className={`p-4 ${
+                  (sheet.status === 'LOADED' && line._avail === 0) ? 'bg-red-50/60' :
+                  (sheet.status === 'CLOSED' && (line._damaged > 0 || line._lost > 0)) ? 'bg-orange-50/60' : ''
+                }`}>
+                  {/* Product name + available badge */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm leading-tight">{line.Product?.name}</p>
+                      {line.damage_notes && <p className="text-xs text-orange-600 mt-0.5">{line.damage_notes}</p>}
+                    </div>
+                    {sheet.status === 'LOADED' && (
+                      <span className={`flex-shrink-0 inline-block px-2.5 py-1 rounded-full text-xs font-bold ${availColor(line._avail, line._loaded)}`}>
+                        {line._avail === 0 ? 'OUT' : `${fmtQty(line._avail)} avail`}
+                      </span>
+                    )}
+                    {sheet.status === 'CLOSED' && (
+                      <span className="flex-shrink-0 text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                        {fmtCurrency(line._sold * parseFloat(line.unit_cost))}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stat pills */}
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-2.5 py-1.5">
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Loaded</span>
+                      <span className="font-bold text-gray-800 text-sm">{fmtQty(line._loaded)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-blue-50 rounded-lg px-2.5 py-1.5">
+                      <span className="text-[10px] font-semibold text-blue-500 uppercase tracking-wide">Sold</span>
+                      <span className="font-bold text-blue-700 text-sm">{fmtQty(line._sold)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2.5 py-1.5">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Returned</span>
+                      <span className="font-bold text-gray-600 text-sm">{fmtQty(line._returned)}</span>
+                    </div>
+                    {sheet.status === 'CLOSED' && line._damaged > 0 && (
+                      <div className="flex items-center gap-1.5 bg-orange-50 rounded-lg px-2.5 py-1.5">
+                        <span className="text-[10px] font-semibold text-orange-500 uppercase tracking-wide">Damaged</span>
+                        <span className="font-bold text-orange-700 text-sm">{fmtQty(line._damaged)}</span>
+                      </div>
+                    )}
+                    {sheet.status === 'CLOSED' && line._lost > 0 && (
+                      <div className="flex items-center gap-1.5 bg-red-50 rounded-lg px-2.5 py-1.5">
+                        <span className="text-[10px] font-semibold text-red-500 uppercase tracking-wide">Lost</span>
+                        <span className="font-bold text-red-700 text-sm">{fmtQty(line._lost)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {sheet.status === 'CLOSED' && (
+                <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-t border-green-100">
+                  <span className="text-sm font-semibold text-green-700">Total Sales</span>
+                  <span className="font-extrabold text-green-700 font-mono">{fmtCurrency(sheet.total_sales_amount)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
 
       {/* Route Expenses */}
       <div className="card">
         <div className="card-header flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-800">
-            Route Expenses
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">Route Expenses</h3>
             {sheetExpenses.length > 0 && (
-              <span className="ml-2 text-gray-400 font-normal">
-                ({sheetExpenses.length}) · Total: {fmtCurrency(sheetExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0))}
-              </span>
+              <p className="text-xs text-gray-400 mt-0.5">{sheetExpenses.length} expense{sheetExpenses.length > 1 ? 's' : ''}</p>
             )}
-          </h3>
+          </div>
           {!showExpForm && (
             <button onClick={() => setShowExpForm(true)}
-              className="flex items-center gap-1 text-xs text-primary-600 font-semibold hover:text-primary-800">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-primary-600 bg-primary-50 border border-primary-200 hover:bg-primary-100 transition-colors">
               <Plus size={13} /> Add Expense
             </button>
           )}
         </div>
 
+        {/* Add expense form */}
         {showExpForm && (
-          <div className="card-body border-b border-gray-100 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <input
-                  type="text" placeholder="Description (e.g. Fuel — Route A)"
-                  value={expForm.description}
-                  onChange={e => setExpForm(p => ({ ...p, description: e.target.value }))}
-                  className="input w-full"
-                />
-              </div>
-              <input type="number" step="0.01" placeholder="Amount (LKR)" value={expForm.amount}
-                onChange={e => setExpForm(p => ({ ...p, amount: e.target.value }))}
-                className="input" />
-              <select value={expForm.category} onChange={e => setExpForm(p => ({ ...p, category: e.target.value }))}
-                className="input">
-                <option value="TRANSPORT">Transport</option>
-                <option value="FUEL">Fuel</option>
-                <option value="MAINTENANCE">Maintenance</option>
-                <option value="OTHER">Other</option>
-              </select>
-              <input type="date" value={expForm.expense_date}
-                onChange={e => setExpForm(p => ({ ...p, expense_date: e.target.value }))}
-                className="input" />
-              <select value={expForm.payment_method} onChange={e => setExpForm(p => ({ ...p, payment_method: e.target.value }))}
-                className="input">
-                <option value="CASH">Cash</option>
-                <option value="CHEQUE">Cheque</option>
-                <option value="BANK_TRANSFER">Bank Transfer</option>
-              </select>
+          <div className="p-4 border-b border-gray-100 space-y-3 bg-gray-50/50">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Description</label>
+              <input type="text" placeholder="e.g. Fuel for Route A"
+                value={expForm.description}
+                onChange={e => setExpForm(p => ({ ...p, description: e.target.value }))}
+                className="input w-full" />
             </div>
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowExpForm(false)} className="btn-secondary btn-sm">Cancel</button>
-              <button type="button" onClick={handleAddExpense} disabled={savingExpense}
-                className="btn btn-primary btn-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Amount (LKR)</label>
+                <input type="number" step="0.01" placeholder="0.00" value={expForm.amount}
+                  onChange={e => setExpForm(p => ({ ...p, amount: e.target.value }))}
+                  className="input" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Category</label>
+                <select value={expForm.category} onChange={e => setExpForm(p => ({ ...p, category: e.target.value }))} className="input">
+                  <option value="TRANSPORT">Transport</option>
+                  <option value="FUEL">Fuel</option>
+                  <option value="MAINTENANCE">Maintenance</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Date</label>
+                <input type="date" value={expForm.expense_date}
+                  onChange={e => setExpForm(p => ({ ...p, expense_date: e.target.value }))}
+                  className="input" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Method</label>
+                <select value={expForm.payment_method} onChange={e => setExpForm(p => ({ ...p, payment_method: e.target.value }))} className="input">
+                  <option value="CASH">Cash</option>
+                  <option value="CHEQUE">Cheque</option>
+                  <option value="BANK_TRANSFER">Bank Transfer</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <button type="button" onClick={() => setShowExpForm(false)} className="btn btn-secondary">Cancel</button>
+              <button type="button" onClick={handleAddExpense} disabled={savingExpense} className="btn btn-primary">
                 {savingExpense ? 'Saving…' : 'Save Expense'}
               </button>
             </div>
           </div>
         )}
 
+        {/* Expense list */}
         {sheetExpenses.length === 0 ? (
-          <div className="card-body text-sm text-gray-400 text-center py-4">No expenses recorded for this trip</div>
-        ) : (
-          <div className="card-body">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="table-th">Description</th>
-                  <th className="table-th">Category</th>
-                  <th className="table-th">Date</th>
-                  <th className="table-th">Method</th>
-                  <th className="table-th text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {sheetExpenses.map(exp => (
-                  <tr key={exp.id}>
-                    <td className="table-td font-medium">{exp.description}</td>
-                    <td className="table-td text-gray-500">{exp.category}</td>
-                    <td className="table-td text-gray-500">{fmtDate(exp.expense_date)}</td>
-                    <td className="table-td text-gray-500">{exp.payment_method}</td>
-                    <td className="table-td text-right font-semibold">{fmtCurrency(exp.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-gray-200 bg-gray-50">
-                  <td colSpan={4} className="table-td text-right font-semibold">Total Expenses</td>
-                  <td className="table-td text-right font-bold text-red-600">
-                    {fmtCurrency(sheetExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0))}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+          <div className="p-8 text-center">
+            <p className="text-sm text-gray-400">No expenses recorded for this trip</p>
           </div>
+        ) : (
+          <>
+            <div className="divide-y divide-gray-100">
+              {sheetExpenses.map(exp => (
+                <div key={exp.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{exp.description}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        {exp.category}
+                      </span>
+                      <span className="text-xs text-gray-400">{fmtDate(exp.expense_date)}</span>
+                      <span className="text-xs text-gray-400">{exp.payment_method}</span>
+                    </div>
+                  </div>
+                  <p className="font-bold text-red-600 font-mono text-sm flex-shrink-0">{fmtCurrency(exp.amount)}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between px-4 py-3 bg-red-50 border-t border-red-100">
+              <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">Total Expenses</span>
+              <span className="font-extrabold text-red-700 font-mono">
+                {fmtCurrency(sheetExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0))}
+              </span>
+            </div>
+          </>
         )}
       </div>
 

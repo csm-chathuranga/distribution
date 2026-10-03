@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -11,6 +11,7 @@ import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetUsersQuery } from '../../api/settingsApi';
 import { selectCurrentUser } from '../../store/authSlice';
+import { usePermission } from '../../hooks/usePermission';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
 import { today, fmtCurrency } from '../../utils/format';
 
@@ -36,13 +37,16 @@ const BLANK_LINE = { product_id: '', quantity: 1, free_quantity: 0, unit_price: 
 
 export default function SalesOrderCreate() {
   const navigate    = useNavigate();
-  const currentUser = useSelector(selectCurrentUser);
+  const [searchParams] = useSearchParams();
+  const preCustomerId = searchParams.get('customer_id') ? Number(searchParams.get('customer_id')) : undefined;
+  const currentUser  = useSelector(selectCurrentUser);
+  const canManageUsers = usePermission('settings.users');
   const [create, { isLoading }] = useCreateSalesOrderMutation();
 
   const { data: customers }  = useGetCustomersQuery({ limit: 500 });
   const { data: warehouses } = useGetWarehousesQuery({});
   const { data: routes }     = useGetRoutesQuery({ limit: 200 });
-  const { data: users }      = useGetUsersQuery({ limit: 200 });
+  const { data: users }      = useGetUsersQuery({ limit: 200 }, { skip: !canManageUsers });
   const { data: products }   = useGetProductsQuery({ limit: 500, is_active: true });
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -51,6 +55,7 @@ export default function SalesOrderCreate() {
       order_date:   today(),
       sales_rep_id: currentUser?.id || '',
       lines: [{ ...BLANK_LINE }],
+      ...(preCustomerId ? { customer_id: preCustomerId } : {}),
     },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
@@ -135,7 +140,15 @@ export default function SalesOrderCreate() {
 
           <div className="grid grid-cols-2 gap-3">
             <SelectField label="Route" options={routeOpts} error={errors.route_id?.message} {...register('route_id')} />
-            <SelectField label="Sales Rep" options={userOpts} error={errors.sales_rep_id?.message} {...register('sales_rep_id')} />
+            {canManageUsers ? (
+              <SelectField label="Sales Rep" options={userOpts} error={errors.sales_rep_id?.message} {...register('sales_rep_id')} />
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Sales Rep</label>
+                <div className="input bg-gray-50 text-gray-700 cursor-default">{currentUser?.name}</div>
+                <input type="hidden" {...register('sales_rep_id')} value={currentUser?.id} />
+              </div>
+            )}
           </div>
 
           <TextField label="Order Date" required type="date" error={errors.order_date?.message} {...register('order_date')} />
@@ -162,69 +175,80 @@ export default function SalesOrderCreate() {
           <div className="space-y-3">
             {fields.map((field, i) => {
               const amt = lineAmt(lines[i] || {});
+              const reg = register;
               return (
-                <div key={field.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
-                  {/* Product + remove */}
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <SelectField
-                        options={productOpts}
-                        error={errors.lines?.[i]?.product_id?.message}
-                        {...register(`lines.${i}.product_id`, {
-                          onChange: e => handleProductChange(i, e.target.value),
-                        })}
-                      />
-                    </div>
+                <div key={field.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                  {/* Item header bar */}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Item {i + 1}</span>
                     {fields.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => remove(i)}
-                        className="p-2 text-red-400 hover:text-red-600 mt-1 flex-shrink-0"
-                      >
-                        <Trash2 size={16} />
+                      <button type="button" onClick={() => remove(i)}
+                        className="flex items-center gap-1 text-xs text-red-500 font-semibold hover:text-red-700 transition-colors">
+                        <Trash2 size={13} /> Remove
                       </button>
                     )}
                   </div>
 
-                  {/* Qty + Price */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <TextField
-                      label="Qty"
-                      type="number" step="1" inputMode="numeric"
-                      error={errors.lines?.[i]?.quantity?.message}
-                      {...register(`lines.${i}.quantity`)}
-                    />
-                    <TextField
-                      label="Unit Price"
-                      type="number" step="0.01" inputMode="decimal"
-                      error={errors.lines?.[i]?.unit_price?.message}
-                      {...register(`lines.${i}.unit_price`)}
-                    />
-                  </div>
-
-                  {/* Free Qty + Discount */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <TextField
-                      label="Free Qty (FOC)"
-                      type="number" step="1" inputMode="numeric"
-                      error={errors.lines?.[i]?.free_quantity?.message}
-                      {...register(`lines.${i}.free_quantity`)}
-                    />
-                    <TextField
-                      label="Discount %"
-                      type="number" step="0.01" inputMode="decimal"
-                      error={errors.lines?.[i]?.discount?.message}
-                      {...register(`lines.${i}.discount`)}
-                    />
-                  </div>
-
-                  {/* Line total */}
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1" />
-                    <div className="flex-1 flex justify-between items-center border-t border-gray-200 pt-2 pb-0.5">
-                      <span className="text-xs text-gray-500">Line Total</span>
-                      <span className="font-bold text-gray-900 font-mono">{fmtCurrency(amt)}</span>
+                  <div className="p-4 space-y-3">
+                    {/* Product select */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Product</label>
+                      <SelectField
+                        options={productOpts}
+                        error={errors.lines?.[i]?.product_id?.message}
+                        {...reg(`lines.${i}.product_id`, { onChange: e => handleProductChange(i, e.target.value) })}
+                      />
                     </div>
+
+                    {/* Qty stepper + Unit Price */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qty</label>
+                        <div className="flex items-center gap-0">
+                          <button type="button"
+                            onClick={() => { const v = parseInt(lines[i]?.quantity || 1); if (v > 1) setValue(`lines.${i}.quantity`, v - 1); }}
+                            className="w-10 h-12 flex items-center justify-center rounded-l-xl border border-gray-300 bg-gray-100 text-gray-700 text-lg font-bold active:bg-gray-200 transition-colors flex-shrink-0">−</button>
+                          <input
+                            type="number" step="1" inputMode="numeric"
+                            className="h-12 flex-1 border-y border-gray-300 text-center font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-0"
+                            style={{ fontSize: 16 }}
+                            {...reg(`lines.${i}.quantity`)}
+                          />
+                          <button type="button"
+                            onClick={() => { const v = parseInt(lines[i]?.quantity || 1); setValue(`lines.${i}.quantity`, v + 1); }}
+                            className="w-10 h-12 flex items-center justify-center rounded-r-xl border border-gray-300 bg-gray-100 text-gray-700 text-lg font-bold active:bg-gray-200 transition-colors flex-shrink-0">+</button>
+                        </div>
+                        {errors.lines?.[i]?.quantity && <p className="text-red-500 text-xs mt-1">{errors.lines[i].quantity.message}</p>}
+                      </div>
+                      <TextField
+                        label="Unit Price"
+                        type="number" step="0.01" inputMode="decimal"
+                        error={errors.lines?.[i]?.unit_price?.message}
+                        {...reg(`lines.${i}.unit_price`)}
+                      />
+                    </div>
+
+                    {/* Free Qty + Discount */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <TextField
+                        label="Free Qty (FOC)"
+                        type="number" step="1" inputMode="numeric"
+                        error={errors.lines?.[i]?.free_quantity?.message}
+                        {...reg(`lines.${i}.free_quantity`)}
+                      />
+                      <TextField
+                        label="Discount %"
+                        type="number" step="0.01" inputMode="decimal"
+                        error={errors.lines?.[i]?.discount?.message}
+                        {...reg(`lines.${i}.discount`)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Line total footer */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-primary-50 border-t border-primary-100">
+                    <span className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Line Total</span>
+                    <span className="font-extrabold text-primary-700 font-mono text-base">{fmtCurrency(amt)}</span>
                   </div>
                 </div>
               );
@@ -243,7 +267,7 @@ export default function SalesOrderCreate() {
       </form>
 
       {/* Sticky submit */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe">
+      <div className="fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3">
         <button
           type="button"
           onClick={handleSubmit(onSubmit)}

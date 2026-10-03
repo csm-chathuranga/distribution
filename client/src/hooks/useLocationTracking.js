@@ -73,12 +73,33 @@ export function useLocationTracking() {
             watchRef.current = { type: 'native', id };
           }
         } else if (!cancelled && navigator?.geolocation) {
-          const id = navigator.geolocation.watchPosition(
-            pos => write(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 30_000 },
-          );
-          watchRef.current = { type: 'web', id };
+          const startWatch = () => {
+            if (cancelled) return;
+            const id = navigator.geolocation.watchPosition(
+              pos => write(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+              () => {},
+              { enableHighAccuracy: true, maximumAge: 30_000, timeout: 15_000 },
+            );
+            watchRef.current = { type: 'web', id };
+          };
+
+          // Only call watchPosition if permission is already granted.
+          // If 'prompt', listen for the user to grant it rather than forcing the dialog.
+          if (navigator.permissions) {
+            const status = await navigator.permissions.query({ name: 'geolocation' });
+            if (cancelled) return;
+            if (status.state === 'granted') {
+              startWatch();
+            } else if (status.state === 'prompt') {
+              // Don't force the dialog — wait until they grant it elsewhere or we can add a UI button
+              const onChange = () => { if (status.state === 'granted') startWatch(); };
+              status.addEventListener('change', onChange);
+            }
+            // 'denied' — do nothing silently
+          } else {
+            // Fallback for browsers without Permissions API
+            startWatch();
+          }
         }
       } catch (_) {}
     })();

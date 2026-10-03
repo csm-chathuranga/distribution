@@ -5,8 +5,8 @@ const crud = require('../controllers/crudFactory')(Warehouse, {
   include: [{ model: Branch, attributes: ['id', 'name'] }],
 });
 
-router.get('/', authorize('inventory.view'), crud.list);
-router.get('/:id', authorize('inventory.view'), crud.get);
+router.get('/', authorize.any('inventory.view', 'sales.view_own', 'sales.create'), crud.list);
+router.get('/:id', authorize.any('inventory.view', 'sales.view_own', 'sales.create'), crud.get);
 router.post('/', authorize('inventory.create'), crud.create);
 router.put('/:id', authorize('inventory.create'), crud.update);
 

@@ -6,6 +6,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { useGetCustomerProfileQuery } from '../../api/customersApi';
+import { usePermission } from '../../hooks/usePermission';
 import { fmtCurrency, fmtDate } from '../../utils/format';
 import StatusBadge from '../../components/ui/StatusBadge';
 
@@ -55,6 +56,7 @@ function InvoiceStatusDot({ status }) {
 export default function CustomerProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const canCreate = usePermission('sales.create');
   const [tab, setTab] = useState(TAB_INVOICE);
 
   const { data, isLoading, isError } = useGetCustomerProfileQuery(id);
@@ -121,8 +123,28 @@ export default function CustomerProfile() {
         </button>
       </div>
 
+      {/* Action buttons */}
+      {canCreate && (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate(`/invoices/new?customer_id=${c.id}`)}
+            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity active:opacity-80"
+            style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}
+          >
+            <FileText size={16} /> New Invoice
+          </button>
+          <button
+            onClick={() => navigate(`/sales-orders/new?customer_id=${c.id}`)}
+            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity active:opacity-80"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#8b5cf6)' }}
+          >
+            <ShoppingCart size={16} /> New Order
+          </button>
+        </div>
+      )}
+
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <StatCard icon={TrendingUp}   label="Total Invoiced"   value={fmtCurrency(totalInvoiced)} sub={`${s?.total_count || 0} invoices`} color="blue" />
         <StatCard icon={AlertCircle}  label="Outstanding"      value={fmtCurrency(outstanding)}   sub={overdueCount > 0 ? `${overdueCount} overdue` : 'All current'} color={outstanding > 0 ? 'red' : 'green'} danger={outstanding > 0} />
         <StatCard icon={CheckCircle}  label="Total Collected"  value={fmtCurrency(totalPaid)}     sub={`${s?.paid_count || 0} paid invoices`} color="green" />

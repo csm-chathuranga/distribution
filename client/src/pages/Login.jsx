@@ -96,7 +96,12 @@ export default function Login() {
     try {
       const result = await login(data).unwrap();
       dispatch(setCredentials(result));
-      navigate('/');
+      const roleName = result.user?.Role?.name;
+      if (roleName === 'sales_rep' || roleName === 'driver' || roleName === 'delivery') {
+        navigate('/customers');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       toast.error(err.data?.message || 'Login failed');
     }
@@ -104,8 +109,8 @@ export default function Login() {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col bg-[#0c1629]"
-        style={{ backgroundImage: 'radial-gradient(ellipse at 60% 0%, #1a3a5c 0%, transparent 60%), radial-gradient(ellipse at 0% 100%, #0d2d1a 0%, transparent 50%)' }}>
+      <div className="min-h-screen flex flex-col bg-[#050d1a]"
+        style={{ backgroundImage: 'linear-gradient(160deg, #0c1f4a 0%, #0d2060 40%, #071430 100%), radial-gradient(ellipse at 70% 10%, #1a3a8a 0%, transparent 55%)' }}>
 
         {/* ── Brand ── */}
         <div className="flex flex-col items-center pt-14 pb-6 px-6">

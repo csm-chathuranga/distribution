@@ -4,34 +4,47 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../store/authSlice';
 
 const SALES_TABS = [
-  { to: '/customers',  icon: Users,    label: 'Customers',  pill: 'bg-blue-500 shadow-blue-200'     },
-  { to: '/invoices',   icon: FileText, label: 'Invoices',   pill: 'bg-emerald-500 shadow-emerald-200' },
-  { to: '/van',        icon: Package,  label: 'Van Stock',  pill: 'bg-orange-500 shadow-orange-200'  },
-  { to: '/deliveries', icon: Truck,    label: 'Deliveries', pill: 'bg-violet-500 shadow-violet-200'  },
-  { to: '/profile',    icon: User,     label: 'Profile',    pill: 'bg-slate-600 shadow-slate-200'    },
+  { to: '/customers',  icon: Users,    label: 'Customers',  color: '#3b82f6' },
+  { to: '/invoices',   icon: FileText, label: 'Invoices',   color: '#10b981' },
+  { to: '/van',        icon: Package,  label: 'Van Stock',  color: '#f97316' },
+  { to: '/deliveries', icon: Truck,    label: 'Deliveries', color: '#8b5cf6' },
+  { to: '/profile',    icon: User,     label: 'Profile',    color: '#64748b' },
 ];
 
 const DRIVER_TABS = [
-  { to: '/deliveries', icon: Truck, label: 'Deliveries', pill: 'bg-violet-500 shadow-violet-200' },
-  { to: '/profile',    icon: User,  label: 'Profile',    pill: 'bg-slate-600 shadow-slate-200'   },
+  { to: '/deliveries', icon: Truck, label: 'Deliveries', color: '#8b5cf6' },
+  { to: '/profile',    icon: User,  label: 'Profile',    color: '#64748b' },
 ];
 
-function Tab({ to, icon: Icon, label, pill }) {
+function Tab({ to, icon: Icon, label, color }) {
   return (
-    <NavLink to={to} end className="flex-1 flex justify-center items-center py-2.5">
-      {({ isActive }) =>
-        isActive ? (
-          <div className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl shadow-lg ${pill}`}>
-            <Icon size={16} strokeWidth={2.5} className="text-white flex-shrink-0" />
-            <span className="text-white text-xs font-bold whitespace-nowrap leading-none">{label}</span>
+    <NavLink to={to} end className="flex-1 flex justify-center items-center py-2">
+      {({ isActive }) => (
+        <div className="flex flex-col items-center gap-1 relative">
+          <div
+            className="w-11 h-10 flex items-center justify-center rounded-2xl transition-all duration-200"
+            style={isActive ? { background: color + '18' } : {}}
+          >
+            <Icon
+              size={20}
+              strokeWidth={isActive ? 2.2 : 1.6}
+              style={{ color: isActive ? color : '#94a3b8' }}
+            />
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-0.5">
-            <Icon size={22} strokeWidth={1.6} className="text-gray-400" />
-            <span className="text-[10px] font-medium text-gray-400 leading-none">{label}</span>
-          </div>
-        )
-      }
+          <span
+            className="text-[10px] font-semibold leading-none transition-colors duration-200"
+            style={{ color: isActive ? color : '#94a3b8' }}
+          >
+            {label}
+          </span>
+          {isActive && (
+            <span
+              className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+              style={{ background: color }}
+            />
+          )}
+        </div>
+      )}
     </NavLink>
   );
 }
@@ -40,15 +53,22 @@ export default function BottomNav() {
   const user = useSelector(selectCurrentUser);
   const role = user?.Role?.name;
 
-  const tabs = role === 'sales_rep'                      ? SALES_TABS
-             : ['driver', 'delivery'].includes(role)     ? DRIVER_TABS
+  const tabs = role === 'sales_rep'                  ? SALES_TABS
+             : ['driver', 'delivery'].includes(role) ? DRIVER_TABS
              : null;
 
   if (!tabs) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pb-safe">
-      <div className="flex items-center px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe"
+      style={{
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 -8px 32px rgba(0,0,0,0.08)',
+      }}>
+      <div className="flex items-center px-1">
         {tabs.map(tab => <Tab key={tab.to} {...tab} />)}
       </div>
     </nav>

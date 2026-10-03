@@ -34,10 +34,10 @@ async function generateExpenseNumber() {
   return `EXP-${datePart}-${String(seq).padStart(3, '0')}`;
 }
 
-router.get('/', authorize('finance.view'), crud.list);
-router.get('/:id', authorize('finance.view'), crud.get);
+router.get('/', authorize.any('finance.view', 'sales.create', 'sales.view_own'), crud.list);
+router.get('/:id', authorize.any('finance.view', 'sales.create', 'sales.view_own'), crud.get);
 
-router.post('/', authorize('finance.payments'), async (req, res, next) => {
+router.post('/', authorize.any('finance.payments', 'sales.create'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const data = { ...req.body };

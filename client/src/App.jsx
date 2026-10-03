@@ -1,7 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from './store/authSlice';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
+
+function HomeRedirect() {
+  const user = useSelector(selectCurrentUser);
+  const role = user?.Role?.name;
+  if (role === 'sales_rep' || role === 'driver' || role === 'delivery') {
+    return <Navigate to="/customers" replace />;
+  }
+  return <Navigate to="/dashboard" replace />;
+}
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 
@@ -107,7 +118,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<HomeRedirect />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="profile" element={<Profile />} />
 
