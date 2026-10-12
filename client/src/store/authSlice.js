@@ -11,10 +11,10 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials(state, { payload }) {
-      state.token = payload.token;
+      state.token = payload.token ?? state.token;
       state.refreshToken = payload.refresh_token ?? state.refreshToken;
       state.user = payload.user;
-      state.permissions = payload.user?.Role?.Permissions?.map(p => p.code) || [];
+      state.permissions = payload.permissions || payload.user?.Role?.Permissions?.map(p => p.code) || [];
       localStorage.setItem('auth', JSON.stringify(state));
     },
     logout(state) {

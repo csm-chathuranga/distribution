@@ -12,8 +12,7 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['logo.svg', 'favicon.svg'],
         devOptions: {
-          enabled: true,        // service worker active in `vite dev` so beforeinstallprompt fires
-          type: 'module',
+          enabled: false,       // SW disabled in dev — autoUpdate + HMR causes constant reloads
         },
         manifest: {
           name: 'Lanka Dist — Distribution System',

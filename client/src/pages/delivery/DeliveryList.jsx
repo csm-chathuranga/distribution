@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Plus, Truck, CheckCircle, RotateCcw, MapPin, User, FileText } from 'lucide-react';
+import { Plus, Truck, CheckCircle, RotateCcw, MapPin, User, FileText, Package, ChevronRight } from 'lucide-react';
 import {
   useGetDeliveriesQuery, useDispatchDeliveryMutation,
   useDeliverDeliveryMutation, useReturnDeliveryMutation,
+  useGetActiveSheetQuery,
 } from '../../api/salesApi';
 import { selectCurrentUser } from '../../store/authSlice';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -29,7 +30,7 @@ export default function DeliveryList() {
   const canCreate   = usePermission('sales.create');
   const isDriver    = ['driver', 'delivery'].includes(currentUser?.Role?.name);
 
-  const [status,   setStatus]   = useState(isDriver ? 'DISPATCHED' : '');
+  const [status,   setStatus]   = useState('');
   const [mineOnly, setMineOnly] = useState(isDriver);
   const [actionDn, setActionDn] = useState(null);
   const [notes,    setNotes]    = useState('');
@@ -42,7 +43,12 @@ export default function DeliveryList() {
   const [deliverMut,  { isLoading: delivering  }] = useDeliverDeliveryMutation();
   const [returnMut,   { isLoading: returning   }] = useReturnDeliveryMutation();
 
-  const rows = data?.data || [];
+  const { data: activeSheet } = useGetActiveSheetQuery(undefined, { skip: !isDriver, refetchOnMountOrArgChange: true });
+
+  const STATUS_ORDER = { DISPATCHED: 0, PENDING: 1, DELIVERED: 2, RETURNED: 3, CANCELLED: 4 };
+  const rows = [...(data?.data || [])].sort((a, b) =>
+    (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9)
+  );
 
   const handleAction = async () => {
     const { dn, action } = actionDn;
@@ -144,6 +150,23 @@ export default function DeliveryList() {
           </button>
         )}
       </div>
+
+      {/* Active Loading Sheet card — drivers only */}
+      {isDriver && activeSheet && (
+        <div
+          onClick={() => navigate(`/loading-sheets/${activeSheet.id}`)}
+          className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer active:opacity-75 transition-opacity border-l-4 border-l-orange-400 bg-white shadow-md"
+        >
+          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <Package size={20} className="text-orange-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-gray-900 text-sm">{activeSheet.sheet_number}</p>
+            <p className="text-xs text-orange-600 font-semibold mt-0.5">Van Loaded · Tap to view stock &amp; close</p>
+          </div>
+          <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+        </div>
+      )}
 
       {filters}
 

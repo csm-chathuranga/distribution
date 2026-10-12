@@ -27,6 +27,7 @@ export const reportsApi = baseApi.injectEndpoints({
     getCompany: b.query({ query: () => '/branches/company', providesTags: ['Company'] }),
     updateCompany: b.mutation({ query: body => ({ url: '/branches/company', method: 'PUT', body }), invalidatesTags: ['Company'] }),
 
+    getVanDamageLoss: b.query({ query: params => ({ url: '/reports/van-damage-loss', params }), providesTags: ['Report'] }),
     getCommissions: b.query({ query: params => ({ url: '/commission', params }), providesTags: ['Commission'] }),
     generateCommission: b.mutation({ query: body => ({ url: '/commission/generate', method: 'POST', body }), invalidatesTags: ['Commission'] }),
     approveCommission: b.mutation({ query: id => ({ url: `/commission/${id}/approve`, method: 'PUT' }), invalidatesTags: ['Commission'] }),
@@ -42,7 +43,7 @@ export const {
   useGetVatSummaryQuery, useGetCustomerStatementQuery,
   useGetProductProfitabilityQuery, useGetReorderSuggestionsQuery, useGetSalesRepKpiQuery,
   useGetStockMatrixQuery, useGetFastMoversQuery, useGetBestRoutesQuery, useGetCustomerRankingQuery,
-  useGetAgedCreditorsQuery, useGetDailyCollectionsQuery,
+  useGetAgedCreditorsQuery, useGetDailyCollectionsQuery, useGetVanDamageLossQuery,
   useGetPeriodsQuery, useCreatePeriodMutation, useClosePeriodMutation, useReopenPeriodMutation,
   useGetCompanyQuery, useUpdateCompanyMutation,
   useGetCommissionsQuery, useGenerateCommissionMutation, useApproveCommissionMutation, usePayCommissionMutation, useCancelCommissionMutation,

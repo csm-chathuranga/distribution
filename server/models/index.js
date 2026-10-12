@@ -46,6 +46,8 @@ const Vehicle = require('./Vehicle')(sequelize);
 const CustomerReturn = require('./CustomerReturn')(sequelize);
 const CustomerReturnLine = require('./CustomerReturnLine')(sequelize);
 const SalesCommission = require('./SalesCommission')(sequelize);
+const FreeItemAllocation = require('./FreeItemAllocation')(sequelize);
+const FreeItemUsage = require('./FreeItemUsage')(sequelize);
 
 // Junction tables
 const RolePermission = sequelize.define('RolePermission', {}, { tableName: 'role_permissions', timestamps: false });
@@ -260,6 +262,16 @@ CustomerReturn.hasMany(CustomerReturnLine, { as: 'Lines', foreignKey: 'return_id
 CustomerReturnLine.belongsTo(CustomerReturn, { foreignKey: 'return_id' });
 CustomerReturnLine.belongsTo(Product, { foreignKey: 'product_id' });
 
+// ── Free Item Allocations ─────────────────────────────────
+FreeItemAllocation.belongsTo(User, { as: 'SalesRep', foreignKey: 'sales_rep_id' });
+FreeItemAllocation.belongsTo(Product, { foreignKey: 'product_id' });
+FreeItemAllocation.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
+FreeItemAllocation.hasMany(FreeItemUsage, { as: 'Usages', foreignKey: 'allocation_id' });
+FreeItemUsage.belongsTo(FreeItemAllocation, { foreignKey: 'allocation_id' });
+FreeItemUsage.belongsTo(Customer, { foreignKey: 'customer_id' });
+FreeItemUsage.belongsTo(Invoice, { foreignKey: 'invoice_id' });
+FreeItemUsage.belongsTo(User, { as: 'GivenBy', foreignKey: 'given_by' });
+
 // ── Notifications ─────────────────────────────────────────
 User.hasMany(Notification, { foreignKey: 'user_id' });
 Notification.belongsTo(User, { foreignKey: 'user_id' });
@@ -290,4 +302,5 @@ module.exports = {
   Vehicle,
   CustomerReturn, CustomerReturnLine,
   SalesCommission,
+  FreeItemAllocation, FreeItemUsage,
 };

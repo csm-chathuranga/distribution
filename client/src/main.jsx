@@ -38,7 +38,45 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
     <NotificationProvider>
       <App />
-      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      <Toaster
+        position="top-right"
+        gutter={10}
+        containerStyle={{ top: 16, right: 16 }}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            minWidth: '320px',
+            maxWidth: '420px',
+            padding: '14px 16px',
+            borderRadius: '14px',
+            fontSize: '14px',
+            fontWeight: '500',
+            lineHeight: '1.4',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+            border: '1px solid rgba(0,0,0,0.06)',
+            color: '#111827',
+            background: '#ffffff',
+          },
+          success: {
+            iconTheme: { primary: '#16a34a', secondary: '#ffffff' },
+            style: {
+              borderLeft: '4px solid #16a34a',
+            },
+          },
+          error: {
+            iconTheme: { primary: '#dc2626', secondary: '#ffffff' },
+            style: {
+              borderLeft: '4px solid #dc2626',
+            },
+          },
+          loading: {
+            iconTheme: { primary: '#2563eb', secondary: '#ffffff' },
+            style: {
+              borderLeft: '4px solid #2563eb',
+            },
+          },
+        }}
+      />
     </NotificationProvider>
   </Provider>
 );

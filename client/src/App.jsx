@@ -1,9 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from './store/authSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { selectCurrentUser, selectToken, setCredentials } from './store/authSlice';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
+import { useGetMeQuery } from './api/authApi';
+
+function AuthRefresher() {
+  const dispatch = useDispatch();
+  const token = useSelector(selectToken);
+  const { data } = useGetMeQuery(undefined, { skip: !token });
+  useEffect(() => {
+    if (data) dispatch(setCredentials({ user: data.user, permissions: data.permissions }));
+  }, [data, dispatch]);
+  return null;
+}
 
 function HomeRedirect() {
   const user = useSelector(selectCurrentUser);
@@ -51,6 +63,7 @@ import RouteList from './pages/routes/RouteList';
 import RouteDetail from './pages/customers/RouteDetail';
 import SalesOrderList from './pages/sales/SalesOrderList';
 import SalesOrderCreate from './pages/sales/SalesOrderCreate';
+import SalesOrderDetail from './pages/sales/SalesOrderDetail';
 import InvoiceList from './pages/sales/InvoiceList';
 import InvoiceCreate from './pages/sales/InvoiceCreate';
 import InvoiceDetail from './pages/sales/InvoiceDetail';
@@ -75,6 +88,7 @@ import LoadingSheetList from './pages/vanSales/LoadingSheetList';
 import LoadingSheetCreate from './pages/vanSales/LoadingSheetCreate';
 import LoadingSheetDetail from './pages/vanSales/LoadingSheetDetail';
 import VanStock from './pages/vanSales/VanStock';
+import FreeItems from './pages/vanSales/FreeItems';
 import SalesRepMap from './pages/tracking/SalesRepMap';
 import LocationTracker from './components/LocationTracker';
 import OfflineBanner from './components/OfflineBanner';
@@ -110,10 +124,12 @@ import ProductProfitability from './pages/reports/ProductProfitability';
 import ReorderSuggestions from './pages/reports/ReorderSuggestions';
 import SalesRepKPI from './pages/reports/SalesRepKPI';
 import Analytics from './pages/reports/Analytics';
+import VanDamageLoss from './pages/reports/VanDamageLoss';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthRefresher />
       <OfflineBanner />
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -151,18 +167,19 @@ export default function App() {
           <Route path="supplier-payments/:id" element={<ProtectedRoute permission="finance.payments"><SupplierPaymentDetail /></ProtectedRoute>} />
 
           {/* Sales — sales.view_own is enough to enter; backend filters data per role */}
-          <Route path="customers" element={<ProtectedRoute permission="sales.view_own"><CustomerList /></ProtectedRoute>} />
-          <Route path="customers/:id" element={<ProtectedRoute permission="sales.view_own"><CustomerProfile /></ProtectedRoute>} />
+          <Route path="customers" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><CustomerList /></ProtectedRoute>} />
+          <Route path="customers/:id" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><CustomerProfile /></ProtectedRoute>} />
           <Route path="routes" element={<ProtectedRoute permission="sales.view_all"><RouteList /></ProtectedRoute>} />
           <Route path="routes/:id" element={<ProtectedRoute permission="sales.view_all"><RouteDetail /></ProtectedRoute>} />
           <Route path="sales-orders" element={<ProtectedRoute permission="sales.view_own"><SalesOrderList /></ProtectedRoute>} />
           <Route path="sales-orders/new" element={<ProtectedRoute permission="sales.create"><SalesOrderCreate /></ProtectedRoute>} />
-          <Route path="invoices" element={<ProtectedRoute permission="sales.view_own"><InvoiceList /></ProtectedRoute>} />
+          <Route path="sales-orders/:id" element={<ProtectedRoute permission="sales.view_own"><SalesOrderDetail /></ProtectedRoute>} />
+          <Route path="invoices" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><InvoiceList /></ProtectedRoute>} />
           <Route path="invoices/new" element={<ProtectedRoute permission="sales.create"><InvoiceCreate /></ProtectedRoute>} />
-          <Route path="invoices/:id" element={<ProtectedRoute permission="sales.view_own"><InvoiceDetail /></ProtectedRoute>} />
-          <Route path="credit-notes" element={<ProtectedRoute permission="sales.view_own"><CreditNoteList /></ProtectedRoute>} />
+          <Route path="invoices/:id" element={<ProtectedRoute permission={["sales.view_own","sales.view_all","sales.create"]}><InvoiceDetail /></ProtectedRoute>} />
+          <Route path="credit-notes" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><CreditNoteList /></ProtectedRoute>} />
           <Route path="credit-notes/new" element={<ProtectedRoute permission="sales.create"><CreditNoteCreate /></ProtectedRoute>} />
-          <Route path="customer-returns" element={<ProtectedRoute permission="sales.view_own"><CustomerReturnList /></ProtectedRoute>} />
+          <Route path="customer-returns" element={<ProtectedRoute permission={["sales.view_own","sales.view_all","sales.create"]}><CustomerReturnList /></ProtectedRoute>} />
           <Route path="customer-returns/new" element={<ProtectedRoute permission="sales.create"><CustomerReturnCreate /></ProtectedRoute>} />
           <Route path="customer-returns/:id" element={<ProtectedRoute permission="sales.view_own"><CustomerReturnDetail /></ProtectedRoute>} />
           <Route path="commission" element={<ProtectedRoute permission="sales.view_own"><CommissionList /></ProtectedRoute>} />
@@ -177,6 +194,7 @@ export default function App() {
           <Route path="loading-sheets" element={<ProtectedRoute permission="sales.create"><LoadingSheetList /></ProtectedRoute>} />
           <Route path="loading-sheets/new" element={<ProtectedRoute permission="sales.create"><LoadingSheetCreate /></ProtectedRoute>} />
           <Route path="loading-sheets/:id" element={<ProtectedRoute permission="sales.create"><LoadingSheetDetail /></ProtectedRoute>} />
+          <Route path="free-items" element={<ProtectedRoute permission="sales.create"><FreeItems /></ProtectedRoute>} />
           <Route path="tracking" element={<ProtectedRoute permission="sales.approve"><SalesRepMap /></ProtectedRoute>} />
 
           {/* Finance */}
@@ -205,6 +223,7 @@ export default function App() {
           <Route path="reports/product-profitability" element={<ProtectedRoute permission="reports.finance"><ProductProfitability /></ProtectedRoute>} />
           <Route path="reports/reorder-suggestions" element={<ProtectedRoute permission="reports.inventory"><ReorderSuggestions /></ProtectedRoute>} />
           <Route path="reports/sales-rep-kpi" element={<ProtectedRoute permission="reports.sales"><SalesRepKPI /></ProtectedRoute>} />
+          <Route path="reports/van-damage-loss" element={<ProtectedRoute permission="reports.inventory"><VanDamageLoss /></ProtectedRoute>} />
           <Route path="analytics" element={<ProtectedRoute permission="reports.sales"><Analytics /></ProtectedRoute>} />
           {/* Legacy path redirects */}
           <Route path="reports/sales" element={<Navigate to="/reports/sales-summary" replace />} />

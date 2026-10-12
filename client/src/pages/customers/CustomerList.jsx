@@ -78,9 +78,23 @@ function CustomerForm({ onClose, editing }) {
     } catch (e) { toast.error(e.data?.message || 'Failed'); }
   };
 
+  const formId = 'customer-form';
+
   return (
-    <Modal open onClose={onClose} title={editing ? 'Edit Customer' : 'New Customer'} size="lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <Modal
+      open onClose={onClose}
+      title={editing ? 'Edit Customer' : 'New Customer'}
+      size="lg"
+      footer={
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+          <button type="submit" form={formId} disabled={c || u} className="btn-primary">
+            {c || u ? 'Saving...' : editing ? 'Update Customer' : 'Create Customer'}
+          </button>
+        </div>
+      }
+    >
+      <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField label="Customer Name" required error={errors.name?.message} {...register('name')} />
           <TextField label="Code" error={errors.code?.message} {...register('code')} />
@@ -111,12 +125,6 @@ function CustomerForm({ onClose, editing }) {
             />
           )}
         />
-        <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-          <button type="submit" disabled={c || u} className="btn-primary">
-            {c || u ? 'Saving...' : editing ? 'Update Customer' : 'Create Customer'}
-          </button>
-        </div>
       </form>
     </Modal>
   );

@@ -35,5 +35,6 @@ router.use('/notifications', auth, require('./notifications'));
 router.use('/vehicles',         auth, require('./vehicles'));
 router.use('/customer-returns', auth, require('./customerReturns'));
 router.use('/commission',       auth, require('./commission'));
+router.use('/free-allocations', auth, require('./freeAllocations'));
 
 module.exports = router;

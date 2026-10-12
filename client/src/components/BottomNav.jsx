@@ -12,8 +12,11 @@ const SALES_TABS = [
 ];
 
 const DRIVER_TABS = [
-  { to: '/deliveries', icon: Truck, label: 'Deliveries', color: '#8b5cf6' },
-  { to: '/profile',    icon: User,  label: 'Profile',    color: '#64748b' },
+  { to: '/customers',        icon: Users,    label: 'Customers', color: '#3b82f6' },
+  { to: '/invoices/new',     icon: FileText, label: 'Invoice',   color: '#10b981' },
+  { to: '/van',              icon: Package,  label: 'Van Stock', color: '#f97316' },
+  { to: '/deliveries',       icon: Truck,    label: 'Deliveries',color: '#8b5cf6' },
+  { to: '/profile',          icon: User,     label: 'Profile',   color: '#64748b' },
 ];
 
 function Tab({ to, icon: Icon, label, color }) {

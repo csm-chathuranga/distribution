@@ -79,7 +79,7 @@ export default function SalesOrderList() {
         <div className="space-y-2">
           {orders.map(so => (
             <div key={so.id} className="card overflow-hidden">
-              <div className="p-4">
+              <div className="p-4 cursor-pointer" onClick={() => navigate(`/sales-orders/${so.id}`)}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 leading-snug">

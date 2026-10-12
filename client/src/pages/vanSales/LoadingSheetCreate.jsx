@@ -1,24 +1,28 @@
+import { useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
-import { useCreateLoadingSheetMutation } from '../../api/salesApi';
+import { Plus, Trash2, FileText, CheckSquare } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useCreateLoadingSheetMutation, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation } from '../../api/salesApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetRoutesQuery } from '../../api/customersApi';
-import { useGetUsersQuery } from '../../api/settingsApi';
+import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { useGetVehiclesQuery } from '../../api/vehiclesApi';
 import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import FormField from '../../components/ui/FormField';
 import SearchableSelect from '../../components/ui/SearchableSelect';
-import { today, fmtCurrency } from '../../utils/format';
+import { today, fmtCurrency, fmtDate } from '../../utils/format';
+import { usePermission } from '../../hooks/usePermission';
 
 const schema = yup.object({
   sheet_date: yup.string().required('Date is required'),
   route_id: yup.number().required('Route is required').typeError('Select a route'),
   warehouse_id: yup.number().required('Warehouse is required').typeError('Select a warehouse'),
   sales_rep_id: yup.number().required('Sales rep is required').typeError('Select a sales rep'),
+  driver_id: yup.number().required('Driver is required').typeError('Select a driver'),
   vehicle_id: yup.number().required('Vehicle is required').typeError('Select a vehicle'),
   lines: yup.array().of(yup.object({
     product_id: yup.number().required().typeError('Select a product'),
@@ -28,19 +32,37 @@ const schema = yup.object({
 });
 
 export default function LoadingSheetCreate() {
-  const navigate = useNavigate();
-  const [create, { isLoading }] = useCreateLoadingSheetMutation();
-  const { data: productsData } = useGetProductsQuery({ limit: 500 });
-  const { data: warehousesData } = useGetWarehousesQuery({});
-  const { data: routesData } = useGetRoutesQuery({});
-  const { data: usersData } = useGetUsersQuery({ limit: 200 });
-  const { data: vehiclesData } = useGetVehiclesQuery({});
+  const navigate   = useNavigate();
+  const canApprove = usePermission('sales.approve');
 
-  const products = productsData?.data || [];
+  const [create,      { isLoading }]          = useCreateLoadingSheetMutation();
+  const [addInvoices, { isLoading: linking }] = useAddInvoicesToSheetMutation();
+  const [selectedInvIds, setSelectedInvIds]   = useState(new Set());
+
+  const { data: availableInvoices = [], isLoading: loadingInvoices } = useGetAvailableInvoicesForNewQuery(undefined, { skip: !canApprove });
+
+  const toggleInv = id => setSelectedInvIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const toggleAllInv = () => {
+    if (selectedInvIds.size === availableInvoices.length) setSelectedInvIds(new Set());
+    else setSelectedInvIds(new Set(availableInvoices.map(i => i.id)));
+  };
+
+  const { data: productsData }  = useGetProductsQuery({ limit: 500 });
+  const { data: warehousesData } = useGetWarehousesQuery({});
+  const { data: routesData }    = useGetRoutesQuery({});
+  const { data: drivers = [] }   = useGetUsersForSelectQuery('delivery');
+  const { data: allSelectUsers = [] } = useGetUsersForSelectQuery(null);
+  const salesReps = allSelectUsers.filter(u => ['sales_rep', 'manager', 'admin'].includes(u.Role?.name));
+  const { data: vehiclesData }  = useGetVehiclesQuery({});
+
+  const products   = productsData?.data || [];
   const warehouses = warehousesData?.data || [];
-  const routes = routesData?.data || [];
-  const users = usersData?.data || [];
-  const vehicles = (vehiclesData?.data || []).filter(v => v.status === 'active');
+  const routes     = routesData?.data || [];
+  const vehicles   = (vehiclesData?.data || []).filter(v => v.status === 'active');
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -75,8 +97,16 @@ export default function LoadingSheetCreate() {
   });
 
   const onSubmit = async (values) => {
-    await create(values).unwrap();
-    navigate('/loading-sheets');
+    try {
+      const sheet = await create(values).unwrap();
+      if (selectedInvIds.size > 0) {
+        await addInvoices({ id: sheet.id, invoice_ids: [...selectedInvIds] }).unwrap();
+      }
+      toast.success('Loading sheet created');
+      navigate(`/loading-sheets/${sheet.id}`);
+    } catch (e) {
+      toast.error(e.data?.message || e.message || 'Failed to create loading sheet');
+    }
   };
 
   return (
@@ -118,7 +148,13 @@ export default function LoadingSheetCreate() {
             <FormField label="Sales Rep" error={errors.sales_rep_id?.message} required>
               <select {...register('sales_rep_id')} className="input">
                 <option value="">-- Select Sales Rep --</option>
-                {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                {salesReps.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Driver" error={errors.driver_id?.message} required>
+              <select {...register('driver_id')} className="input">
+                <option value="">-- Select Driver --</option>
+                {drivers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
             </FormField>
           </div>
@@ -213,10 +249,67 @@ export default function LoadingSheetCreate() {
           </div>
         </div>
 
+        {/* Link Invoices — admin/manager only */}
+        {canApprove && (
+          <div className="card">
+            <div className="card-header flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">Link Invoices</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Attach posted invoices to this loading sheet</p>
+              </div>
+              {availableInvoices.length > 0 && (
+                <button type="button" onClick={toggleAllInv}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-800">
+                  <CheckSquare size={13} />
+                  {selectedInvIds.size === availableInvoices.length ? 'Deselect all' : 'Select all'}
+                </button>
+              )}
+            </div>
+
+            {loadingInvoices ? (
+              <div className="p-6 text-center text-sm text-gray-400">Loading invoices…</div>
+            ) : availableInvoices.length === 0 ? (
+              <div className="p-8 text-center">
+                <FileText size={28} className="mx-auto text-gray-200 mb-2" />
+                <p className="text-sm text-gray-400">No unassigned posted invoices available</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+                {availableInvoices.map(inv => (
+                  <label key={inv.id}
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${selectedInvIds.has(inv.id) ? 'bg-primary-50/40' : ''}`}>
+                    <input type="checkbox" checked={selectedInvIds.has(inv.id)} onChange={() => toggleInv(inv.id)}
+                      className="w-4 h-4 accent-primary-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-sm font-semibold text-primary-700">{inv.invoice_number}</span>
+                        <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">POSTED</span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                        <span>{inv.Customer?.name || '—'}</span>
+                        <span>{fmtDate(inv.invoice_date)}</span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-gray-800 font-mono text-sm flex-shrink-0">{fmtCurrency(inv.total_amount)}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {selectedInvIds.size > 0 && (
+              <div className="px-4 py-2.5 bg-primary-50 border-t border-primary-100 text-xs font-semibold text-primary-700">
+                {selectedInvIds.size} invoice{selectedInvIds.size !== 1 ? 's' : ''} selected · {fmtCurrency(
+                  availableInvoices.filter(i => selectedInvIds.has(i.id)).reduce((s, i) => s + parseFloat(i.total_amount), 0)
+                )} total
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex justify-end gap-3">
           <button type="button" onClick={() => navigate('/loading-sheets')} className="btn btn-secondary">Cancel</button>
-          <button type="submit" disabled={isLoading || hasOverStock} className="btn btn-primary disabled:opacity-50">
-            {isLoading ? 'Creating...' : 'Create Loading Sheet'}
+          <button type="submit" disabled={isLoading || linking || hasOverStock} className="btn btn-primary disabled:opacity-50">
+            {isLoading || linking ? 'Creating...' : 'Create Loading Sheet'}
           </button>
           {hasOverStock && <p className="text-sm text-red-600 self-center">Fix quantities exceeding available stock</p>}
         </div>

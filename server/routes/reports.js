@@ -443,4 +443,41 @@ router.get('/aged-creditors', authorize('reports.finance'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
+// GET /api/reports/van-damage-loss — all damaged/lost items from closed loading sheets
+router.get('/van-damage-loss', authorize('reports.inventory'), async (req, res, next) => {
+  try {
+    const { from, to } = req.query;
+    const rows = await sequelize.query(`
+      SELECT
+        ls.sheet_number,
+        ls.sheet_date,
+        COALESCE(driver.name, rep.name, '—') AS driver_name,
+        p.name AS product_name,
+        p.sku,
+        w.name AS warehouse_name,
+        lsl.loaded_quantity,
+        lsl.damaged_quantity,
+        lsl.lost_quantity,
+        lsl.damage_notes,
+        lsl.unit_cost,
+        (lsl.damaged_quantity + lsl.lost_quantity) * lsl.unit_cost AS write_off_value
+      FROM loading_sheet_lines lsl
+      JOIN loading_sheets ls ON ls.id = lsl.sheet_id
+      JOIN products p ON p.id = lsl.product_id
+      JOIN warehouses w ON w.id = ls.warehouse_id
+      LEFT JOIN users driver ON driver.id = ls.driver_id
+      LEFT JOIN users rep    ON rep.id    = ls.sales_rep_id
+      WHERE ls.status = 'CLOSED'
+        AND (lsl.damaged_quantity > 0 OR lsl.lost_quantity > 0)
+        ${from ? 'AND ls.sheet_date >= :from' : ''}
+        ${to   ? 'AND ls.sheet_date <= :to'   : ''}
+      ORDER BY ls.sheet_date DESC, ls.sheet_number
+    `, { type: QueryTypes.SELECT, replacements: { from, to } });
+    const totalDamaged   = rows.reduce((s, r) => s + parseFloat(r.damaged_quantity || 0), 0);
+    const totalLost      = rows.reduce((s, r) => s + parseFloat(r.lost_quantity    || 0), 0);
+    const totalWriteOff  = rows.reduce((s, r) => s + parseFloat(r.write_off_value  || 0), 0);
+    res.json({ rows, summary: { totalDamaged, totalLost, totalWriteOff } });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

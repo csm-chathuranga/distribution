@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, sequelize } = require('../models');
+const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
 const notify = require('../notify');
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
@@ -36,16 +36,34 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/loading-sheets/active — current user's LOADED loading sheet (sales rep auto-detect)
+// GET /api/loading-sheets/active — current user's LOADED loading sheet (sales rep OR driver)
 router.get('/active', async (req, res, next) => {
   try {
     const sheet = await LoadingSheet.findOne({
-      where: { sales_rep_id: req.user.id, status: 'LOADED' },
+      where: {
+        status: 'LOADED',
+        [Op.or]: [{ sales_rep_id: req.user.id }, { driver_id: req.user.id }],
+      },
       order: [['sheet_date', 'DESC']],
       attributes: ['id', 'sheet_number', 'status', 'sheet_date', 'warehouse_id'],
     });
     if (!sheet) return res.status(404).json({ message: 'No active loading sheet' });
     res.json(sheet);
+  } catch (err) { next(err); }
+});
+
+// GET /api/loading-sheets/available-invoices — POSTED invoices with no sheet (for new sheet creation)
+router.get('/available-invoices', authorize('sales.approve'), async (req, res, next) => {
+  try {
+    const where = { status: 'POSTED', loading_sheet_id: null };
+    if (req.user.branch_id) where.branch_id = req.user.branch_id;
+    const invoices = await Invoice.findAll({
+      where,
+      include: [{ model: Customer, attributes: ['id', 'name', 'code'] }],
+      order: [['invoice_date', 'DESC'], ['id', 'DESC']],
+      limit: 200,
+    });
+    res.json(invoices);
   } catch (err) { next(err); }
 });
 
@@ -87,6 +105,10 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { lines, ...sheetData } = req.body;
+    if (!Array.isArray(lines) || lines.length === 0) {
+      await t.rollback();
+      return res.status(400).json({ message: 'At least one product line is required' });
+    }
     const year = new Date().getFullYear();
     const count = await LoadingSheet.count();
     const sheet_number = `LS-${year}-${String(count + 1).padStart(5, '0')}`;
@@ -94,8 +116,73 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
     const sheet = await LoadingSheet.create({ ...sheetData, sheet_number, total_loaded_value: totalLoaded, branch_id: req.user.branch_id, created_by: req.user.id }, { transaction: t });
     await LoadingSheetLine.bulkCreate(lines.map(l => ({ ...l, sheet_id: sheet.id })), { transaction: t });
     await t.commit();
-    res.status(201).json(await LoadingSheet.findByPk(sheet.id, { include }));
+    const created = await LoadingSheet.findByPk(sheet.id, { include });
+    res.status(201).json(created);
+    // Notify the assigned driver that a loading sheet has been created for them
+    if (sheetData.driver_id) {
+      notify({ userId: sheetData.driver_id, type: 'SHEET_CREATED', title: 'Loading Sheet Assigned', body: `${sheet_number} has been assigned to you — awaiting loading`, link: `/loading-sheets/${sheet.id}` });
+    }
+    if (sheetData.sales_rep_id && sheetData.sales_rep_id !== sheetData.driver_id) {
+      notify({ userId: sheetData.sales_rep_id, type: 'SHEET_CREATED', title: 'Loading Sheet Assigned', body: `${sheet_number} has been assigned to you — awaiting loading`, link: `/loading-sheets/${sheet.id}` });
+    }
   } catch (err) { await t.rollback(); next(err); }
+});
+
+// GET /api/loading-sheets/:id/available-invoices — POSTED invoices not yet on any sheet
+router.get('/:id/available-invoices', authorize('sales.approve'), async (req, res, next) => {
+  try {
+    const sheet = await LoadingSheet.findByPk(req.params.id, { attributes: ['id', 'branch_id'] });
+    if (!sheet) return res.status(404).json({ message: 'Not found' });
+    const invoices = await Invoice.findAll({
+      where: { status: 'POSTED', loading_sheet_id: null, branch_id: sheet.branch_id },
+      include: [{ model: Customer, attributes: ['id', 'name', 'code'] }],
+      order: [['invoice_date', 'DESC'], ['id', 'DESC']],
+      limit: 200,
+    });
+    res.json(invoices);
+  } catch (err) { next(err); }
+});
+
+// PUT /api/loading-sheets/:id/invoices — assign invoice_ids to this sheet
+router.put('/:id/invoices', authorize('sales.approve'), async (req, res, next) => {
+  try {
+    const { invoice_ids } = req.body;
+    if (!Array.isArray(invoice_ids) || !invoice_ids.length) return res.status(400).json({ message: 'invoice_ids required' });
+    const sheet = await LoadingSheet.findByPk(req.params.id);
+    if (!sheet) return res.status(404).json({ message: 'Not found' });
+    if (sheet.status === 'CLOSED') return res.status(422).json({ message: 'Sheet is closed' });
+    const [count] = await Invoice.update(
+      { loading_sheet_id: sheet.id },
+      { where: { id: invoice_ids, status: 'POSTED', loading_sheet_id: null } }
+    );
+    res.json({ linked: count });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/loading-sheets/:id/invoices/:invoiceId — unlink invoice from sheet
+router.delete('/:id/invoices/:invoiceId', authorize('sales.approve'), async (req, res, next) => {
+  try {
+    await Invoice.update(
+      { loading_sheet_id: null },
+      { where: { id: req.params.invoiceId, loading_sheet_id: req.params.id } }
+    );
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/loading-sheets/:id — update driver/sales_rep on non-closed sheets
+router.patch('/:id', authorize('sales.approve'), async (req, res, next) => {
+  try {
+    const sheet = await LoadingSheet.findByPk(req.params.id);
+    if (!sheet) return res.status(404).json({ message: 'Not found' });
+    if (sheet.status === 'CLOSED') return res.status(422).json({ message: 'Cannot edit a closed sheet' });
+    const { driver_id, sales_rep_id } = req.body;
+    const updates = {};
+    if (driver_id !== undefined) updates.driver_id = driver_id || null;
+    if (sales_rep_id !== undefined) updates.sales_rep_id = sales_rep_id || null;
+    await sheet.update(updates);
+    res.json(await LoadingSheet.findByPk(sheet.id, { include }));
+  } catch (err) { next(err); }
 });
 
 // PUT /api/loading-sheets/:id/load — deduct stock from warehouse, mark LOADED
@@ -213,6 +300,37 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
       }
 
       totalSales += soldQty * (parseFloat(line.unit_cost) || 0);
+    }
+
+    // Journal write-off for damaged + lost stock
+    const totalDamageLoss = returns.reduce((sum, r) => {
+      const line = sheet.Lines.find(l => l.id === r.line_id);
+      const cost = parseFloat(line?.unit_cost || 0);
+      return sum + (Number(r.damaged_quantity || 0) + Number(r.lost_quantity || 0)) * cost;
+    }, 0);
+
+    if (totalDamageLoss > 0) {
+      const [period, lossAcc, stockAcc] = await Promise.all([
+        AccountingPeriod.findOne({ where: { is_open: true }, transaction: t }),
+        Account.findOne({ where: { is_system: true, sub_type: 'VAN_LOSS' }, transaction: t }),
+        Account.findOne({ where: { is_system: true, sub_type: 'STOCK' }, transaction: t }),
+      ]);
+      if (period && lossAcc && stockAcc) {
+        const entryCount = await JournalEntry.count({ transaction: t });
+        const entryNum = `JE-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}-${String(entryCount + 1).padStart(5,'0')}`;
+        const je = await JournalEntry.create({
+          company_id: sheet.company_id, branch_id: sheet.branch_id, period_id: period.id,
+          entry_number: entryNum, entry_date: new Date().toISOString().slice(0, 10),
+          source_type: 'VAN_CLOSE', source_id: sheet.id,
+          description: `Van damage/loss write-off — ${sheet.sheet_number}`,
+          total_debit: totalDamageLoss, total_credit: totalDamageLoss, is_posted: true,
+          created_by: req.user.id,
+        }, { transaction: t });
+        await JournalLine.bulkCreate([
+          { journal_id: je.id, account_id: lossAcc.id,  debit: totalDamageLoss, credit: 0,               description: 'Van damage & loss expense' },
+          { journal_id: je.id, account_id: stockAcc.id, debit: 0,               credit: totalDamageLoss, description: 'Stock written off — van damage/loss' },
+        ], { transaction: t });
+      }
     }
 
     await sheet.update({ status: 'CLOSED', total_sales_amount: totalSales, cash_collected: parseFloat(cash_collected) || 0 }, { transaction: t });

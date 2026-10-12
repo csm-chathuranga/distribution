@@ -73,7 +73,21 @@ Driver returns to warehouse
 | UI    | `client/src/pages/vanSales/LoadingSheetCreate.jsx`, `LoadingSheetList.jsx`, `LoadingSheetDetail.jsx` |
 | UI    | `client/src/pages/vanSales/VanStock.jsx` |
 
+**LoadingSheet fields:** `driver_id` (FK → users, delivery role), `vehicle_id` (FK → vehicles), `sales_rep_id`, `route_id`, `warehouse_id`, `branch_id`, `total_loaded_value`, `cash_collected`
+
 **LoadingSheetLine fields:** `loaded_quantity`, `sold_quantity`, `returned_quantity`, `damaged_quantity` *(migration 008)*, `lost_quantity` *(migration 008)*, `damage_notes` *(migration 008)*, `unit_cost`
+
+**Invoice linking:** POSTED invoices can be linked to a sheet at creation time (admin/manager) or from the detail page via "Add Existing" button. `Invoice.loading_sheet_id` tracks the link. Invoices can also be unlinked (removed) from DRAFT/LOADED sheets.
+
+**Driver access:** Delivery role has `sales.create` permission *(migration 012)*. Active sheet detection checks both `driver_id` OR `sales_rep_id` so drivers see their own sheet.
+
+**Key endpoints added:**
+- `GET /api/loading-sheets/available-invoices` — POSTED invoices without a sheet (for create form; requires `sales.approve`)
+- `GET /api/loading-sheets/:id/available-invoices` — same but scoped to sheet's branch
+- `PUT /api/loading-sheets/:id/invoices` — link invoice_ids to a sheet
+- `DELETE /api/loading-sheets/:id/invoices/:invoiceId` — unlink invoice
+- `GET /api/users/for-select?role=delivery` — lightweight users list for dropdowns
+- `PATCH /api/loading-sheets/:id` — update `driver_id` / `sales_rep_id` on non-CLOSED sheets (requires `sales.approve`); used by inline driver assignment on detail page
 
 **Day-End Close payload:**
 ```json
@@ -169,7 +183,65 @@ Driver returns to warehouse
 
 ---
 
-### 9. Route Expenses (linked to Loading Sheet)
+### 9. Van Delivery Tracking (Mark Delivered)
+**Flow:** After a van invoice is posted, the driver marks it as physically delivered at the customer premises.
+
+| Layer | File |
+|-------|------|
+| Model field | `server/models/Invoice.js` — `delivered_at DATETIME`, `delivered_by INT` |
+| Route | `server/routes/invoices.js` — `PUT /:id/deliver` (requires `sales.create`) |
+| UI | `client/src/pages/sales/InvoiceDetail.jsx` — teal "Mark Delivered" button (van invoices only, canCreate, not yet delivered) |
+
+**Business rule:** Only invoices with `loading_sheet_id` show the Mark Delivered button. Status must be `POSTED`, `PARTIAL`, or `OVERDUE`. Idempotent guard prevents double-delivery.
+
+**Notifications on deliver:** admin + manager + super_admin notified (`INVOICE_DELIVERED`). If `sales_rep_id ≠ driver`, sales rep also notified.
+
+**Migration:** 013
+
+---
+
+### 10. Van Damage & Loss — P&L Write-off
+**Flow:** At Day-End Close, if any damaged_quantity or lost_quantity is recorded, the system auto-creates a journal entry to write off stock cost to the Van Damage & Loss expense account.
+
+| Layer | File |
+|-------|------|
+| Journal logic | `server/routes/loadingSheets.js` — close endpoint, inside transaction |
+| Account | `6800 Van Damage & Loss` (EXPENSE, sub_type=VAN_LOSS, is_system=true) |
+| Report | `client/src/pages/reports/VanDamageLoss.jsx` |
+| API | `server/routes/reports.js` — `GET /van-damage-loss?from=&to=` |
+
+**Journal entry:** `DR 6800 Van Damage & Loss / CR 1301 Stock` — amount = sum(damaged_qty + lost_qty) × unit_cost per line.
+
+**Migrations:** 014 (enum + account)
+
+---
+
+### 11. Free Item Allocations (Promotional Quota)
+**Flow:** Manager/admin assigns a product quota to a sales rep (warehouse-specific). When the rep creates an invoice, they can attach free items from their quota as zero-price lines. Quota is deducted atomically within the invoice transaction.
+
+| Layer | File |
+|-------|------|
+| Models | `server/models/FreeItemAllocation.js`, `server/models/FreeItemUsage.js` |
+| Route | `server/routes/freeAllocations.js` |
+| Controller | `server/controllers/invoiceController.js` — `free_items` param handled in `exports.create` |
+| UI management | `client/src/pages/vanSales/FreeItems.jsx` — quota cards, top-up, history |
+| UI on invoice | `client/src/pages/sales/InvoiceCreate.jsx` — purple "Free Items" panel, +/− controls per product |
+
+**FreeItemAllocation fields:** `company_id`, `sales_rep_id`, `product_id`, `warehouse_id`, `allocated_quantity`, `used_quantity`, `notes`
+
+**FreeItemUsage fields:** `allocation_id`, `customer_id`, `invoice_id`, `quantity`, `notes`, `given_by`
+
+**Invoice create body addition:**
+```json
+{ "free_items": [{ "allocation_id": 3, "quantity": 2 }] }
+```
+Each free item is injected as a zero-price line (`unit_price: 0, vat_rate: 0, cost_price: 0`). Stock deducted same as regular lines via `performPost`. Quota deducted after post succeeds.
+
+**Migrations:** 015
+
+---
+
+### 12. Route Expenses (linked to Loading Sheet)
 **Flow:** Driver/manager records expenses (fuel, transport, etc.) against a specific loading sheet trip.
 
 | Layer | File |
@@ -196,6 +268,11 @@ Driver returns to warehouse
 | 008 | `008_add_damage_loss_to_loading_sheet_lines.js` | `damaged_quantity`, `lost_quantity`, `damage_notes` on loading sheet lines |
 | 009 | `009_add_sales_commissions.js` | `sales_commissions` table |
 | 010 | `010_add_visit_order_and_expense_loading_sheet.js` | `visit_order` on customers; `loading_sheet_id` on expenses |
+| 011 | `011_add_notifications_table.js` | `notifications` table for push/in-app notifications |
+| 012 | `012_delivery_role_sales_create.js` | Grants `sales.create` permission to `delivery` role (van drivers can create invoices) |
+| 013 | `013_add_delivered_at_to_invoices.js` | Adds `delivered_at DATETIME NULL` and `delivered_by INT NULL` to `invoices` table for van delivery tracking |
+| 014 | `014_van_damage_loss_journal.js` | Extends `journal_entries.source_type` enum with `VAN_CLOSE`; adds account `6800 Van Damage & Loss` (EXPENSE, sub_type=VAN_LOSS, is_system=true) |
+| 015 | `015_free_item_allocations.js` | Creates `free_item_allocations` (manager assigns promo quota per product/rep/warehouse) and `free_item_usages` (tracks each zero-price invoice line) tables |
 
 ---
 
@@ -204,13 +281,28 @@ Driver returns to warehouse
 | Prefix | File | Notes |
 |--------|------|-------|
 | `/api/sales-orders` | `salesOrders.js` | CRUD + confirm; credit limit check on create |
-| `/api/invoices` | `invoices.js` | Create (auto-posts) + post |
+| `/api/invoices` | `invoices.js` | Create (auto-posts) + post + `PUT /:id/deliver` (van delivery tracking) |
 | `/api/customer-returns` | `customerReturns.js` | CRUD + confirm + cancel |
 | `/api/loading-sheets` | `loadingSheets.js` | CRUD + load + close |
 | `/api/commission` | `commission.js` | List + generate + approve + pay + cancel |
 | `/api/deliveries` | `deliveries.js` | CRUD + dispatch + deliver + return |
 | `/api/routes` | `routes_api.js` | CRUD + `GET /:id/customers` + `PUT /:id/visit-order` |
 | `/api/expenses` | `expenses.js` | CRUD; filterable by `loading_sheet_id` |
+| `/api/free-allocations` | `freeAllocations.js` | GET (list), POST (create), PUT /:id/topup, GET /:id/history |
+
+---
+
+## Notification Flow
+
+| Event | Trigger | Recipients |
+|-------|---------|------------|
+| Sales order created | `POST /api/sales-orders` | admin, manager, super_admin |
+| Sales order confirmed | `PUT /api/sales-orders/:id/confirm` | order creator (`created_by`) |
+| Loading sheet created/assigned | `POST /api/loading-sheets` | driver (`driver_id`), sales rep (`sales_rep_id`) if different |
+| Invoice delivered (van) | `PUT /api/invoices/:id/deliver` | admin, manager, super_admin; sales rep if different from driver |
+
+**notify() signature:** `notify({ userId?, roleName?, type, title, body, link })`
+- `userId` → specific user; `roleName` → all users with that role (both optional but one required)
 
 ---
 
@@ -220,4 +312,4 @@ Driver returns to warehouse
 
 ---
 
-*Last updated: 2026-10-03*
+*Last updated: 2026-10-13*

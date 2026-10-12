@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Package, Users, ShoppingCart, FileText, Truck,
   CreditCard, BarChart2, Settings, ChevronDown, Warehouse, BookOpen,
   Receipt, ArrowLeftRight, Building2, LogOut, MapPin, ClipboardList,
-  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car, DollarSign,
+  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car, DollarSign, Gift,
 } from 'lucide-react';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import { usePermission, useCanAny } from '../hooks/usePermission';
@@ -147,6 +147,7 @@ export default function Sidebar() {
           <>
             <p className="sidebar-section-label">Van Sales</p>
             <NavItem to="/loading-sheets" icon={Navigation} label="Loading Sheets" />
+            <NavItem to="/free-items" icon={Gift} label="Free Items" />
             <NavItem to="/tracking" icon={MapPin} label="Rep Tracking" />
             <NavItem to="/reports/daily-collections" icon={Zap} label="Daily Collections" />
           </>
@@ -181,6 +182,7 @@ export default function Sidebar() {
               <NavItem to="/reports/aged-creditors" label="Aged Creditors (AP)" />
               <NavItem to="/reports/customer-statement" label="Customer Statement" />
               <NavItem to="/reports/stock-movement" label="Stock Movement" />
+              <NavItem to="/reports/van-damage-loss" label="Van Damage &amp; Loss" />
               <NavItem to="/reports/low-stock" label="Low Stock Alert" />
               <NavItem to="/reports/reorder-suggestions" label="Reorder Suggestions" />
               <NavItem to="/reports/product-profitability" label="Product Profitability" />

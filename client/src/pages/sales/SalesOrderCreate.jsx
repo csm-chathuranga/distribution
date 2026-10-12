@@ -1,8 +1,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useCreateSalesOrderMutation } from '../../api/salesApi';
@@ -12,7 +12,10 @@ import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetUsersQuery } from '../../api/settingsApi';
 import { selectCurrentUser } from '../../store/authSlice';
 import { usePermission } from '../../hooks/usePermission';
+import { useOfflineSync } from '../../hooks/useOfflineSync';
+import { enqueueRequest } from '../../utils/offlineQueue';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
+import SearchableSelect from '../../components/ui/SearchableSelect';
 import { today, fmtCurrency } from '../../utils/format';
 
 const lineSchema = yup.object({
@@ -42,6 +45,7 @@ export default function SalesOrderCreate() {
   const currentUser  = useSelector(selectCurrentUser);
   const canManageUsers = usePermission('settings.users');
   const [create, { isLoading }] = useCreateSalesOrderMutation();
+  const { isOnline, refreshCount } = useOfflineSync();
 
   const { data: customers }  = useGetCustomersQuery({ limit: 500 });
   const { data: warehouses } = useGetWarehousesQuery({});
@@ -86,14 +90,33 @@ export default function SalesOrderCreate() {
   const total = lines.reduce((s, l) => s + lineAmt(l), 0);
 
   const onSubmit = async (data) => {
+    const linesWithTotal = data.lines.map(l => ({
+      ...l,
+      free_quantity: Number(l.free_quantity) || 0,
+      discount_rate: Number(l.discount) || 0,
+      line_total: lineAmt(l),
+    }));
+    const payload = { ...data, lines: linesWithTotal, total_amount: total };
+
+    if (!navigator.onLine) {
+      try {
+        await enqueueRequest({
+          id:     `order-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          url:    '/sales-orders',
+          method: 'POST',
+          body:   payload,
+        });
+        await refreshCount();
+        toast.success('Order saved — will sync when back online', { icon: '📋', duration: 4000 });
+        navigate('/sales-orders');
+      } catch {
+        toast.error('Failed to save offline');
+      }
+      return;
+    }
+
     try {
-      const linesWithTotal = data.lines.map(l => ({
-        ...l,
-        free_quantity: Number(l.free_quantity) || 0,
-        discount_rate: Number(l.discount) || 0,
-        line_total: lineAmt(l),
-      }));
-      await create({ ...data, lines: linesWithTotal, total_amount: total }).unwrap();
+      await create(payload).unwrap();
       toast.success('Sales order created');
       navigate('/sales-orders');
     } catch (e) { toast.error(e.data?.message || 'Failed'); }
@@ -108,6 +131,14 @@ export default function SalesOrderCreate() {
         </button>
         <h1 className="text-lg font-bold text-gray-900">New Sales Order</h1>
       </div>
+
+      {/* Offline notice */}
+      {!isOnline && (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium">
+          <WifiOff size={15} className="text-red-400 flex-shrink-0" />
+          Offline — order will be saved and synced when connected
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
@@ -190,13 +221,24 @@ export default function SalesOrderCreate() {
                   </div>
 
                   <div className="p-4 space-y-3">
-                    {/* Product select */}
+                    {/* Product search */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Product</label>
-                      <SelectField
-                        options={productOpts}
-                        error={errors.lines?.[i]?.product_id?.message}
-                        {...reg(`lines.${i}.product_id`, { onChange: e => handleProductChange(i, e.target.value) })}
+                      <Controller
+                        control={control}
+                        name={`lines.${i}.product_id`}
+                        render={({ field }) => (
+                          <SearchableSelect
+                            value={field.value}
+                            onChange={val => {
+                              field.onChange(val);
+                              handleProductChange(i, val);
+                            }}
+                            options={productOpts}
+                            placeholder="Search product…"
+                            error={errors.lines?.[i]?.product_id?.message}
+                          />
+                        )}
                       />
                     </div>
 
@@ -274,7 +316,7 @@ export default function SalesOrderCreate() {
           disabled={isLoading}
           className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-50"
         >
-          {isLoading ? 'Creating…' : `Create Order · ${fmtCurrency(total)}`}
+          {isLoading ? 'Creating…' : !isOnline ? `Save Offline · ${fmtCurrency(total)}` : `Create Order · ${fmtCurrency(total)}`}
         </button>
       </div>
     </div>

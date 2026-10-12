@@ -4,7 +4,7 @@ const authorize = require('../middleware/authorize');
 const { Receipt, Customer, Invoice, Cheque, ReceiptAllocation, JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
 
 // GET /api/receipts/advance/:customerId — total unallocated (advance) balance for a customer
-router.get('/advance/:customerId', authorize('finance.receipts'), async (req, res, next) => {
+router.get('/advance/:customerId', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
   try {
     const receipts = await Receipt.findAll({
       where: { customer_id: req.params.customerId, status: 'POSTED' },
@@ -32,8 +32,8 @@ const generateReceiptNumber = async () => {
   return `RCT-${datePart}-${String(seq).padStart(3, '0')}`;
 };
 
-router.get('/', authorize('finance.receipts'), crud.list);
-router.get('/:id', authorize('finance.receipts'), async (req, res, next) => {
+router.get('/', authorize.any('finance.receipts', 'sales.view_own'), crud.list);
+router.get('/:id', authorize.any('finance.receipts', 'sales.view_own'), async (req, res, next) => {
   try {
     const r = await Receipt.findByPk(req.params.id, {
       include: [{ model: Customer }, { model: Invoice, through: { model: ReceiptAllocation } }, { model: Cheque }],
@@ -43,7 +43,7 @@ router.get('/:id', authorize('finance.receipts'), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', authorize('finance.receipts'), async (req, res, next) => {
+router.post('/', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { allocations, cheque, ...data } = req.body;
@@ -105,7 +105,7 @@ router.post('/', authorize('finance.receipts'), async (req, res, next) => {
 });
 
 // POST /api/receipts/:id/allocate — apply unallocated receipt amount to an invoice
-router.post('/:id/allocate', authorize('finance.receipts'), async (req, res, next) => {
+router.post('/:id/allocate', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { invoice_id, amount } = req.body;

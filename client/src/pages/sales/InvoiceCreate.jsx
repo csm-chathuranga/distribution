@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Plus, Trash2, MapPin, MapPinOff, Loader, ArrowLeft, Truck, UserPlus, X } from 'lucide-react';
+import { Plus, Trash2, MapPin, MapPinOff, Loader, ArrowLeft, Truck, UserPlus, X, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useCreateInvoiceMutation, useGetVanStockQuery, useGetActiveSheetQuery } from '../../api/salesApi';
+import { useCreateInvoiceMutation, useGetVanStockQuery, useGetActiveSheetQuery, useGetFreeAllocationsQuery } from '../../api/salesApi';
 import { useGetCustomersQuery, useCreateCustomerMutation } from '../../api/customersApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
@@ -75,6 +75,9 @@ export default function InvoiceCreate() {
   const [location,  setLocation]  = useState(null);
   const [locStatus, setLocStatus] = useState('fetching');
   const [showAddCustomer, setShowAddCustomer] = useState(false);
+  // free_items: [{ allocation_id, product_id, product_name, quantity, remaining }]
+  const [freeItems, setFreeItems] = useState([]);
+  const { data: freeAllocs = [] } = useGetFreeAllocationsQuery();
   const [newCustName, setNewCustName]   = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
   const [newCustType, setNewCustType]   = useState('RETAILER');
@@ -162,6 +165,7 @@ export default function InvoiceCreate() {
         ...data, company_id: 1, branch_id: 1,
         latitude:  location?.latitude  ?? null,
         longitude: location?.longitude ?? null,
+        free_items: freeItems.filter(f => f.quantity > 0).map(f => ({ allocation_id: f.allocation_id, quantity: f.quantity })),
       };
       if (isVanMode) payload.loading_sheet_id = parseInt(effectiveSheetId);
       const inv = await createInvoice(payload).unwrap();
@@ -505,6 +509,68 @@ export default function InvoiceCreate() {
             })}
           </div>
         </div>
+
+        {/* Free Items */}
+        {freeAllocs.length > 0 && (
+          <div className="card overflow-hidden border border-purple-100">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-purple-100 bg-purple-50">
+              <Gift size={15} className="text-purple-600" />
+              <h2 className="font-semibold text-purple-800 text-sm">Free Items</h2>
+              <span className="text-xs text-purple-500 ml-1">Added as zero-price lines</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {freeAllocs.map(a => {
+                const remaining = parseFloat(a.allocated_quantity) - parseFloat(a.used_quantity);
+                if (remaining <= 0) return null;
+                const fi = freeItems.find(f => f.allocation_id === a.id);
+                const qty = fi?.quantity || 0;
+                return (
+                  <div key={a.id} className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{a.Product?.name}</p>
+                      <p className="text-xs text-purple-600">{remaining} units available</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <button type="button"
+                        onClick={() => setFreeItems(prev => {
+                          const next = prev.filter(f => f.allocation_id !== a.id);
+                          const newQty = Math.max(0, qty - 1);
+                          return newQty > 0 ? [...next, { allocation_id: a.id, quantity: newQty, remaining }] : next;
+                        })}
+                        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm">−</button>
+                      <input type="number" min="0" max={remaining} step="1"
+                        value={qty || ''}
+                        placeholder="0"
+                        onChange={e => {
+                          const v = Math.min(remaining, Math.max(0, parseInt(e.target.value) || 0));
+                          setFreeItems(prev => {
+                            const next = prev.filter(f => f.allocation_id !== a.id);
+                            return v > 0 ? [...next, { allocation_id: a.id, quantity: v, remaining }] : next;
+                          });
+                        }}
+                        onFocus={e => e.target.select()}
+                        className="input text-sm py-1 text-center w-14" />
+                      <button type="button"
+                        onClick={() => setFreeItems(prev => {
+                          const next = prev.filter(f => f.allocation_id !== a.id);
+                          const newQty = Math.min(remaining, qty + 1);
+                          return newQty > 0 ? [...next, { allocation_id: a.id, quantity: newQty, remaining }] : next;
+                        })}
+                        className="w-7 h-7 rounded-lg bg-purple-100 hover:bg-purple-200 flex items-center justify-center text-purple-600 font-bold text-sm">+</button>
+                      <span className="text-xs text-gray-400 w-12 text-right">FREE</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {freeItems.some(f => f.quantity > 0) && (
+              <div className="px-4 py-2 bg-purple-50 border-t border-purple-100 flex justify-between">
+                <span className="text-xs text-purple-700 font-semibold">Free items added</span>
+                <span className="text-xs text-purple-700 font-mono font-bold">{freeItems.reduce((s, f) => s + f.quantity, 0)} units</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Totals summary */}
         <div className="card p-4 space-y-2">

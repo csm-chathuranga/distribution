@@ -90,8 +90,8 @@ export default function UserList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const { data, isLoading } = useGetUsersQuery({ search, page, limit: 20 });
-  const { data: rolesData } = useGetRolesQuery({});
-  const roles = rolesData?.data || [];
+  const { data: rolesData } = useGetRolesQuery();
+  const roles = Array.isArray(rolesData) ? rolesData : [];
 
   const openEdit = (r) => { setEditing(r); setFormKey(k => k + 1); setFormOpen(true); };
   const openNew = () => { setEditing(null); setFormKey(k => k + 1); setFormOpen(true); };

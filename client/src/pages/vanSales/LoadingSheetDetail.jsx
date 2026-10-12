@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Printer, Truck, Trash2, Plus } from 'lucide-react';
-import { useGetLoadingSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetExpensesQuery, useCreateExpenseMutation } from '../../api/salesApi';
+import { ArrowLeft, RotateCcw, Printer, Truck, Trash2, Plus, X, FileText, CheckSquare } from 'lucide-react';
+import { useGetLoadingSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetExpensesQuery, useCreateExpenseMutation, useGetAvailableInvoicesQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation } from '../../api/salesApi';
+import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { useGetCompanyQuery } from '../../api/reportsApi';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -187,6 +188,90 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
   );
 }
 
+function AddInvoiceModal({ sheetId, onClose }) {
+  const { data: available = [], isLoading } = useGetAvailableInvoicesQuery(sheetId);
+  const [addInvoices, { isLoading: adding }] = useAddInvoicesToSheetMutation();
+  const [selected, setSelected] = useState(new Set());
+
+  const toggle = id => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const toggleAll = () => {
+    if (selected.size === available.length) setSelected(new Set());
+    else setSelected(new Set(available.map(inv => inv.id)));
+  };
+
+  const handleAdd = async () => {
+    if (!selected.size) return;
+    try {
+      const result = await addInvoices({ id: sheetId, invoice_ids: [...selected] }).unwrap();
+      toast.success(`${result.linked} invoice${result.linked !== 1 ? 's' : ''} added to sheet`);
+      onClose();
+    } catch (e) { toast.error(e.data?.message || 'Failed to add invoices'); }
+  };
+
+  return (
+    <Modal open title="Add Invoices to Sheet" onClose={onClose} size="lg"
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <span className="text-sm text-gray-500">
+            {selected.size > 0 ? `${selected.size} selected` : 'Select invoices below'}
+          </span>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="btn btn-secondary">Cancel</button>
+            <button onClick={handleAdd} disabled={!selected.size || adding} className="btn btn-primary">
+              {adding ? 'Adding…' : `Add ${selected.size || ''} Invoice${selected.size !== 1 ? 's' : ''}`}
+            </button>
+          </div>
+        </div>
+      }
+    >
+      {isLoading ? (
+        <div className="py-10 text-center text-gray-400">Loading available invoices…</div>
+      ) : available.length === 0 ? (
+        <div className="py-10 text-center">
+          <FileText size={36} className="mx-auto text-gray-300 mb-2" />
+          <p className="text-sm text-gray-500 font-medium">No posted invoices available</p>
+          <p className="text-xs text-gray-400 mt-1">All posted invoices are already assigned to a loading sheet</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          <div className="flex items-center gap-3 px-1 pb-2 border-b border-gray-100">
+            <button onClick={toggleAll}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-800">
+              <CheckSquare size={13} />
+              {selected.size === available.length ? 'Deselect all' : 'Select all'}
+            </button>
+            <span className="text-xs text-gray-400">{available.length} available</span>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+            {available.map(inv => (
+              <label key={inv.id} className={`flex items-center gap-3 px-2 py-3 cursor-pointer rounded-lg hover:bg-gray-50 transition-colors ${selected.has(inv.id) ? 'bg-primary-50/50' : ''}`}>
+                <input type="checkbox" checked={selected.has(inv.id)} onChange={() => toggle(inv.id)}
+                  className="w-4 h-4 accent-primary-600 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm font-semibold text-primary-700">{inv.invoice_number}</span>
+                    <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">POSTED</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                    <span>{inv.Customer?.name || '—'}</span>
+                    <span>{fmtDate(inv.invoice_date)}</span>
+                  </div>
+                </div>
+                <span className="font-bold text-gray-900 font-mono text-sm flex-shrink-0">{fmtCurrency(inv.total_amount)}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 export default function LoadingSheetDetail() {
   const { id }    = useParams();
   const navigate  = useNavigate();
@@ -198,10 +283,14 @@ export default function LoadingSheetDetail() {
   const [load,   { isLoading: loading  }] = useLoadLoadingSheetMutation();
   const [close,  { isLoading: closing  }] = useCloseLoadingSheetMutation();
   const [remove, { isLoading: deleting }] = useDeleteLoadingSheetMutation();
+  const [removeInv,   { isLoading: unlinking }]  = useRemoveInvoiceFromSheetMutation();
+  const [updateSheet, { isLoading: updatingSheet }] = useUpdateLoadingSheetMutation();
+  const { data: drivers = [] } = useGetUsersForSelectQuery('delivery', { skip: !canLoadVan });
 
-  const [showLoad,   setShowLoad]   = useState(false);
-  const [showClose,  setShowClose]  = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
+  const [showLoad,      setShowLoad]      = useState(false);
+  const [showClose,     setShowClose]     = useState(false);
+  const [showDelete,    setShowDelete]    = useState(false);
+  const [showAddInv,    setShowAddInv]    = useState(false);
 
   const { data: expenseData, refetch: refetchExpenses } = useGetExpensesQuery({ loading_sheet_id: id, limit: 50 });
   const [createExpense, { isLoading: savingExpense }] = useCreateExpenseMutation();
@@ -307,18 +396,18 @@ export default function LoadingSheetDetail() {
               </button>
             </>
           )}
+          {sheet.status === 'LOADED' && canLoadVan && (
+            <button onClick={() => setShowClose(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white whitespace-nowrap flex-shrink-0 shadow-sm transition-opacity active:opacity-80"
+              style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)' }}>
+              <RotateCcw size={15} /> Day-End Close
+            </button>
+          )}
           {sheet.status === 'LOADED' && canCreate && (
-            <>
-              <button onClick={() => setShowClose(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white whitespace-nowrap flex-shrink-0 shadow-sm transition-opacity active:opacity-80"
-                style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)' }}>
-                <RotateCcw size={15} /> Day-End Close
-              </button>
-              <button onClick={() => navigate(`/invoices/create?sheet=${sheet.id}`)}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
-                <Plus size={15} /> Create Invoice
-              </button>
-            </>
+            <button onClick={() => navigate(`/invoices/create?sheet=${sheet.id}`)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+              <Plus size={15} /> Create Invoice
+            </button>
           )}
           <button onClick={handlePrint}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
@@ -331,7 +420,30 @@ export default function LoadingSheetDetail() {
       <div className="card">
         <div className="card-body grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
           <div><p className="text-gray-500">Sales Rep</p><p className="font-semibold">{sheet.SalesRep?.name || '—'}</p></div>
-          <div><p className="text-gray-500">Driver</p><p className="font-semibold">{sheet.Driver?.name || '—'}</p></div>
+          <div>
+            <p className="text-gray-500">Driver</p>
+            {sheet.Driver?.name ? (
+              <p className="font-semibold">{sheet.Driver.name}</p>
+            ) : canLoadVan && sheet.status !== 'CLOSED' ? (
+              <select
+                defaultValue=""
+                disabled={updatingSheet}
+                onChange={async e => {
+                  if (!e.target.value) return;
+                  try {
+                    await updateSheet({ id: sheet.id, driver_id: Number(e.target.value) }).unwrap();
+                    toast.success('Driver assigned');
+                  } catch (err) { toast.error(err.data?.message || 'Failed'); }
+                }}
+                className="mt-0.5 text-sm border border-gray-300 rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-full"
+              >
+                <option value="">Assign driver…</option>
+                {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            ) : (
+              <p className="font-semibold text-gray-400">—</p>
+            )}
+          </div>
           <div><p className="text-gray-500">Warehouse</p><p className="font-semibold">{sheet.Warehouse?.name || '—'}</p></div>
           <div><p className="text-gray-500">Loaded Value</p><p className="font-semibold text-primary-700">{fmtCurrency(sheet.total_loaded_value)}</p></div>
           {sheet.status === 'CLOSED' && (
@@ -349,53 +461,80 @@ export default function LoadingSheetDetail() {
         </div>
       </div>
 
-      {/* Invoices card — shown when any invoices exist */}
-      {invoices.length > 0 && (
+      {/* Invoices card — shown for admin on DRAFT/LOADED sheets, or whenever invoices exist */}
+      {(invoices.length > 0 || (canLoadVan && sheet.status !== 'CLOSED')) && (
         <div className="card">
-          <div className="card-header flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-800">Invoices ({invoices.length})</h3>
-            {sheet.status === 'LOADED' && canCreate && (
-              <button onClick={() => navigate(`/invoices/create?sheet=${sheet.id}`)}
-                className="flex items-center gap-1 text-xs text-primary-600 font-semibold hover:text-primary-800">
-                <Plus size={13} /> New Invoice
-              </button>
-            )}
+          <div className="card-header flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-semibold text-gray-800">Invoices {invoices.length > 0 && `(${invoices.length})`}</h3>
+            <div className="flex items-center gap-2">
+              {canLoadVan && sheet.status !== 'CLOSED' && (
+                <button onClick={() => setShowAddInv(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary-600 bg-primary-50 border border-primary-200 hover:bg-primary-100 transition-colors">
+                  <Plus size={13} /> Add Existing
+                </button>
+              )}
+              {sheet.status === 'LOADED' && canCreate && (
+                <button onClick={() => navigate(`/invoices/create?sheet=${sheet.id}`)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors">
+                  <Plus size={13} /> New Invoice
+                </button>
+              )}
+            </div>
           </div>
-          <div className="card-body">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="table-th">Invoice #</th>
-                  <th className="table-th">Customer</th>
-                  <th className="table-th">Date</th>
-                  <th className="table-th text-right">Amount</th>
-                  <th className="table-th">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {invoices.map(inv => (
-                  <tr key={inv.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/invoices/${inv.id}`)}>
-                    <td className="table-td font-mono text-primary-700">{inv.invoice_number}</td>
-                    <td className="table-td">{inv.Customer?.name}</td>
-                    <td className="table-td text-gray-500">{fmtDate(inv.invoice_date)}</td>
-                    <td className="table-td text-right font-semibold">{fmtCurrency(inv.total_amount)}</td>
-                    <td className="table-td">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${invoiceStatusColor(inv.status)}`}>{inv.status}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-gray-200 bg-gray-50">
-                  <td colSpan={3} className="table-td text-right font-semibold">Total Invoiced</td>
-                  <td className="table-td text-right font-bold text-green-700">
-                    {fmtCurrency(invoices.filter(i => i.status === 'POSTED').reduce((s, i) => s + parseFloat(i.total_amount), 0))}
-                  </td>
-                  <td />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          {invoices.length === 0 ? (
+            <div className="p-8 text-center">
+              <FileText size={32} className="mx-auto text-gray-200 mb-2" />
+              <p className="text-sm text-gray-400">No invoices linked yet</p>
+              <p className="text-xs text-gray-300 mt-0.5">Use "Add Existing" to link posted invoices</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {invoices.map(inv => {
+                const isPosted = inv.status === 'POSTED';
+                return (
+                <div key={inv.id}
+                  onClick={() => navigate(`/invoices/${inv.id}`)}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
+                  {/* Left: invoice info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-sm font-bold text-primary-700">{inv.invoice_number}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${invoiceStatusColor(inv.status)}`}>{inv.status}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-0.5 truncate">{inv.Customer?.name}</p>
+                    <p className="text-xs text-gray-400">{fmtDate(inv.invoice_date)}</p>
+                  </div>
+                  {/* Right: amount + actions */}
+                  <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <span className="font-bold text-gray-900 font-mono text-sm">{fmtCurrency(inv.total_amount)}</span>
+                    {isPosted && canCreate && sheet.status === 'LOADED' && (
+                      <button
+                        onClick={() => navigate(`/invoices/${inv.id}?collect=1`)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-green-600 hover:bg-green-700 active:bg-green-800 transition-colors whitespace-nowrap">
+                        Collect
+                      </button>
+                    )}
+                    {canLoadVan && sheet.status !== 'CLOSED' && (
+                      <button
+                        onClick={() => removeInv({ sheetId: sheet.id, invoiceId: inv.id })}
+                        disabled={unlinking}
+                        title="Remove from sheet"
+                        className="p-1 text-gray-300 hover:text-red-500 transition-colors rounded">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                );
+              })}
+              <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-t border-green-100">
+                <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Total Invoiced</span>
+                <span className="font-bold text-green-700 font-mono text-sm">
+                  {fmtCurrency(invoices.filter(i => i.status === 'POSTED').reduce((s, i) => s + parseFloat(i.total_amount), 0))}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -690,6 +829,10 @@ export default function LoadingSheetDetail() {
           onConfirm={handleClose}
           isLoading={closing}
         />
+      )}
+
+      {showAddInv && (
+        <AddInvoiceModal sheetId={sheet.id} onClose={() => setShowAddInv(false)} />
       )}
     </div>
   );

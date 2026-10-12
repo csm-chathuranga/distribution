@@ -6,11 +6,13 @@ export const salesApi = baseApi.injectEndpoints({
     getSalesOrder: b.query({ query: id => `/sales-orders/${id}`, providesTags: (r,e,id) => [{ type:'SalesOrder', id }] }),
     createSalesOrder: b.mutation({ query: body => ({ url: '/sales-orders', method: 'POST', body }), invalidatesTags: ['SalesOrder'] }),
     confirmSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}/confirm`, method: 'PUT' }), invalidatesTags: ['SalesOrder'] }),
+    invoiceSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}/invoice`, method: 'POST' }), invalidatesTags: ['SalesOrder', 'Invoice'] }),
 
     getInvoices: b.query({ query: params => ({ url: '/invoices', params }), providesTags: ['Invoice'] }),
     getInvoice: b.query({ query: id => `/invoices/${id}`, providesTags: (r,e,id) => [{ type:'Invoice', id }] }),
     createInvoice: b.mutation({ query: body => ({ url: '/invoices', method: 'POST', body }), invalidatesTags: ['Invoice'] }),
     postInvoice: b.mutation({ query: id => ({ url: `/invoices/${id}/post`, method: 'POST' }), invalidatesTags: ['Invoice', 'Stock', 'Journal'] }),
+    deliverInvoice: b.mutation({ query: id => ({ url: `/invoices/${id}/deliver`, method: 'PUT' }), invalidatesTags: ['Invoice', 'LoadingSheet'] }),
 
     getReceipts: b.query({ query: params => ({ url: '/receipts', params }), providesTags: ['Receipt'] }),
     getReceipt: b.query({ query: id => `/receipts/${id}`, providesTags: (r,e,id) => [{ type: 'Receipt', id }] }),
@@ -44,6 +46,17 @@ export const salesApi = baseApi.injectEndpoints({
     loadLoadingSheet: b.mutation({ query: id => ({ url: `/loading-sheets/${id}/load`, method: 'PUT' }), invalidatesTags: ['LoadingSheet', 'Stock'] }),
     closeLoadingSheet: b.mutation({ query: ({ id, ...body }) => ({ url: `/loading-sheets/${id}/close`, method: 'PUT', body }), invalidatesTags: ['LoadingSheet', 'Stock', 'Invoice'] }),
     deleteLoadingSheet: b.mutation({ query: id => ({ url: `/loading-sheets/${id}`, method: 'DELETE' }), invalidatesTags: ['LoadingSheet'] }),
+    getAvailableInvoices: b.query({ query: sheetId => `/loading-sheets/${sheetId}/available-invoices`, providesTags: ['Invoice'] }),
+    getAvailableInvoicesForNew: b.query({ query: () => '/loading-sheets/available-invoices', providesTags: ['Invoice'] }),
+    addInvoicesToSheet: b.mutation({ query: ({ id, invoice_ids }) => ({ url: `/loading-sheets/${id}/invoices`, method: 'PUT', body: { invoice_ids } }), invalidatesTags: ['LoadingSheet', 'Invoice'] }),
+    removeInvoiceFromSheet: b.mutation({ query: ({ sheetId, invoiceId }) => ({ url: `/loading-sheets/${sheetId}/invoices/${invoiceId}`, method: 'DELETE' }), invalidatesTags: ['LoadingSheet', 'Invoice'] }),
+    updateLoadingSheet: b.mutation({ query: ({ id, ...body }) => ({ url: `/loading-sheets/${id}`, method: 'PATCH', body }), invalidatesTags: ['LoadingSheet'] }),
+
+    getFreeAllocations: b.query({ query: () => '/free-allocations', providesTags: ['FreeAlloc'] }),
+    createFreeAllocation: b.mutation({ query: body => ({ url: '/free-allocations', method: 'POST', body }), invalidatesTags: ['FreeAlloc'] }),
+    topupFreeAllocation: b.mutation({ query: ({ id, ...body }) => ({ url: `/free-allocations/${id}/topup`, method: 'PUT', body }), invalidatesTags: ['FreeAlloc'] }),
+    distributeFreeItems: b.mutation({ query: ({ id, ...body }) => ({ url: `/free-allocations/${id}/distribute`, method: 'POST', body }), invalidatesTags: ['FreeAlloc', 'Stock'] }),
+    getFreeAllocationHistory: b.query({ query: id => `/free-allocations/${id}/history`, providesTags: (r, e, id) => [{ type: 'FreeAlloc', id }] }),
 
     getCustomerReturns: b.query({ query: params => ({ url: '/customer-returns', params }), providesTags: ['CustomerReturn'] }),
     getCustomerReturn: b.query({ query: id => `/customer-returns/${id}`, providesTags: (r,e,id) => [{ type:'CustomerReturn', id }] }),
@@ -54,13 +67,14 @@ export const salesApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useConfirmSalesOrderMutation,
-  useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation,
+  useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
+  useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation, useDeliverInvoiceMutation,
   useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
   useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation,
   useGetPaymentsQuery, useCreatePaymentMutation,
   useGetExpensesQuery, useCreateExpenseMutation,
   useGetDeliveriesQuery, useGetDeliveryQuery, useCreateDeliveryMutation, useDispatchDeliveryMutation, useDeliverDeliveryMutation, useReturnDeliveryMutation,
-  useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation,
+  useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetAvailableInvoicesQuery, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation,
+  useGetFreeAllocationsQuery, useCreateFreeAllocationMutation, useTopupFreeAllocationMutation, useDistributeFreeItemsMutation, useGetFreeAllocationHistoryQuery,
   useGetCustomerReturnsQuery, useGetCustomerReturnQuery, useCreateCustomerReturnMutation, useConfirmCustomerReturnMutation, useCancelCustomerReturnMutation,
 } = salesApi;

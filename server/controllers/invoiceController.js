@@ -1,4 +1,4 @@
-const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, sequelize } = require('../models');
+const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, sequelize } = require('../models');
 const notify = require('../notify');
 const { Op } = require('sequelize');
 
@@ -190,13 +190,31 @@ async function performPost(invoice, userId, t) {
 exports.create = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
-    const { lines, ...invoiceData } = req.body;
+    const { lines, free_items = [], ...invoiceData } = req.body;
     invoiceData.created_by   = req.user.id;
     invoiceData.sales_rep_id = req.user.id;
     if (!invoiceData.branch_id)  invoiceData.branch_id  = req.user.branch_id;
     if (!invoiceData.company_id) invoiceData.company_id = req.user.Branch?.company_id;
     if (!invoiceData.invoice_number) {
       invoiceData.invoice_number = await generateInvoiceNumber(invoiceData.invoice_type);
+    }
+
+    // Validate and inject free item lines
+    if (free_items.length > 0) {
+      const allocIds = free_items.map(f => f.allocation_id);
+      const allocs = await FreeItemAllocation.findAll({ where: { id: allocIds }, transaction: t, lock: true });
+      for (const fi of free_items) {
+        const alloc = allocs.find(a => a.id === Number(fi.allocation_id));
+        if (!alloc) throw Object.assign(new Error(`Free allocation #${fi.allocation_id} not found`), { status: 400 });
+        if (alloc.sales_rep_id !== req.user.id && !req.permissions?.has('sales.approve')) {
+          throw Object.assign(new Error('Not your free item allocation'), { status: 403 });
+        }
+        const remaining = parseFloat(alloc.allocated_quantity) - parseFloat(alloc.used_quantity);
+        if (parseFloat(fi.quantity) > remaining) {
+          throw Object.assign(new Error(`Only ${remaining} units remaining in free item quota`), { status: 422 });
+        }
+        lines.push({ product_id: alloc.product_id, quantity: fi.quantity, unit_price: 0, vat_rate: 0, discount_amount: 0, cost_price: 0 });
+      }
     }
 
     // Auto-fill cost_price from product catalogue for COGS accuracy
@@ -229,6 +247,12 @@ exports.create = async (req, res, next) => {
       transaction: t,
     });
     await performPost(fresh, req.user.id, t);
+
+    // Deduct free item quotas now that invoice is confirmed
+    for (const fi of free_items) {
+      await FreeItemAllocation.increment('used_quantity', { by: parseFloat(fi.quantity), where: { id: fi.allocation_id }, transaction: t });
+      await FreeItemUsage.create({ allocation_id: fi.allocation_id, customer_id: invoiceData.customer_id, invoice_id: invoice.id, quantity: fi.quantity, notes: 'Via invoice', given_by: req.user.id }, { transaction: t });
+    }
 
     await t.commit();
 

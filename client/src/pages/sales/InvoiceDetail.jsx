@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Printer, Truck, MapPin, Banknote, CreditCard } from 'lucide-react';
 import MapModal from '../../components/MapModal';
 import Modal from '../../components/ui/Modal';
 import toast from 'react-hot-toast';
-import { useGetInvoiceQuery, usePostInvoiceMutation, useCreateReceiptMutation, useGetCustomerAdvanceQuery, useAllocateReceiptMutation } from '../../api/salesApi';
+import { useGetInvoiceQuery, usePostInvoiceMutation, useCreateReceiptMutation, useGetCustomerAdvanceQuery, useAllocateReceiptMutation, useDeliverInvoiceMutation } from '../../api/salesApi';
 import { useGetCompanyQuery } from '../../api/reportsApi';
 import { usePermission } from '../../hooks/usePermission';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -135,10 +135,11 @@ function CollectPaymentModal({ invoice, onClose }) {
 export default function InvoiceDetail() {
   const { id }    = useParams();
   const navigate  = useNavigate();
+  const [searchParams] = useSearchParams();
   const canCreate = usePermission('sales.create');
   const canPost   = usePermission('sales.approve');
   const [confirmPost,   setConfirmPost]   = useState(false);
-  const [showPayment,   setShowPayment]   = useState(false);
+  const [showPayment,   setShowPayment]   = useState(searchParams.get('collect') === '1');
   const [mapOpen,       setMapOpen]       = useState(false);
   const [showAdvance,   setShowAdvance]   = useState(false);
   const [applyReceiptId, setApplyReceiptId] = useState('');
@@ -149,7 +150,15 @@ export default function InvoiceDetail() {
   const { data: advance } = useGetCustomerAdvanceQuery(invoice?.customer_id, { skip: !invoice?.customer_id });
   const [postInvoice,    { isLoading: posting }]    = usePostInvoiceMutation();
   const [allocateReceipt, { isLoading: allocating }] = useAllocateReceiptMutation();
+  const [deliverInvoice,  { isLoading: delivering }] = useDeliverInvoiceMutation();
   const handlePrint = () => printComponent(<InvoicePrint invoice={invoice} company={company} />);
+
+  const handleDeliver = async () => {
+    try {
+      await deliverInvoice(id).unwrap();
+      toast.success('Marked as delivered');
+    } catch (e) { toast.error(e.data?.message || 'Failed to mark delivered'); }
+  };
 
   const handlePost = async () => {
     try {
@@ -187,10 +196,12 @@ export default function InvoiceDetail() {
 
   const isPosted    = ['POSTED', 'PARTIAL', 'OVERDUE'].includes(invoice.status);
   const hasBalance  = balance > 0;
-  const showPostBtn    = invoice.status === 'DRAFT' && canPost; // fallback — normally never shown
-  const showPayBtn     = isPosted && hasBalance && canCreate;
-  const showDeliverBtn = isPosted && canCreate && !invoice.loading_sheet_id;
-  const showStickyBar  = showPostBtn || showPayBtn || showDeliverBtn;
+  const isVanInvoice = !!invoice.loading_sheet_id;
+  const showPostBtn          = invoice.status === 'DRAFT' && canPost;
+  const showPayBtn           = isPosted && hasBalance && canCreate;
+  const showMarkDeliveredBtn = isPosted && canCreate && isVanInvoice && !invoice.delivered_at;
+  const showDeliverBtn       = isPosted && canPost && !isVanInvoice;
+  const showStickyBar        = showPostBtn || showPayBtn || showMarkDeliveredBtn || showDeliverBtn;
 
   return (
     <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${showStickyBar ? 'pb-28 md:pb-6' : 'pb-6'}`}>
@@ -214,6 +225,12 @@ export default function InvoiceDetail() {
             <button onClick={() => setShowPayment(true)}
               className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
               <Banknote size={15} /> Collect Payment
+            </button>
+          )}
+          {showMarkDeliveredBtn && (
+            <button onClick={handleDeliver} disabled={delivering}
+              className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium transition-colors disabled:opacity-50">
+              <Truck size={15} /> {delivering ? 'Marking…' : 'Mark Delivered'}
             </button>
           )}
           {showDeliverBtn && (
@@ -243,6 +260,11 @@ export default function InvoiceDetail() {
                   className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full hover:bg-blue-100">
                   Van · {invoice.VanSheet.sheet_number}
                 </Link>
+              )}
+              {invoice.delivered_at && (
+                <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Truck size={11} /> Delivered · {fmtDate(invoice.delivered_at)}
+                </span>
               )}
             </div>
             <h1 className="text-lg font-bold text-gray-900 leading-snug">{invoice.Customer?.name || '—'}</h1>
@@ -463,6 +485,12 @@ export default function InvoiceDetail() {
             <button onClick={() => setShowPayment(true)}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-base transition-colors">
               <Banknote size={20} /> Collect Payment · {fmtCurrency(balance)}
+            </button>
+          )}
+          {showMarkDeliveredBtn && (
+            <button onClick={handleDeliver} disabled={delivering}
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-base transition-colors disabled:opacity-50">
+              <Truck size={20} /> {delivering ? 'Marking…' : 'Mark Delivered'}
             </button>
           )}
           {showDeliverBtn && (
