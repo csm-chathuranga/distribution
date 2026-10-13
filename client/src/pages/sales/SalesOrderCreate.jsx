@@ -58,7 +58,6 @@ export default function SalesOrderCreate() {
 
   const setQty      = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
   const setFree     = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
-  const setDiscount = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], disc: val } }));
 
   // Group products by category
   const grouped = useMemo(() => {
@@ -97,10 +96,9 @@ export default function SalesOrderCreate() {
     .map(p => {
       const qty   = parseFloat(qtys[p.id]?.qty  || 0);
       const free  = parseFloat(qtys[p.id]?.free || 0);
-      const disc  = parseFloat(qtys[p.id]?.disc || 0);
       const price = parseFloat(p.selling_price || 0);
-      const total = qty * price * (1 - disc / 100);
-      return { product: p, qty, free, disc, price, total };
+      const total = qty * price;
+      return { product: p, qty, free, price, total };
     })
     .filter(l => l.qty > 0);
 
@@ -124,7 +122,7 @@ export default function SalesOrderCreate() {
         quantity:      l.qty,
         free_quantity: l.free || 0,
         unit_price:    l.price,
-        discount_rate: l.disc || 0,
+        discount_rate: 0,
         line_total:    l.total,
       })),
     };
@@ -232,12 +230,11 @@ export default function SalesOrderCreate() {
           </div>
 
           {/* Column headers */}
-          <div className="grid grid-cols-[1fr_52px_64px_76px_48px_52px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+          <div className="grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
             <div className="px-3 py-2">Description</div>
             <div className="px-1 py-2 text-center">Qty</div>
             <div className="px-1 py-2 text-right">Price</div>
             <div className="px-1 py-2 text-right">Amount</div>
-            <div className="px-1 py-2 text-center">Disc%</div>
             <div className="px-1 py-2 text-center">Free</div>
           </div>
 
@@ -266,7 +263,7 @@ export default function SalesOrderCreate() {
                 return (
                   <div
                     key={p.id}
-                    className={`grid grid-cols-[1fr_52px_64px_76px_48px_52px] gap-0 border-b border-gray-100 items-center ${
+                    className={`grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-100 items-center ${
                       hasQty ? 'bg-green-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                     }`}
                   >
@@ -303,20 +300,6 @@ export default function SalesOrderCreate() {
                       </span>
                     </div>
 
-                    {/* Discount % */}
-                    <div className="px-1 py-1.5">
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        max="100"
-                        value={qtys[p.id]?.disc ?? ''}
-                        onChange={e => setDiscount(p.id, e.target.value)}
-                        placeholder="0"
-                        className="w-full h-9 text-center text-xs font-medium rounded-lg border border-gray-200 bg-white text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                      />
-                    </div>
-
                     {/* Free qty */}
                     <div className="px-1 py-1.5">
                       <input
@@ -340,7 +323,7 @@ export default function SalesOrderCreate() {
             <div className="px-4 py-3 bg-primary-50 border-t border-primary-100 space-y-1">
               {lines.map(l => (
                 <div key={l.product.id} className="flex items-center justify-between text-xs text-gray-700">
-                  <span className="truncate flex-1 mr-2">{l.product.name} × {l.qty}{l.free > 0 ? ` (+${l.free} free)` : ''}{l.disc > 0 ? ` -${l.disc}%` : ''}</span>
+                  <span className="truncate flex-1 mr-2">{l.product.name} × {l.qty}{l.free > 0 ? ` (+${l.free} free)` : ''}</span>
                   <span className="font-bold font-mono flex-shrink-0">{fmtCurrency(l.total)}</span>
                 </div>
               ))}
