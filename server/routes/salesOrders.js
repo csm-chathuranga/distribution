@@ -17,7 +17,13 @@ async function generateOrderNumber() {
   return `SO-${datePart}-${String(seq).padStart(3, '0')}`;
 }
 
-router.get('/', authorize('sales.view_own'), crud.list);
+router.get('/', authorize('sales.view_own'), async (req, res, next) => {
+  try {
+    const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('sales.approve');
+    if (!canViewAll) req.query.created_by = req.user.id;
+    return crud.list(req, res, next);
+  } catch (err) { next(err); }
+});
 router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
   try {
     const { User, Product, SalesOrderLine } = require('../models');
@@ -41,6 +47,10 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
     if (!data.order_number) data.order_number = await generateOrderNumber();
+    // Auto-confirm — no manual approval step needed
+    data.status      = 'CONFIRMED';
+    data.approved_by = req.user.id;
+    data.approved_at = new Date();
 
     // Credit limit check — block order if customer is over their credit limit
     if (data.customer_id) {
