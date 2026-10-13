@@ -19,6 +19,14 @@ import { enqueueRequest } from '../../utils/offlineQueue';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
 import { today, fmtCurrency } from '../../utils/format';
 
+const SIZES = [
+  { label: '250ml', pattern: /250/i },
+  { label: '500ml', pattern: /500/i },
+  { label: '750ml', pattern: /750/i },
+  { label: '1L',    pattern: /(?<![0-9.])1[Ll](?![Ll0-9])/ },
+  { label: '1.5L',  pattern: /1\.5[Ll]/i },
+];
+
 const headerSchema = yup.object({
   customer_id:  yup.number().required('Customer required').typeError('Select customer'),
   warehouse_id: yup.number().required('Warehouse required').typeError('Select warehouse'),
@@ -61,13 +69,6 @@ export default function SalesOrderCreate() {
   const [sizeFilter,    setSizeFilter]    = useState(null);
   const [orderDisc,     setOrderDisc]     = useState('');
   const [orderDiscType, setOrderDiscType] = useState('pct'); // 'pct' | 'amt'
-  const SIZES = [
-    { label: '250ml',  re: /250/i },
-    { label: '500ml',  re: /500/i },
-    { label: '750ml',  re: /750/i },
-    { label: '1L',     re: /(?<![0-9.])1[Ll](?![Ll0-9])/  },
-    { label: '1.5L',   re: /1\.5[Ll]/i },
-  ];
 
   const setQty      = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
   const setFree     = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
@@ -255,7 +256,7 @@ export default function SalesOrderCreate() {
             .map(([cat, prods]) => [
               cat,
               sizeFilter
-                ? prods.filter(p => sizeFilter.re.test(p.name + ' ' + (p.Category?.name || '')))
+                ? prods.filter(p => sizeFilter.pattern.test(p.name + ' ' + (p.Category?.name || '')))
                 : prods,
             ])
             .filter(([, prods]) => prods.length > 0)
