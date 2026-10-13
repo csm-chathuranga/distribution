@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Truck, FileText, Users, ClipboardList, Package, User } from 'lucide-react';
+import { Truck, FileText, Users, ClipboardList, Package, User, RotateCcw } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../store/authSlice';
 
@@ -12,11 +12,11 @@ const SALES_TABS = [
 ];
 
 const DRIVER_TABS = [
-  { to: '/customers',        icon: Users,    label: 'Customers', color: '#3b82f6' },
-  { to: '/invoices/new',     icon: FileText, label: 'Invoice',   color: '#10b981' },
-  { to: '/van',              icon: Package,  label: 'Van Stock', color: '#f97316' },
-  { to: '/deliveries',       icon: Truck,    label: 'Deliveries',color: '#8b5cf6' },
-  { to: '/profile',          icon: User,     label: 'Profile',   color: '#64748b' },
+  { to: '/customers',        icon: Users,       label: 'Customers', color: '#3b82f6' },
+  { to: '/invoices/new',     icon: FileText,    label: 'Invoice',   color: '#10b981' },
+  { to: '/customer-returns', icon: RotateCcw,   label: 'Returns',   color: '#ef4444' },
+  { to: '/deliveries',       icon: Truck,       label: 'Deliveries',color: '#8b5cf6' },
+  { to: '/profile',          icon: User,        label: 'Profile',   color: '#64748b' },
 ];
 
 function Tab({ to, icon: Icon, label, color }) {

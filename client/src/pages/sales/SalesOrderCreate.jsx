@@ -283,8 +283,13 @@ export default function SalesOrderCreate() {
                     {/* Description */}
                     <div className="px-3 py-2">
                       <p className="text-sm font-semibold text-gray-900 leading-tight">{p.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {p.sku && <span className="text-xs text-gray-400 font-mono">{p.sku}</span>}
+                        {parseFloat(p.marked_price) > 0 && (
+                          <span className="text-xs font-semibold text-indigo-600">
+                            MRP: {fmtCurrency(p.marked_price)}
+                          </span>
+                        )}
                         {selectedWarehouseId && (
                           <span className={`text-xs font-semibold ${
                             (stockMap[p.id] ?? 0) <= 0

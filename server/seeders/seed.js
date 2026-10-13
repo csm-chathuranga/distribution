@@ -62,7 +62,7 @@ const ROLE_PERMISSIONS = {
     'purchase.view', 'purchase.receive',
     'reports.inventory',
   ],
-  driver: ['sales.view_own'],
+  driver: ['sales.view_own', 'sales.return'],
   cashier: ['sales.create', 'sales.view_own', 'finance.receipts'],
 };
 

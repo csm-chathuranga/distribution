@@ -14,6 +14,7 @@ const schema = yup.object({
   barcode: yup.string().nullable().max(100),
   cost_price: yup.number().min(0, 'Must be ≥ 0').required('Cost price is required').typeError('Enter a number'),
   selling_price: yup.number().min(0).required('Selling price is required').typeError('Enter a number'),
+  marked_price: yup.number().min(0).nullable().typeError('Enter a number'),
   wholesale_price: yup.number().min(0).nullable().typeError('Enter a number'),
   vat_rate: yup.number().min(0).max(100).typeError('Enter percentage').default(0),
   reorder_point: yup.number().integer().min(0).typeError('Enter a number').default(0),
@@ -42,6 +43,7 @@ export default function ProductForm({ onClose, editing, companyId }) {
       base_unit_id: editing.base_unit_id || '',
       cost_price: editing.cost_price ?? 0,
       selling_price: editing.selling_price ?? 0,
+      marked_price: editing.marked_price ?? '',
       wholesale_price: editing.wholesale_price ?? '',
       vat_rate: editing.vat_rate ?? 0,
       reorder_point: editing.reorder_point ?? 0,
@@ -102,9 +104,10 @@ export default function ProductForm({ onClose, editing, companyId }) {
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <TextField label="Cost Price (LKR)" required type="number" step="0.01" error={errors.cost_price?.message} {...register('cost_price')} />
           <TextField label="Selling Price (LKR)" required type="number" step="0.01" error={errors.selling_price?.message} {...register('selling_price')} />
+          <TextField label="Marked Price (LKR)" type="number" step="0.01" hint="Retail/sticker price shown to reps" error={errors.marked_price?.message} {...register('marked_price')} />
           <TextField label="Wholesale Price (LKR)" type="number" step="0.01" error={errors.wholesale_price?.message} {...register('wholesale_price')} />
         </div>
 

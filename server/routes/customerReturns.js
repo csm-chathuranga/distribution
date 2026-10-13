@@ -26,7 +26,7 @@ async function generateReturnNumber() {
 }
 
 // List
-router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
+router.get('/', authorize.any('sales.view_own', 'sales.view_all', 'sales.return'), async (req, res, next) => {
   try {
     const { status, customer_id, from, to, page = 1, limit = 20 } = req.query;
     const where = {};
@@ -49,7 +49,7 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
 });
 
 // Get single
-router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
+router.get('/:id', authorize.any('sales.view_own', 'sales.view_all', 'sales.return'), async (req, res, next) => {
   try {
     const ret = await CustomerReturn.findByPk(req.params.id, { include });
     if (!ret) return res.status(404).json({ message: 'Return note not found' });
@@ -58,7 +58,7 @@ router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), async (req
 });
 
 // Create
-router.post('/', authorize('sales.create'), async (req, res, next) => {
+router.post('/', authorize.any('sales.create', 'sales.return'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { lines, ...data } = req.body;

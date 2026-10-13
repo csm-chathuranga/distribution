@@ -12,6 +12,7 @@ module.exports = (sequelize) => {
     barcode: DataTypes.STRING(100),
     cost_price: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
     selling_price: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
+    marked_price: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
     wholesale_price: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
     vat_rate: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
     reorder_point: { type: DataTypes.INTEGER, defaultValue: 0 },
