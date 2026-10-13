@@ -68,7 +68,16 @@ router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), as
 
 router.get('/', authorize.any('sales.view_own', 'sales.view_all'), crud.list);
 router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), crud.get);
-router.post('/', authorize('sales.create'), crud.create);
+router.post('/', authorize('sales.create'), async (req, res, next) => {
+  try {
+    const data = { ...req.body };
+    // Resolve company_id — user's branch → fallback to 1 (single-company system)
+    data.company_id = data.company_id || req.user?.Branch?.company_id || 1;
+    if (!data.branch_id && req.user?.branch_id) data.branch_id = req.user.branch_id;
+    const customer = await Customer.create(data);
+    res.status(201).json(customer);
+  } catch (err) { next(err); }
+});
 router.put('/:id', authorize('sales.create'), crud.update);
 
 module.exports = router;
