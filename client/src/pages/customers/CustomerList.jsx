@@ -5,7 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Pencil, Plus, Search, Phone, User } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation } from '../../api/customersApi';
+import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
 import { usePermission } from '../../hooks/usePermission';
 import Modal from '../../components/ui/Modal';
@@ -44,13 +44,15 @@ const schema = yup.object({
   tax_number:     yup.string().nullable().max(50),
   credit_days:    yup.number().integer().min(0).default(0).typeError('Enter days'),
   credit_limit:   yup.number().min(0).default(0).typeError('Enter amount'),
-  account_id:     yup.number().nullable().transform((val, orig) => (orig === '' || orig === null) ? null : val),
+  account_id:     yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
+  route_id:       yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
 });
 
 function CustomerForm({ onClose, editing }) {
   const [create, { isLoading: c }] = useCreateCustomerMutation();
   const [update, { isLoading: u }] = useUpdateCustomerMutation();
-  const { data: accountsData } = useGetAccountsQuery({ type: 'ASSET', is_active: 'true' });
+  const { data: accountsData }     = useGetAccountsQuery({ type: 'ASSET', is_active: 'true' });
+  const { data: routesData }       = useGetRoutesQuery({ limit: 200 });
 
   const { register, control, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -62,15 +64,17 @@ function CustomerForm({ onClose, editing }) {
       tax_number: editing.tax_number || '',
       credit_days: editing.credit_days ?? 0, credit_limit: editing.credit_limit ?? 0,
       account_id: editing.account_id || '',
-    } : { customer_type: 'RETAILER', credit_days: 0, credit_limit: 0, account_id: '' },
+      route_id: editing.route_id || '',
+    } : { customer_type: 'RETAILER', credit_days: 0, credit_limit: 0, account_id: '', route_id: '' },
   });
 
   const receivableAccounts = (Array.isArray(accountsData) ? accountsData : (accountsData?.data || []))
     .map(a => ({ value: a.id, label: `${a.code} — ${a.name}` }));
+  const routeOptions = (routesData?.data || []).map(r => ({ value: r.id, label: r.name }));
 
   const onSubmit = async (data) => {
     try {
-      const payload = { ...data, company_id: 1 };
+      const payload = { ...data };
       if (editing) await update({ id: editing.id, ...payload }).unwrap();
       else await create(payload).unwrap();
       toast.success(editing ? 'Customer updated' : 'Customer created');
@@ -114,6 +118,18 @@ function CustomerForm({ onClose, editing }) {
           <TextField label="Credit Limit (LKR)" type="number" error={errors.credit_limit?.message} {...register('credit_limit')} />
         </div>
         <Controller
+          control={control} name="route_id"
+          render={({ field, fieldState }) => (
+            <SelectField
+              label="Route"
+              placeholder="Select route…"
+              options={routeOptions}
+              value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur}
+              error={fieldState.error?.message}
+            />
+          )}
+        />
+        <Controller
           control={control} name="account_id"
           render={({ field, fieldState }) => (
             <SelectField
@@ -133,13 +149,19 @@ function CustomerForm({ onClose, editing }) {
 export default function CustomerList() {
   const canCreate = usePermission('sales.create');
   const navigate = useNavigate();
-  const [formKey,  setFormKey]  = useState(0);
-  const [page,     setPage]     = useState(1);
-  const [search,   setSearch]   = useState('');
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing,  setEditing]  = useState(null);
+  const [formKey,    setFormKey]    = useState(0);
+  const [page,       setPage]       = useState(1);
+  const [search,     setSearch]     = useState('');
+  const [routeFilter,setRouteFilter]= useState('');
+  const [formOpen,   setFormOpen]   = useState(false);
+  const [editing,    setEditing]    = useState(null);
 
-  const { data, isLoading } = useGetCustomersQuery({ search, page, limit: 20 });
+  const { data: routesData } = useGetRoutesQuery({ limit: 200 });
+  const routeOptions = routesData?.data || [];
+
+  const queryParams = { search, page, limit: 20 };
+  if (routeFilter) queryParams.route_id = routeFilter;
+  const { data, isLoading } = useGetCustomersQuery(queryParams);
   const customers = data?.data || [];
   const total     = data?.total || 0;
 
@@ -159,15 +181,25 @@ export default function CustomerList() {
         )}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-        <input
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1); }}
-          placeholder="Search customers…"
-          className="input pl-9 w-full"
-        />
+      {/* Search + Route filter */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search customers…"
+            className="input pl-9 w-full"
+          />
+        </div>
+        <select
+          value={routeFilter}
+          onChange={e => { setRouteFilter(e.target.value); setPage(1); }}
+          className="input w-40 sm:w-48 flex-shrink-0"
+        >
+          <option value="">All Routes</option>
+          {routeOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </select>
       </div>
 
       {/* Card list */}
