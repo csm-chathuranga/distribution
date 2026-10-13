@@ -14,7 +14,7 @@ import { TextField, SelectField } from '../../components/ui/FormField';
 const schema = yup.object({
   name: yup.string().required('Category name is required').max(255),
   code: yup.string().nullable().max(50),
-  parent_id: yup.number().nullable().transform(v => v === '' ? null : Number(v)),
+  parent_id: yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
 });
 
 function CategoryForm({ onClose, editing, categories }) {
@@ -35,7 +35,7 @@ function CategoryForm({ onClose, editing, categories }) {
 
   const onSubmit = async (data) => {
     try {
-      const payload = { ...data, company_id: 1 };
+      const payload = { ...data };
       if (editing) await update({ id: editing.id, ...payload }).unwrap();
       else await create(payload).unwrap();
       toast.success(editing ? 'Category updated' : 'Category created');
