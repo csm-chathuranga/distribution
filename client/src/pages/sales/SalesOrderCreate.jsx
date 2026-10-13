@@ -45,7 +45,9 @@ export default function SalesOrderCreate() {
 
   // qty state: { [productId]: { qty: '', free: '' } }
   const [qtys, setQtys]         = useState({});
-  const [sizeFilter, setSizeFilter] = useState(null); // null = show all
+  const [sizeFilter,    setSizeFilter]    = useState(null);
+  const [orderDisc,     setOrderDisc]     = useState('');
+  const [orderDiscType, setOrderDiscType] = useState('pct'); // 'pct' | 'amt'
   const SIZES = [
     { label: '250ml',  re: /250/i },
     { label: '500ml',  re: /500/i },
