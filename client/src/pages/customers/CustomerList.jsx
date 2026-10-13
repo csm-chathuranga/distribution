@@ -147,7 +147,8 @@ function CustomerForm({ onClose, editing }) {
 }
 
 export default function CustomerList() {
-  const canCreate = usePermission('sales.create');
+  const canCreate  = usePermission('sales.create');
+  const canViewAll = usePermission('sales.view_all');
   const navigate = useNavigate();
   const [formKey,    setFormKey]    = useState(0);
   const [page,       setPage]       = useState(1);
@@ -197,7 +198,7 @@ export default function CustomerList() {
           onChange={e => { setRouteFilter(e.target.value); setPage(1); }}
           className="input w-40 sm:w-48 flex-shrink-0"
         >
-          <option value="">All Routes</option>
+          {canViewAll && <option value="">All Routes</option>}
           {routeOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
         </select>
       </div>
