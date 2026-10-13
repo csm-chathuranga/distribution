@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Truck, FileText, Users, ClipboardList, User } from 'lucide-react';
+import { Truck, FileText, Users, ClipboardList, Package, User } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../store/authSlice';
 
