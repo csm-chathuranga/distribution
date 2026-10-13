@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 const { Stock, StockMovement, Product, Category, Unit, Warehouse, sequelize } = require('../models');
 
-router.get('/on-hand', authorize('inventory.view'), async (req, res, next) => {
+router.get('/on-hand', authorize.any('inventory.view', 'sales.create'), async (req, res, next) => {
   try {
     const { warehouse_id, search } = req.query;
     const where = {};

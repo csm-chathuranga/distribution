@@ -6,7 +6,7 @@ import { selectCurrentUser } from '../store/authSlice';
 const SALES_TABS = [
   { to: '/customers',    icon: Users,         label: 'Customers', color: '#3b82f6' },
   { to: '/sales-orders', icon: ClipboardList, label: 'My Orders', color: '#10b981' },
-  { to: '/invoices',     icon: FileText,      label: 'Invoices',  color: '#f97316' },
+  { to: '/stock',        icon: Package,       label: 'Stock',     color: '#f97316' },
   { to: '/deliveries',   icon: Truck,         label: 'Deliveries',color: '#8b5cf6' },
   { to: '/profile',      icon: User,          label: 'Profile',   color: '#64748b' },
 ];

@@ -10,6 +10,7 @@ import { useCreateSalesOrderMutation } from '../../api/salesApi';
 import { useGetCustomersQuery, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
+import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import { useGetUsersQuery } from '../../api/settingsApi';
 import { selectCurrentUser } from '../../store/authSlice';
 import { usePermission } from '../../hooks/usePermission';
@@ -42,6 +43,18 @@ export default function SalesOrderCreate() {
   const { data: users }      = useGetUsersQuery({ limit: 200 }, { skip: !canManageUsers });
   const { data: productsRaw } = useGetProductsQuery({ limit: 500, is_active: true });
   const products = productsRaw?.data || [];
+
+  const selectedWarehouseId = watch('warehouse_id');
+  const { data: stockRaw } = useGetStockOnHandQuery(
+    { warehouse_id: selectedWarehouseId },
+    { skip: !selectedWarehouseId }
+  );
+  // Map product_id → available qty for quick lookup
+  const stockMap = useMemo(() => {
+    const m = {};
+    (stockRaw?.data || []).forEach(s => { m[s.product_id] = s.available; });
+    return m;
+  }, [stockRaw]);
 
   // qty state: { [productId]: { qty: '', free: '' } }
   const [qtys, setQtys]         = useState({});
@@ -270,7 +283,20 @@ export default function SalesOrderCreate() {
                     {/* Description */}
                     <div className="px-3 py-2">
                       <p className="text-sm font-semibold text-gray-900 leading-tight">{p.name}</p>
-                      {p.sku && <p className="text-xs text-gray-400 font-mono mt-0.5">{p.sku}</p>}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {p.sku && <span className="text-xs text-gray-400 font-mono">{p.sku}</span>}
+                        {selectedWarehouseId && (
+                          <span className={`text-xs font-semibold ${
+                            (stockMap[p.id] ?? 0) <= 0
+                              ? 'text-red-500'
+                              : (stockMap[p.id] ?? 0) < 10
+                              ? 'text-amber-600'
+                              : 'text-emerald-600'
+                          }`}>
+                            Stock: {stockMap[p.id] ?? 0}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Qty input */}
