@@ -45,11 +45,18 @@ export default function SalesOrderCreate() {
 
   // qty state: { [productId]: { qty: '', free: '' } }
   const [qtys, setQtys]         = useState({});
-  const [sizeFilter, setSizeFilter] = useState(''); // '' = show all
-  const SIZES = ['250', '500', '750', '1000', '1500'];
+  const [sizeFilter, setSizeFilter] = useState(null); // null = show all
+  const SIZES = [
+    { label: '250ml',  re: /250/i },
+    { label: '500ml',  re: /500/i },
+    { label: '750ml',  re: /750/i },
+    { label: '1L',     re: /(?<![0-9.])1[Ll](?![Ll0-9])/  },
+    { label: '1.5L',   re: /1\.5[Ll]/i },
+  ];
 
-  const setQty  = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
-  const setFree = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
+  const setQty      = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
+  const setFree     = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
+  const setDiscount = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], disc: val } }));
 
   // Group products by category
   const grouped = useMemo(() => {
@@ -86,10 +93,12 @@ export default function SalesOrderCreate() {
   // Compute totals
   const lines = products
     .map(p => {
-      const qty  = parseFloat(qtys[p.id]?.qty  || 0);
-      const free = parseFloat(qtys[p.id]?.free || 0);
+      const qty   = parseFloat(qtys[p.id]?.qty  || 0);
+      const free  = parseFloat(qtys[p.id]?.free || 0);
+      const disc  = parseFloat(qtys[p.id]?.disc || 0);
       const price = parseFloat(p.selling_price || 0);
-      return { product: p, qty, free, price, total: qty * price };
+      const total = qty * price * (1 - disc / 100);
+      return { product: p, qty, free, disc, price, total };
     })
     .filter(l => l.qty > 0);
 
@@ -108,7 +117,7 @@ export default function SalesOrderCreate() {
         quantity:      l.qty,
         free_quantity: l.free || 0,
         unit_price:    l.price,
-        discount_rate: 0,
+        discount_rate: l.disc || 0,
         line_total:    l.total,
       })),
     };
@@ -202,23 +211,26 @@ export default function SalesOrderCreate() {
 
           {/* Size filter chips */}
           <div className="flex gap-2 overflow-x-auto px-3 py-2 border-b border-gray-100 scrollbar-none">
-            {['All', ...SIZES].map(s => (
-              <button type="button" key={s}
-                onClick={() => setSizeFilter(s === 'All' ? '' : s)}
+            <button type="button" onClick={() => setSizeFilter(null)}
+              className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                sizeFilter === null ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}>All</button>
+            {SIZES.map(s => (
+              <button type="button" key={s.label}
+                onClick={() => setSizeFilter(s)}
                 className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-                  (s === 'All' && sizeFilter === '') || sizeFilter === s
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}>{s === 'All' ? 'All' : `${s}ml`}</button>
+                  sizeFilter?.label === s.label ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}>{s.label}</button>
             ))}
           </div>
 
           {/* Column headers */}
-          <div className="grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+          <div className="grid grid-cols-[1fr_52px_64px_76px_48px_52px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
             <div className="px-3 py-2">Description</div>
             <div className="px-1 py-2 text-center">Qty</div>
             <div className="px-1 py-2 text-right">Price</div>
             <div className="px-1 py-2 text-right">Amount</div>
+            <div className="px-1 py-2 text-center">Disc%</div>
             <div className="px-1 py-2 text-center">Free</div>
           </div>
 
@@ -226,15 +238,15 @@ export default function SalesOrderCreate() {
             .map(([cat, prods]) => [
               cat,
               sizeFilter
-                ? prods.filter(p => (p.name + ' ' + (p.Category?.name || '')).includes(sizeFilter))
+                ? prods.filter(p => sizeFilter.re.test(p.name + ' ' + (p.Category?.name || '')))
                 : prods,
             ])
             .filter(([, prods]) => prods.length > 0)
             .map(([category, prods]) => (
             <div key={category}>
               {/* Category header */}
-              <div className="px-3 py-1.5 bg-gray-100 border-b border-gray-200">
-                <span className="text-xs font-bold text-gray-600">{category}</span>
+              <div className="px-3 py-2 bg-gray-100 border-b border-gray-200">
+                <span className="text-sm font-bold text-gray-700">{category}</span>
               </div>
 
               {prods.map((p, idx) => {
@@ -247,14 +259,14 @@ export default function SalesOrderCreate() {
                 return (
                   <div
                     key={p.id}
-                    className={`grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-100 items-center ${
+                    className={`grid grid-cols-[1fr_52px_64px_76px_48px_52px] gap-0 border-b border-gray-100 items-center ${
                       hasQty ? 'bg-green-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                     }`}
                   >
                     {/* Description */}
                     <div className="px-3 py-2">
-                      <p className="text-xs font-medium text-gray-800 leading-tight">{p.name}</p>
-                      {p.sku && <p className="text-[10px] text-gray-400 font-mono">{p.sku}</p>}
+                      <p className="text-sm font-semibold text-gray-900 leading-tight">{p.name}</p>
+                      {p.sku && <p className="text-xs text-gray-400 font-mono mt-0.5">{p.sku}</p>}
                     </div>
 
                     {/* Qty input */}
@@ -266,7 +278,7 @@ export default function SalesOrderCreate() {
                         value={qty}
                         onChange={e => setQty(p.id, e.target.value)}
                         placeholder="0"
-                        className={`w-full h-9 text-center text-sm font-bold rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                        className={`w-full h-10 text-center text-base font-bold rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                           hasQty ? 'border-green-400 bg-green-50 text-green-800' : 'border-gray-200 bg-white text-gray-700'
                         }`}
                       />
@@ -274,14 +286,28 @@ export default function SalesOrderCreate() {
 
                     {/* Unit price */}
                     <div className="px-1 py-2 text-right">
-                      <span className="text-xs text-gray-600 font-mono">{fmtCurrency(price)}</span>
+                      <span className="text-xs font-medium text-gray-600 font-mono">{fmtCurrency(price)}</span>
                     </div>
 
                     {/* Amount */}
                     <div className="px-1 py-2 text-right">
-                      <span className={`text-xs font-bold font-mono ${hasQty ? 'text-green-700' : 'text-gray-300'}`}>
+                      <span className={`text-sm font-bold font-mono ${hasQty ? 'text-green-700' : 'text-gray-300'}`}>
                         {hasQty ? fmtCurrency(amt) : '—'}
                       </span>
+                    </div>
+
+                    {/* Discount % */}
+                    <div className="px-1 py-1.5">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        max="100"
+                        value={qtys[p.id]?.disc ?? ''}
+                        onChange={e => setDiscount(p.id, e.target.value)}
+                        placeholder="0"
+                        className="w-full h-9 text-center text-xs font-medium rounded-lg border border-gray-200 bg-white text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
                     </div>
 
                     {/* Free qty */}
