@@ -340,13 +340,56 @@ export default function SalesOrderCreate() {
             <div className="px-4 py-3 bg-primary-50 border-t border-primary-100 space-y-1">
               {lines.map(l => (
                 <div key={l.product.id} className="flex items-center justify-between text-xs text-gray-700">
-                  <span className="truncate flex-1 mr-2">{l.product.name} × {l.qty}{l.free > 0 ? ` (+${l.free} free)` : ''}</span>
+                  <span className="truncate flex-1 mr-2">{l.product.name} × {l.qty}{l.free > 0 ? ` (+${l.free} free)` : ''}{l.disc > 0 ? ` -${l.disc}%` : ''}</span>
                   <span className="font-bold font-mono flex-shrink-0">{fmtCurrency(l.total)}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
+        {/* Order-level discount & total */}
+        {lines.length > 0 && (
+          <div className="card p-4 space-y-3">
+            <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Order Discount</h2>
+            <div className="flex gap-2 items-center">
+              {/* Type toggle */}
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                <button type="button"
+                  onClick={() => setOrderDiscType('pct')}
+                  className={`px-3 py-2 text-sm font-semibold transition-colors ${orderDiscType === 'pct' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>%</button>
+                <button type="button"
+                  onClick={() => setOrderDiscType('amt')}
+                  className={`px-3 py-2 text-sm font-semibold transition-colors ${orderDiscType === 'amt' ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>LKR</button>
+              </div>
+              <input
+                type="number"
+                min="0"
+                inputMode="decimal"
+                value={orderDisc}
+                onChange={e => setOrderDisc(e.target.value)}
+                placeholder={orderDiscType === 'pct' ? 'Discount %' : 'Discount amount'}
+                className="input flex-1 text-right font-semibold text-lg"
+              />
+            </div>
+            {/* Totals breakdown */}
+            <div className="space-y-1 pt-2 border-t border-gray-100">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Subtotal</span>
+                <span className="font-mono">{fmtCurrency(subtotal)}</span>
+              </div>
+              {discountAmt > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Discount {orderDiscType === 'pct' && discVal > 0 ? `(${discVal}%)` : ''}</span>
+                  <span className="font-mono">− {fmtCurrency(discountAmt)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold text-gray-900 pt-1 border-t border-gray-200">
+                <span>Total</span>
+                <span className="font-mono text-primary-700">{fmtCurrency(orderTotal)}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </form>
 
       {/* Sticky submit */}
