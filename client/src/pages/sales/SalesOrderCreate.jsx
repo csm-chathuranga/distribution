@@ -45,7 +45,8 @@ export default function SalesOrderCreate() {
 
   // qty state: { [productId]: { qty: '', free: '' } }
   const [qtys, setQtys]         = useState({});
-  const [catFilter, setCatFilter] = useState(''); // '' = show all
+  const [sizeFilter, setSizeFilter] = useState(''); // '' = show all
+  const SIZES = ['250', '500', '750', '1000', '1500'];
 
   const setQty  = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
   const setFree = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
@@ -199,19 +200,16 @@ export default function SalesOrderCreate() {
             )}
           </div>
 
-          {/* Category filter chips */}
+          {/* Size filter chips */}
           <div className="flex gap-2 overflow-x-auto px-3 py-2 border-b border-gray-100 scrollbar-none">
-            <button type="button"
-              onClick={() => setCatFilter('')}
-              className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-                catFilter === '' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}>All</button>
-            {Object.keys(grouped).map(cat => (
-              <button type="button" key={cat}
-                onClick={() => setCatFilter(cat)}
+            {['All', ...SIZES].map(s => (
+              <button type="button" key={s}
+                onClick={() => setSizeFilter(s === 'All' ? '' : s)}
                 className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-                  catFilter === cat ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}>{cat}</button>
+                  (s === 'All' && sizeFilter === '') || sizeFilter === s
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}>{s === 'All' ? 'All' : `${s}ml`}</button>
             ))}
           </div>
 
@@ -224,7 +222,15 @@ export default function SalesOrderCreate() {
             <div className="px-1 py-2 text-center">Free</div>
           </div>
 
-          {Object.entries(grouped).filter(([cat]) => !catFilter || cat === catFilter).map(([category, prods]) => (
+          {Object.entries(grouped)
+            .map(([cat, prods]) => [
+              cat,
+              sizeFilter
+                ? prods.filter(p => (p.name + ' ' + (p.Category?.name || '')).includes(sizeFilter))
+                : prods,
+            ])
+            .filter(([, prods]) => prods.length > 0)
+            .map(([category, prods]) => (
             <div key={category}>
               {/* Category header */}
               <div className="px-3 py-1.5 bg-gray-100 border-b border-gray-200">
