@@ -1,8 +1,9 @@
+import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Plus, Trash2, ArrowLeft, WifiOff } from 'lucide-react';
+import { ArrowLeft, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useCreateSalesOrderMutation } from '../../api/salesApi';
@@ -15,34 +16,22 @@ import { usePermission } from '../../hooks/usePermission';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
 import { enqueueRequest } from '../../utils/offlineQueue';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
-import SearchableSelect from '../../components/ui/SearchableSelect';
 import { today, fmtCurrency } from '../../utils/format';
 
-const lineSchema = yup.object({
-  product_id:    yup.number().required('Required').typeError('Select product'),
-  quantity:      yup.number().positive('Must be > 0').required('Required').typeError('Enter qty'),
-  free_quantity: yup.number().min(0).nullable().transform(v => v === '' ? 0 : Number(v)),
-  unit_price:    yup.number().min(0).required('Required').typeError('Enter price'),
-  discount:      yup.number().min(0).max(100).nullable().transform(v => v === '' ? 0 : Number(v)),
-});
-
-const schema = yup.object({
+const headerSchema = yup.object({
   customer_id:  yup.number().required('Customer required').typeError('Select customer'),
   warehouse_id: yup.number().required('Warehouse required').typeError('Select warehouse'),
-  route_id:     yup.number().nullable().transform(v => v === '' ? null : Number(v)),
-  sales_rep_id: yup.number().nullable().transform(v => v === '' ? null : Number(v)),
+  route_id:     yup.number().nullable().transform((v, o) => (o === '' || o == null) ? null : v),
+  sales_rep_id: yup.number().nullable().transform((v, o) => (o === '' || o == null) ? null : v),
   order_date:   yup.string().required('Date required'),
   notes:        yup.string().nullable(),
-  lines:        yup.array().of(lineSchema).min(1, 'Add at least one item'),
 });
 
-const BLANK_LINE = { product_id: '', quantity: 1, free_quantity: 0, unit_price: 0, discount: 0 };
-
 export default function SalesOrderCreate() {
-  const navigate    = useNavigate();
+  const navigate       = useNavigate();
   const [searchParams] = useSearchParams();
-  const preCustomerId = searchParams.get('customer_id') ? Number(searchParams.get('customer_id')) : undefined;
-  const currentUser  = useSelector(selectCurrentUser);
+  const preCustomerId  = searchParams.get('customer_id') ? Number(searchParams.get('customer_id')) : undefined;
+  const currentUser    = useSelector(selectCurrentUser);
   const canManageUsers = usePermission('settings.users');
   const [create, { isLoading }] = useCreateSalesOrderMutation();
   const { isOnline, refreshCount } = useOfflineSync();
@@ -51,67 +40,85 @@ export default function SalesOrderCreate() {
   const { data: warehouses } = useGetWarehousesQuery({});
   const { data: routes }     = useGetRoutesQuery({ limit: 200 });
   const { data: users }      = useGetUsersQuery({ limit: 200 }, { skip: !canManageUsers });
-  const { data: products }   = useGetProductsQuery({ limit: 500, is_active: true });
+  const { data: productsRaw } = useGetProductsQuery({ limit: 500, is_active: true });
+  const products = productsRaw?.data || [];
 
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    resolver: yupResolver(schema),
+  // qty state: { [productId]: { qty: '', free: '' } }
+  const [qtys, setQtys]         = useState({});
+  const [catFilter, setCatFilter] = useState(''); // '' = show all
+
+  const setQty  = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
+  const setFree = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
+
+  // Group products by category
+  const grouped = useMemo(() => {
+    const map = {};
+    products.forEach(p => {
+      const cat = p.Category?.name || 'Uncategorized';
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(p);
+    });
+    return map;
+  }, [products]);
+
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    resolver: yupResolver(headerSchema),
     defaultValues: {
       order_date:   today(),
       sales_rep_id: currentUser?.id || '',
-      lines: [{ ...BLANK_LINE }],
       ...(preCustomerId ? { customer_id: preCustomerId } : {}),
     },
   });
-  const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
-  const lines = watch('lines') || [];
-  const selectedCustomerId = watch('customer_id');
 
-  const selectedCustomer = customers?.data?.find(c => String(c.id) === String(selectedCustomerId));
-  const creditLimit = parseFloat(selectedCustomer?.credit_limit || 0);
-  const outstanding = parseFloat(selectedCustomer?.outstanding_balance || 0);
-  const overLimit   = creditLimit > 0 && outstanding >= creditLimit;
-  const nearLimit   = creditLimit > 0 && !overLimit && outstanding >= creditLimit * 0.8;
+  const selectedCustomerId = watch('customer_id');
+  const selectedCustomer   = customers?.data?.find(c => String(c.id) === String(selectedCustomerId));
+  const creditLimit        = parseFloat(selectedCustomer?.credit_limit || 0);
+  const outstanding        = parseFloat(selectedCustomer?.outstanding_balance || 0);
+  const overLimit          = creditLimit > 0 && outstanding >= creditLimit;
+  const nearLimit          = creditLimit > 0 && !overLimit && outstanding >= creditLimit * 0.8;
 
   const customerOpts  = customers?.data?.map(c => ({ value: c.id, label: c.name })) || [];
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
   const routeOpts     = [{ value: '', label: '— No route —' }, ...(routes?.data?.map(r => ({ value: r.id, label: r.name })) || [])];
   const userOpts      = [{ value: '', label: '— No rep —' }, ...(users?.data?.map(u => ({ value: u.id, label: u.name })) || [])];
-  const productOpts   = products?.data?.map(p => ({ value: p.id, label: `${p.sku} — ${p.name}` })) || [];
 
-  const handleProductChange = (index, productId) => {
-    const product = products?.data?.find(p => String(p.id) === String(productId));
-    if (product) setValue(`lines.${index}.unit_price`, product.selling_price || 0);
-  };
+  // Compute totals
+  const lines = products
+    .map(p => {
+      const qty  = parseFloat(qtys[p.id]?.qty  || 0);
+      const free = parseFloat(qtys[p.id]?.free || 0);
+      const price = parseFloat(p.selling_price || 0);
+      return { product: p, qty, free, price, total: qty * price };
+    })
+    .filter(l => l.qty > 0);
 
-  const lineAmt = (l) => {
-    const amt = (Number(l.quantity)||0) * (Number(l.unit_price)||0);
-    return amt * (1 - (Number(l.discount)||0) / 100);
-  };
-  const total = lines.reduce((s, l) => s + lineAmt(l), 0);
+  const orderTotal = lines.reduce((s, l) => s + l.total, 0);
 
-  const onSubmit = async (data) => {
-    const linesWithTotal = data.lines.map(l => ({
-      ...l,
-      free_quantity: Number(l.free_quantity) || 0,
-      discount_rate: Number(l.discount) || 0,
-      line_total: lineAmt(l),
-    }));
-    const payload = { ...data, lines: linesWithTotal, total_amount: total };
+  const onSubmit = async (headerData) => {
+    if (lines.length === 0) {
+      toast.error('Add at least one item with a quantity');
+      return;
+    }
+    const payload = {
+      ...headerData,
+      total_amount: orderTotal,
+      lines: lines.map(l => ({
+        product_id:    l.product.id,
+        quantity:      l.qty,
+        free_quantity: l.free || 0,
+        unit_price:    l.price,
+        discount_rate: 0,
+        line_total:    l.total,
+      })),
+    };
 
     if (!navigator.onLine) {
       try {
-        await enqueueRequest({
-          id:     `order-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          url:    '/sales-orders',
-          method: 'POST',
-          body:   payload,
-        });
+        await enqueueRequest({ id: `order-${Date.now()}-${Math.random().toString(36).slice(2)}`, url: '/sales-orders', method: 'POST', body: payload });
         await refreshCount();
-        toast.success('Order saved — will sync when back online', { icon: '📋', duration: 4000 });
+        toast.success('Order saved — will sync when back online', { duration: 4000 });
         navigate('/sales-orders');
-      } catch {
-        toast.error('Failed to save offline');
-      }
+      } catch { toast.error('Failed to save offline'); }
       return;
     }
 
@@ -132,29 +139,24 @@ export default function SalesOrderCreate() {
         <h1 className="text-lg font-bold text-gray-900">New Sales Order</h1>
       </div>
 
-      {/* Offline notice */}
       {!isOnline && (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium">
           <WifiOff size={15} className="text-red-400 flex-shrink-0" />
-          Offline — order will be saved and synced when connected
+          Offline — order will sync when connected
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
         {/* Order Details */}
         <div className="card p-4 space-y-3">
           <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Order Details</h2>
 
-          <SelectField
-            label="Customer" required
-            options={customerOpts}
-            error={errors.customer_id?.message}
-            {...register('customer_id')}
-          />
+          <SelectField label="Customer" required options={customerOpts}
+            error={errors.customer_id?.message} {...register('customer_id')} />
+
           {overLimit && (
             <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 font-medium">
-              ⛔ Credit limit exceeded — Outstanding: {fmtCurrency(outstanding)} / Limit: {fmtCurrency(creditLimit)}. Order may be rejected.
+              ⛔ Credit limit exceeded — Outstanding: {fmtCurrency(outstanding)} / Limit: {fmtCurrency(creditLimit)}
             </div>
           )}
           {nearLimit && (
@@ -162,17 +164,16 @@ export default function SalesOrderCreate() {
               ⚠ Near credit limit — Outstanding: {fmtCurrency(outstanding)} / Limit: {fmtCurrency(creditLimit)}
             </div>
           )}
-          <SelectField
-            label="Warehouse" required
-            options={warehouseOpts}
-            error={errors.warehouse_id?.message}
-            {...register('warehouse_id')}
-          />
+
+          <SelectField label="Warehouse" required options={warehouseOpts}
+            error={errors.warehouse_id?.message} {...register('warehouse_id')} />
 
           <div className="grid grid-cols-2 gap-3">
-            <SelectField label="Route" options={routeOpts} error={errors.route_id?.message} {...register('route_id')} />
+            <SelectField label="Route" options={routeOpts}
+              error={errors.route_id?.message} {...register('route_id')} />
             {canManageUsers ? (
-              <SelectField label="Sales Rep" options={userOpts} error={errors.sales_rep_id?.message} {...register('sales_rep_id')} />
+              <SelectField label="Sales Rep" options={userOpts}
+                error={errors.sales_rep_id?.message} {...register('sales_rep_id')} />
             ) : (
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Sales Rep</label>
@@ -182,130 +183,131 @@ export default function SalesOrderCreate() {
             )}
           </div>
 
-          <TextField label="Order Date" required type="date" error={errors.order_date?.message} {...register('order_date')} />
+          <TextField label="Order Date" required type="date"
+            error={errors.order_date?.message} {...register('order_date')} />
           <TextareaField label="Notes" rows={2} error={errors.notes?.message} {...register('notes')} />
         </div>
 
-        {/* Line Items */}
-        <div className="card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Items</h2>
-            <button
-              type="button"
-              onClick={() => append({ ...BLANK_LINE })}
-              className="flex items-center gap-1 text-sm text-primary-600 font-semibold hover:text-primary-800"
-            >
-              <Plus size={16} /> Add item
-            </button>
+        {/* Catalogue order table */}
+        <div className="card overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Products</h2>
+            {lines.length > 0 && (
+              <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                {lines.length} item{lines.length > 1 ? 's' : ''} added
+              </span>
+            )}
           </div>
 
-          {errors.lines?.message && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{errors.lines.message}</p>
-          )}
+          {/* Category filter chips */}
+          <div className="flex gap-2 overflow-x-auto px-3 py-2 border-b border-gray-100 scrollbar-none">
+            <button type="button"
+              onClick={() => setCatFilter('')}
+              className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                catFilter === '' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}>All</button>
+            {Object.keys(grouped).map(cat => (
+              <button type="button" key={cat}
+                onClick={() => setCatFilter(cat)}
+                className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                  catFilter === cat ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}>{cat}</button>
+            ))}
+          </div>
 
-          <div className="space-y-3">
-            {fields.map((field, i) => {
-              const amt = lineAmt(lines[i] || {});
-              const reg = register;
-              return (
-                <div key={field.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                  {/* Item header bar */}
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Item {i + 1}</span>
-                    {fields.length > 1 && (
-                      <button type="button" onClick={() => remove(i)}
-                        className="flex items-center gap-1 text-xs text-red-500 font-semibold hover:text-red-700 transition-colors">
-                        <Trash2 size={13} /> Remove
-                      </button>
-                    )}
-                  </div>
+          {/* Column headers */}
+          <div className="grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <div className="px-3 py-2">Description</div>
+            <div className="px-1 py-2 text-center">Qty</div>
+            <div className="px-1 py-2 text-right">Price</div>
+            <div className="px-1 py-2 text-right">Amount</div>
+            <div className="px-1 py-2 text-center">Free</div>
+          </div>
 
-                  <div className="p-4 space-y-3">
-                    {/* Product search */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Product</label>
-                      <Controller
-                        control={control}
-                        name={`lines.${i}.product_id`}
-                        render={({ field }) => (
-                          <SearchableSelect
-                            value={field.value}
-                            onChange={val => {
-                              field.onChange(val);
-                              handleProductChange(i, val);
-                            }}
-                            options={productOpts}
-                            placeholder="Search product…"
-                            error={errors.lines?.[i]?.product_id?.message}
-                          />
-                        )}
+          {Object.entries(grouped).filter(([cat]) => !catFilter || cat === catFilter).map(([category, prods]) => (
+            <div key={category}>
+              {/* Category header */}
+              <div className="px-3 py-1.5 bg-gray-100 border-b border-gray-200">
+                <span className="text-xs font-bold text-gray-600">{category}</span>
+              </div>
+
+              {prods.map((p, idx) => {
+                const qty   = qtys[p.id]?.qty  ?? '';
+                const free  = qtys[p.id]?.free ?? '';
+                const price = parseFloat(p.selling_price || 0);
+                const amt   = (parseFloat(qty) || 0) * price;
+                const hasQty = parseFloat(qty) > 0;
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-100 items-center ${
+                      hasQty ? 'bg-green-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                    }`}
+                  >
+                    {/* Description */}
+                    <div className="px-3 py-2">
+                      <p className="text-xs font-medium text-gray-800 leading-tight">{p.name}</p>
+                      {p.sku && <p className="text-[10px] text-gray-400 font-mono">{p.sku}</p>}
+                    </div>
+
+                    {/* Qty input */}
+                    <div className="px-1 py-1.5">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={qty}
+                        onChange={e => setQty(p.id, e.target.value)}
+                        placeholder="0"
+                        className={`w-full h-9 text-center text-sm font-bold rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                          hasQty ? 'border-green-400 bg-green-50 text-green-800' : 'border-gray-200 bg-white text-gray-700'
+                        }`}
                       />
                     </div>
 
-                    {/* Qty stepper + Unit Price */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qty</label>
-                        <div className="flex items-center gap-0">
-                          <button type="button"
-                            onClick={() => { const v = parseInt(lines[i]?.quantity || 1); if (v > 1) setValue(`lines.${i}.quantity`, v - 1); }}
-                            className="w-10 h-12 flex items-center justify-center rounded-l-xl border border-gray-300 bg-gray-100 text-gray-700 text-lg font-bold active:bg-gray-200 transition-colors flex-shrink-0">−</button>
-                          <input
-                            type="number" step="1" inputMode="numeric"
-                            className="h-12 flex-1 border-y border-gray-300 text-center font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-0"
-                            style={{ fontSize: 16 }}
-                            {...reg(`lines.${i}.quantity`)}
-                          />
-                          <button type="button"
-                            onClick={() => { const v = parseInt(lines[i]?.quantity || 1); setValue(`lines.${i}.quantity`, v + 1); }}
-                            className="w-10 h-12 flex items-center justify-center rounded-r-xl border border-gray-300 bg-gray-100 text-gray-700 text-lg font-bold active:bg-gray-200 transition-colors flex-shrink-0">+</button>
-                        </div>
-                        {errors.lines?.[i]?.quantity && <p className="text-red-500 text-xs mt-1">{errors.lines[i].quantity.message}</p>}
-                      </div>
-                      <TextField
-                        label="Unit Price"
-                        type="number" step="0.01" inputMode="decimal"
-                        error={errors.lines?.[i]?.unit_price?.message}
-                        {...reg(`lines.${i}.unit_price`)}
-                      />
+                    {/* Unit price */}
+                    <div className="px-1 py-2 text-right">
+                      <span className="text-xs text-gray-600 font-mono">{fmtCurrency(price)}</span>
                     </div>
 
-                    {/* Free Qty + Discount */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <TextField
-                        label="Free Qty (FOC)"
-                        type="number" step="1" inputMode="numeric"
-                        error={errors.lines?.[i]?.free_quantity?.message}
-                        {...reg(`lines.${i}.free_quantity`)}
-                      />
-                      <TextField
-                        label="Discount %"
-                        type="number" step="0.01" inputMode="decimal"
-                        error={errors.lines?.[i]?.discount?.message}
-                        {...reg(`lines.${i}.discount`)}
+                    {/* Amount */}
+                    <div className="px-1 py-2 text-right">
+                      <span className={`text-xs font-bold font-mono ${hasQty ? 'text-green-700' : 'text-gray-300'}`}>
+                        {hasQty ? fmtCurrency(amt) : '—'}
+                      </span>
+                    </div>
+
+                    {/* Free qty */}
+                    <div className="px-1 py-1.5">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={free}
+                        onChange={e => setFree(p.id, e.target.value)}
+                        placeholder="0"
+                        className="w-full h-9 text-center text-xs font-medium rounded-lg border border-gray-200 bg-white text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
                       />
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          ))}
 
-                  {/* Line total footer */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-primary-50 border-t border-primary-100">
-                    <span className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Line Total</span>
-                    <span className="font-extrabold text-primary-700 font-mono text-base">{fmtCurrency(amt)}</span>
-                  </div>
+          {/* Order summary */}
+          {lines.length > 0 && (
+            <div className="px-4 py-3 bg-primary-50 border-t border-primary-100 space-y-1">
+              {lines.map(l => (
+                <div key={l.product.id} className="flex items-center justify-between text-xs text-gray-700">
+                  <span className="truncate flex-1 mr-2">{l.product.name} × {l.qty}{l.free > 0 ? ` (+${l.free} free)` : ''}</span>
+                  <span className="font-bold font-mono flex-shrink-0">{fmtCurrency(l.total)}</span>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Total */}
-        <div className="card p-4">
-          <div className="flex justify-between font-bold text-base">
-            <span>Order Total</span>
-            <span className="font-mono text-primary-700">{fmtCurrency(total)}</span>
-          </div>
-        </div>
-
       </form>
 
       {/* Sticky submit */}
@@ -313,10 +315,16 @@ export default function SalesOrderCreate() {
         <button
           type="button"
           onClick={handleSubmit(onSubmit)}
-          disabled={isLoading}
-          className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-50"
+          disabled={isLoading || lines.length === 0}
+          className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-40"
         >
-          {isLoading ? 'Creating…' : !isOnline ? `Save Offline · ${fmtCurrency(total)}` : `Create Order · ${fmtCurrency(total)}`}
+          {isLoading
+            ? 'Creating…'
+            : lines.length === 0
+            ? 'Enter quantities to continue'
+            : !isOnline
+            ? `Save Offline · ${fmtCurrency(orderTotal)}`
+            : `Create Order · ${fmtCurrency(orderTotal)}`}
         </button>
       </div>
     </div>
