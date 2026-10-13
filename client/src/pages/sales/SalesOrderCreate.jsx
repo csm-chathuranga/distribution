@@ -104,7 +104,10 @@ export default function SalesOrderCreate() {
     })
     .filter(l => l.qty > 0);
 
-  const orderTotal = lines.reduce((s, l) => s + l.total, 0);
+  const subtotal     = lines.reduce((s, l) => s + l.total, 0);
+  const discVal      = parseFloat(orderDisc) || 0;
+  const discountAmt  = orderDiscType === 'pct' ? subtotal * discVal / 100 : Math.min(discVal, subtotal);
+  const orderTotal   = Math.max(0, subtotal - discountAmt);
 
   const onSubmit = async (headerData) => {
     if (lines.length === 0) {
@@ -113,6 +116,8 @@ export default function SalesOrderCreate() {
     }
     const payload = {
       ...headerData,
+      subtotal_amount: subtotal,
+      discount_amount: discountAmt,
       total_amount: orderTotal,
       lines: lines.map(l => ({
         product_id:    l.product.id,
