@@ -159,11 +159,11 @@ async function seed() {
 
     // Company
     const [company] = await Company.findOrCreate({
-      where: { name: 'Lanka Distribution (Pvt) Ltd' },
+      where: { name: 'Rathnayaka Distribution (Pvt) Ltd' },
       defaults: {
         address: 'No. 1, Galle Road, Colombo 03, Sri Lanka',
         phone: '+94 11 234 5678',
-        email: 'info@lankadist.lk',
+        email: 'info@rathnayakadist.lk',
         tin_number: 'TIN123456789',
         vat_number: 'VAT123456789',
         currency: 'LKR',
