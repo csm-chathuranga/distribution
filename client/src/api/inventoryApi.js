@@ -52,6 +52,14 @@ export const inventoryApi = baseApi.injectEndpoints({
       query: params => ({ url: '/stock/on-hand', params }),
       providesTags: ['Stock'],
     }),
+    submitDamageReport: b.mutation({
+      query: body => ({ url: '/stock/damage-report', method: 'POST', body }),
+      invalidatesTags: ['DamageReport', 'Stock'],
+    }),
+    getDamageReports: b.query({
+      query: () => '/stock/damage-report',
+      providesTags: ['DamageReport'],
+    }),
   }),
 });
 
@@ -61,4 +69,5 @@ export const {
   useGetStockTransfersQuery, useGetStockTransferQuery,
   useCreateStockTransferMutation, useDispatchStockTransferMutation, useReceiveStockTransferMutation,
   useSetOpeningStockMutation, useGetStockOnHandQuery,
+  useSubmitDamageReportMutation, useGetDamageReportsQuery,
 } = inventoryApi;

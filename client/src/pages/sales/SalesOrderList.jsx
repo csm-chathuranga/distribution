@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ClipboardList, ChevronRight, CheckCircle } from 'lucide-react';
+import { Plus, Search, ClipboardList, ChevronRight, CheckCircle, TrendingUp, ShoppingBag, BadgeCheck, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetSalesOrdersQuery, useConfirmSalesOrderMutation } from '../../api/salesApi';
 import { usePermission } from '../../hooks/usePermission';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { fmtCurrency, fmtDate } from '../../utils/format';
+
+const TODAY = new Date().toISOString().split('T')[0];
 
 export default function SalesOrderList() {
   const navigate    = useNavigate();
@@ -17,9 +19,20 @@ export default function SalesOrderList() {
   const [confirmingOrder,  setConfirmingOrder]  = useState(null);
 
   const { data, isLoading } = useGetSalesOrdersQuery({ search, page, limit: 20 });
+  const { data: todayData } = useGetSalesOrdersQuery({ date_from: TODAY, date_to: TODAY, limit: 200 });
   const [confirmOrder, { isLoading: confirming }] = useConfirmSalesOrderMutation();
   const orders = data?.data || [];
   const total  = data?.total || 0;
+
+  const todaySummary = useMemo(() => {
+    const list = todayData?.data || [];
+    return {
+      count:     list.length,
+      total:     list.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0),
+      confirmed: list.filter(o => o.status === 'CONFIRMED').length,
+      draft:     list.filter(o => o.status === 'DRAFT').length,
+    };
+  }, [todayData]);
 
   const handleConfirm = async () => {
     try {
@@ -39,6 +52,35 @@ export default function SalesOrderList() {
             <Plus size={16} /> New
           </button>
         )}
+      </div>
+
+      {/* Today's summary */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-primary-600 rounded-2xl p-3.5 text-white">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp size={13} className="opacity-80" />
+            <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">Today's Sales</span>
+          </div>
+          <p className="text-lg font-bold leading-tight">{fmtCurrency(todaySummary.total)}</p>
+          <p className="text-[11px] opacity-70 mt-0.5">{todaySummary.count} order{todaySummary.count !== 1 ? 's' : ''}</p>
+        </div>
+
+        <div className="grid grid-rows-2 gap-2">
+          <div className="bg-green-50 border border-green-100 rounded-xl px-3 py-2 flex items-center gap-2">
+            <BadgeCheck size={16} className="text-green-500 flex-shrink-0" />
+            <div>
+              <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wide">Confirmed</p>
+              <p className="text-base font-bold text-green-700 leading-tight">{todaySummary.confirmed}</p>
+            </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 flex items-center gap-2">
+            <Clock size={15} className="text-amber-500 flex-shrink-0" />
+            <div>
+              <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">Draft</p>
+              <p className="text-base font-bold text-amber-700 leading-tight">{todaySummary.draft}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search */}

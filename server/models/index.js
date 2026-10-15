@@ -48,6 +48,7 @@ const CustomerReturnLine = require('./CustomerReturnLine')(sequelize);
 const SalesCommission = require('./SalesCommission')(sequelize);
 const FreeItemAllocation = require('./FreeItemAllocation')(sequelize);
 const FreeItemUsage = require('./FreeItemUsage')(sequelize);
+const WarehouseUser = require('./WarehouseUser')(sequelize);
 
 // Junction tables
 const RolePermission = sequelize.define('RolePermission', {}, { tableName: 'role_permissions', timestamps: false });
@@ -76,6 +77,10 @@ User.belongsTo(Branch, { foreignKey: 'branch_id' });
 Branch.hasMany(User, { foreignKey: 'branch_id' });
 User.belongsToMany(Permission, { through: UserPermission, foreignKey: 'user_id' });
 Permission.belongsToMany(User, { through: UserPermission, foreignKey: 'permission_id' });
+
+// ── Warehouse ↔ User assignments ─────────────────────────
+Warehouse.belongsToMany(User, { through: WarehouseUser, foreignKey: 'warehouse_id', as: 'AssignedUsers' });
+User.belongsToMany(Warehouse, { through: WarehouseUser, foreignKey: 'user_id', as: 'AssignedWarehouses' });
 
 // ── Accounting ───────────────────────────────────────────
 Company.hasMany(AccountingPeriod, { foreignKey: 'company_id' });
@@ -110,7 +115,9 @@ Stock.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
 Product.hasMany(Stock, { foreignKey: 'product_id' });
 Stock.belongsTo(Product, { foreignKey: 'product_id' });
 Warehouse.hasMany(StockMovement, { foreignKey: 'warehouse_id' });
+StockMovement.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
 Product.hasMany(StockMovement, { foreignKey: 'product_id' });
+StockMovement.belongsTo(Product, { foreignKey: 'product_id' });
 
 // ── Suppliers ────────────────────────────────────────────
 Company.hasMany(Supplier, { foreignKey: 'company_id' });
@@ -152,6 +159,7 @@ SalesOrder.belongsTo(Customer, { foreignKey: 'customer_id' });
 SalesOrder.belongsTo(Branch, { foreignKey: 'branch_id' });
 SalesOrder.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
 SalesOrder.belongsTo(User, { as: 'SalesRep', foreignKey: 'sales_rep_id' });
+SalesOrder.belongsTo(Route, { foreignKey: 'route_id' });
 SalesOrder.hasMany(SalesOrderLine, { as: 'Lines', foreignKey: 'order_id' });
 SalesOrderLine.belongsTo(SalesOrder, { foreignKey: 'order_id' });
 SalesOrderLine.belongsTo(Product, { foreignKey: 'product_id' });
@@ -303,4 +311,5 @@ module.exports = {
   CustomerReturn, CustomerReturnLine,
   SalesCommission,
   FreeItemAllocation, FreeItemUsage,
+  WarehouseUser,
 };

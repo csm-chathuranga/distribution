@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { Branch } = require('../models');
+    const { Branch, Warehouse } = require('../models');
     const user = await User.findByPk(decoded.id, {
       include: [
         {
@@ -19,6 +19,7 @@ module.exports = async (req, res, next) => {
         },
         { model: Permission, through: { attributes: ['granted'] } },
         { model: Branch, attributes: ['id', 'company_id'] },
+        { model: Warehouse, as: 'AssignedWarehouses', attributes: ['id', 'name', 'code'], through: { attributes: [] } },
       ],
     });
 
@@ -36,6 +37,8 @@ module.exports = async (req, res, next) => {
     });
 
     req.user = user;
+    // Expose the single assigned warehouse (null for admins / unassigned users)
+    req.user.assigned_warehouse = user.AssignedWarehouses?.[0] ?? null;
     req.permissions = rolePerms;
     next();
   } catch (err) {

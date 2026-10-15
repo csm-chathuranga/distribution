@@ -13,7 +13,9 @@ module.exports = (Model, options = {}) => {
         const { search, page = 1, limit = 20, is_active, ...filters } = req.query;
         const where = { ...defaultWhere };
 
-        if (req.user.branch_id && Model.rawAttributes.branch_id) where.branch_id = req.user.branch_id;
+        const hasBranchScope = req.user.branch_id && Model.rawAttributes.branch_id;
+        const isScopedRole   = !req.permissions?.has('sales.view_all') && !req.permissions?.has('settings.users');
+        if (hasBranchScope && isScopedRole) where.branch_id = req.user.branch_id;
         if (req.user.Role?.name !== 'super_admin' && Model.rawAttributes.company_id) {
           // scope by company via branch — simplified
         }

@@ -1,13 +1,16 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
 const c = require('../controllers/userController');
-const { User, Role } = require('../models');
+const { User, Role, Warehouse } = require('../models');
 
 // GET /api/users/for-select?role=driver — lightweight user list for dropdowns (no settings.users needed)
 router.get('/for-select', authorize('sales.create'), async (req, res, next) => {
   try {
     const where = { is_active: true };
-    const include = [{ model: Role, attributes: ['id', 'name', 'display_name'] }];
+    const include = [
+      { model: Role, attributes: ['id', 'name', 'display_name'] },
+      { model: Warehouse, as: 'AssignedWarehouses', attributes: ['id', 'name'], through: { attributes: [] } },
+    ];
     if (req.query.role) {
       const role = await Role.findOne({ where: { name: req.query.role } });
       if (role) where.role_id = role.id;

@@ -4,6 +4,7 @@ export const settingsApi = baseApi.injectEndpoints({
   endpoints: b => ({
     login: b.mutation({ query: body => ({ url: '/auth/login', method: 'POST', body }) }),
     me: b.query({ query: () => '/auth/me', providesTags: ['User'] }),
+    changePassword: b.mutation({ query: body => ({ url: '/auth/change-password', method: 'PUT', body }) }),
 
     getUsers: b.query({ query: params => ({ url: '/users', params }), providesTags: ['User'] }),
     getUsersForSelect: b.query({ query: (role = null) => ({ url: '/users/for-select', params: role ? { role } : {} }), providesTags: ['User'] }),
@@ -27,7 +28,7 @@ export const settingsApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useLoginMutation, useMeQuery,
+  useLoginMutation, useMeQuery, useChangePasswordMutation,
   useGetUsersQuery, useGetUsersForSelectQuery, useGetUserQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation, useSetUserPermissionsMutation,
   useGetRolesQuery, useGetRoleQuery, useCreateRoleMutation, useUpdateRoleMutation, useSetRolePermissionsMutation, useGetAllPermissionsQuery,
   useGetBranchesQuery, useCreateBranchMutation, useUpdateBranchMutation,

@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
-import { useCreateCustomerReturnMutation } from '../../api/salesApi';
+import { useCreateCustomerReturnMutation, useGetActiveSheetQuery, useGetLoadingSheetQuery } from '../../api/salesApi';
 import { useGetCustomersQuery } from '../../api/customersApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
-import { useGetInvoicesQuery } from '../../api/salesApi';
-import { selectCurrentUser } from '../../store/authSlice';
+import { selectCurrentUser, selectAssignedWarehouse } from '../../store/authSlice';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
 import { today } from '../../utils/format';
 
@@ -33,14 +33,19 @@ const schema = yup.object({
 const BLANK_LINE = { product_id: '', quantity: 1, unit_price: 0, reason: '' };
 
 export default function CustomerReturnCreate() {
-  const navigate    = useNavigate();
-  const currentUser = useSelector(selectCurrentUser);
+  const navigate         = useNavigate();
+  const currentUser      = useSelector(selectCurrentUser);
+  const assignedWarehouse = useSelector(selectAssignedWarehouse);
   const [create, { isLoading }] = useCreateCustomerReturnMutation();
 
   const { data: customers }  = useGetCustomersQuery({ limit: 500 });
   const { data: warehouses } = useGetWarehousesQuery({});
   const { data: products }   = useGetProductsQuery({ limit: 500, is_active: true });
-  const { data: invoices }   = useGetInvoicesQuery({ status: 'POSTED', limit: 300 });
+
+  // For drivers: pull invoices from their active loading sheet
+  const { data: activeSheet } = useGetActiveSheetQuery();
+  const { data: sheetDetail } = useGetLoadingSheetQuery(activeSheet?.id, { skip: !activeSheet?.id });
+  const sheetInvoices = sheetDetail?.Invoices ?? [];
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -52,12 +57,19 @@ export default function CustomerReturnCreate() {
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
 
+  // Pre-select assigned warehouse for scoped users (sales_rep / driver)
+  useEffect(() => {
+    if (assignedWarehouse) setValue('warehouse_id', assignedWarehouse.id);
+  }, [assignedWarehouse, setValue]);
+
   const customerOpts  = customers?.data?.map(c => ({ value: c.id, label: c.name })) || [];
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
   const productOpts   = products?.data?.map(p => ({ value: p.id, label: `${p.sku} — ${p.name}` })) || [];
-  const invoiceOpts   = [
+
+  // Prefer sheet invoices (drivers); fall back to empty list
+  const invoiceOpts = [
     { value: '', label: '— No linked invoice —' },
-    ...(invoices?.data?.map(inv => ({ value: inv.id, label: `${inv.invoice_number} — ${inv.Customer?.name || ''}` })) || []),
+    ...sheetInvoices.map(inv => ({ value: inv.id, label: `${inv.invoice_number} — ${inv.Customer?.name || ''}` })),
   ];
 
   const handleProductChange = (index, productId) => {

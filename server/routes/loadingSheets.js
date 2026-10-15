@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
+
 const notify = require('../notify');
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
@@ -11,8 +12,13 @@ const include = [
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
   { model: User, as: 'Driver', attributes: ['id', 'name'] },
   { model: Vehicle, attributes: ['id', 'registration_number', 'make', 'model'] },
-  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'status', 'invoice_date', 'customer_id'],
-    include: [{ model: Customer, attributes: ['id', 'name'] }] },
+  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes'],
+    include: [
+      { model: Customer, attributes: ['id', 'name', 'address'] },
+      { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'unit_price', 'line_total'],
+        include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+    ],
+  },
 ];
 
 // GET /api/loading-sheets
@@ -59,7 +65,11 @@ router.get('/available-invoices', authorize('sales.approve'), async (req, res, n
     if (req.user.branch_id) where.branch_id = req.user.branch_id;
     const invoices = await Invoice.findAll({
       where,
-      include: [{ model: Customer, attributes: ['id', 'name', 'code'] }],
+      include: [
+        { model: Customer, attributes: ['id', 'name', 'code'] },
+        { model: InvoiceLine, as: 'Lines',
+          include: [{ model: Product, attributes: ['id', 'name', 'sku', 'cost_price'] }] },
+      ],
       order: [['invoice_date', 'DESC'], ['id', 'DESC']],
       limit: 200,
     });
@@ -231,8 +241,24 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'LOADED') return res.status(400).json({ message: 'Sheet must be LOADED to close' });
 
-    const invoiceCount = await Invoice.count({ where: { loading_sheet_id: sheet.id, status: 'POSTED' }, transaction: t });
+    const invoiceCount = await Invoice.count({ where: { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] }, transaction: t });
     const hasInvoices = invoiceCount > 0;
+
+    // Build product_id → total invoiced quantity from actual invoice lines
+    const invoicedQtyMap = {};
+    if (hasInvoices) {
+      const sheetInvoices = await Invoice.findAll({
+        where: { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] },
+        include: [{ model: InvoiceLine, as: 'Lines', attributes: ['product_id', 'quantity'] }],
+        transaction: t,
+      });
+      sheetInvoices.forEach(inv => {
+        (inv.Lines || []).forEach(il => {
+          const pid = il.product_id;
+          invoicedQtyMap[pid] = (invoicedQtyMap[pid] || 0) + parseFloat(il.quantity || 0);
+        });
+      });
+    }
 
     // Build maps from the returns payload
     const returnMap   = {};
@@ -253,7 +279,7 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
       const damagedQty  = damagedMap[line.id] || 0;
       const lostQty     = lostMap[line.id]    || 0;
       const soldQty = hasInvoices
-        ? parseFloat(line.sold_quantity || 0)
+        ? (invoicedQtyMap[line.product_id] || 0)
         : Math.max(0, parseFloat(line.loaded_quantity) - returnedQty - damagedQty - lostQty);
 
       await line.update({

@@ -15,15 +15,15 @@ import { TextField, SelectField } from '../../components/ui/FormField';
 
 const createSchema = yup.object({
   name: yup.string().required('Name is required').max(255),
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().min(8, 'Min 8 characters').required('Password required'),
+  email: yup.string().required('Email or username is required'),
+  password: yup.string().min(3, 'Min 3 characters').required('Password required'),
   role_id: yup.number().required('Role is required').typeError('Select role'),
 });
 
 const editSchema = yup.object({
   name: yup.string().required('Name is required').max(255),
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().nullable().transform(v => v === '' ? null : v).min(8, 'Min 8 characters').optional(),
+  email: yup.string().required('Email or username is required'),
+  password: yup.string().nullable().transform(v => v === '' ? null : v).min(3, 'Min 3 characters').optional(),
   role_id: yup.number().required('Role is required').typeError('Select role'),
 });
 
@@ -56,7 +56,7 @@ function UserForm({ onClose, editing, roles }) {
     <Modal open={true} onClose={onClose} title={editing ? 'Edit User' : 'New User'} size="md">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <TextField label="Full Name" required error={errors.name?.message} {...register('name')} />
-        <TextField label="Email" required type="email" error={errors.email?.message} {...register('email')} />
+        <TextField label="Email" required type="text" error={errors.email?.message} {...register('email')} />
         <TextField label={editing ? 'New Password (leave blank to keep)' : 'Password'} required={!editing} type="password" error={errors.password?.message} {...register('password')} />
         <Controller
           control={control}

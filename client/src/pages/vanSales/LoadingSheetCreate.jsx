@@ -41,22 +41,42 @@ export default function LoadingSheetCreate() {
 
   const { data: availableInvoices = [], isLoading: loadingInvoices } = useGetAvailableInvoicesForNewQuery(undefined, { skip: !canApprove });
 
-  const toggleInv = id => setSelectedInvIds(prev => {
-    const next = new Set(prev);
+  const buildLinesFromInvoices = (invIds) => {
+    const map = {};
+    availableInvoices.filter(i => invIds.has(i.id)).forEach(inv => {
+      (inv.Lines || []).forEach(line => {
+        const pid = String(line.product_id);
+        const costPrice = parseFloat(line.Product?.cost_price || 0);
+        const unitCost = costPrice > 0 ? costPrice : parseFloat(line.unit_price || 0);
+        if (!map[pid]) {
+          map[pid] = { product_id: line.product_id, loaded_quantity: 0, unit_cost: unitCost };
+        }
+        map[pid].loaded_quantity += parseFloat(line.quantity || 0);
+      });
+    });
+    const result = Object.values(map);
+    return result.length > 0 ? result : [{ product_id: '', loaded_quantity: 1, unit_cost: 0 }];
+  };
+
+  const toggleInv = id => {
+    const next = new Set(selectedInvIds);
     next.has(id) ? next.delete(id) : next.add(id);
-    return next;
-  });
+    setSelectedInvIds(next);
+    replace(buildLinesFromInvoices(next));
+  };
   const toggleAllInv = () => {
-    if (selectedInvIds.size === availableInvoices.length) setSelectedInvIds(new Set());
-    else setSelectedInvIds(new Set(availableInvoices.map(i => i.id)));
+    const next = selectedInvIds.size === availableInvoices.length
+      ? new Set()
+      : new Set(availableInvoices.map(i => i.id));
+    setSelectedInvIds(next);
+    replace(buildLinesFromInvoices(next));
   };
 
   const { data: productsData }  = useGetProductsQuery({ limit: 500 });
   const { data: warehousesData } = useGetWarehousesQuery({});
   const { data: routesData }    = useGetRoutesQuery({});
-  const { data: drivers = [] }   = useGetUsersForSelectQuery('delivery');
-  const { data: allSelectUsers = [] } = useGetUsersForSelectQuery(null);
-  const salesReps = allSelectUsers.filter(u => ['sales_rep', 'manager', 'admin'].includes(u.Role?.name));
+  const { data: drivers = [] }  = useGetUsersForSelectQuery('driver');
+  const { data: salesReps = [] } = useGetUsersForSelectQuery('sales_rep');
   const { data: vehiclesData }  = useGetVehiclesQuery({});
 
   const products   = productsData?.data || [];
@@ -69,7 +89,7 @@ export default function LoadingSheetCreate() {
     defaultValues: { sheet_date: today(), lines: [{ product_id: '', loaded_quantity: 1, unit_cost: 0 }] },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'lines' });
   const lines       = watch('lines');
   const warehouseId = watch('warehouse_id');
 

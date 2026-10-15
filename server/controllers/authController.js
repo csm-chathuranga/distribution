@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 const { User, Role, Permission } = require('../models');
 
 const ACCESS_SECRET = process.env.JWT_SECRET;
@@ -15,10 +16,10 @@ const userInclude = [{ model: Role, include: [Permission] }];
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+    if (!email || !password) return res.status(400).json({ message: 'Email/username and password required' });
 
     const user = await User.scope('withPassword').findOne({
-      where: { email },
+      where: { [Op.or]: [{ email }, { name: email }] },
       include: userInclude,
     });
 
@@ -61,7 +62,9 @@ exports.refresh = async (req, res, next) => {
 };
 
 exports.me = async (req, res) => {
-  res.json({ user: req.user, permissions: [...req.permissions] });
+  const userData = req.user.toJSON();
+  userData.assigned_warehouse = userData.AssignedWarehouses?.[0] ?? null;
+  res.json({ user: userData, permissions: [...req.permissions] });
 };
 
 exports.changePassword = async (req, res, next) => {

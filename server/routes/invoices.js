@@ -10,7 +10,7 @@ router.post('/', authorize('sales.create'), c.create);
 router.post('/:id/post', authorize('sales.approve'), c.post);
 
 // PUT /api/invoices/:id/deliver — driver marks goods as physically delivered
-router.put('/:id/deliver', authorize('sales.create'), async (req, res, next) => {
+router.put('/:id/deliver', authorize.any('sales.create', 'sales.view_own'), async (req, res, next) => {
   try {
     const invoice = await Invoice.findByPk(req.params.id);
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
@@ -20,7 +20,7 @@ router.put('/:id/deliver', authorize('sales.create'), async (req, res, next) => 
     if (invoice.delivered_at) {
       return res.status(422).json({ message: 'Invoice already marked as delivered' });
     }
-    await invoice.update({ delivered_at: new Date(), delivered_by: req.user.id });
+    await invoice.update({ status: 'DELIVERED', delivered_at: new Date(), delivered_by: req.user.id });
     res.json({ message: 'Marked as delivered', delivered_at: invoice.delivered_at });
     const deliveredBy = req.user.name || `User #${req.user.id}`;
     const deliveryBody = `${invoice.invoice_number} marked delivered by ${deliveredBy}`;
@@ -30,6 +30,21 @@ router.put('/:id/deliver', authorize('sales.create'), async (req, res, next) => 
     if (invoice.sales_rep_id && invoice.sales_rep_id !== req.user.id) {
       notify({ userId: invoice.sales_rep_id, type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: `${invoice.invoice_number} has been delivered to the customer`, link: `/invoices/${invoice.id}` });
     }
+  } catch (err) { next(err); }
+});
+
+// PUT /api/invoices/:id/cancel — driver cancels delivery with a reason
+router.put('/:id/cancel', authorize.any('sales.create', 'sales.view_own'), async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    if (!reason?.trim()) return res.status(400).json({ message: 'Cancellation reason is required' });
+    const invoice = await Invoice.findByPk(req.params.id);
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+    if (!['POSTED', 'PARTIAL', 'OVERDUE'].includes(invoice.status)) {
+      return res.status(422).json({ message: 'Invoice cannot be cancelled in its current status' });
+    }
+    await invoice.update({ status: 'CANCELLED', notes: reason.trim() });
+    res.json({ message: 'Invoice cancelled' });
   } catch (err) { next(err); }
 });
 

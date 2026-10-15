@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
     order_date: { type: DataTypes.DATEONLY, allowNull: false },
     delivery_date: DataTypes.DATEONLY,
     status: {
-      type: DataTypes.ENUM('DRAFT', 'CONFIRMED', 'PARTIAL', 'DELIVERED', 'CANCELLED'),
+      type: DataTypes.ENUM('DRAFT', 'CONFIRMED', 'PARTIAL', 'DELIVERED', 'INVOICED', 'CANCELLED'),
       defaultValue: 'DRAFT',
     },
     order_type: { type: DataTypes.ENUM('CREDIT', 'CASH'), defaultValue: 'CREDIT' },

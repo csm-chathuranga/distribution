@@ -24,12 +24,24 @@ const availColor = (avail, loaded) => {
 function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
   const lines = sheet.Lines || [];
   const invoices = sheet.Invoices || [];
-  const hasInvoices = invoices.filter(i => i.status === 'POSTED').length > 0;
+  const hasInvoices = invoices.filter(i => ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'].includes(i.status)).length > 0;
+
+  // Sum invoiced quantities per product from actual invoice lines
+  const invoicedQtyMap = {};
+  invoices
+    .filter(i => ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'].includes(i.status))
+    .forEach(inv => {
+      (inv.Lines || []).forEach(il => {
+        const pid = String(il.product_id);
+        invoicedQtyMap[pid] = (invoicedQtyMap[pid] || 0) + parseFloat(il.quantity || 0);
+      });
+    });
 
   const initReturns = {};
   if (hasInvoices) {
     lines.forEach(line => {
-      const remaining = Math.max(0, parseFloat(line.loaded_quantity) - parseFloat(line.sold_quantity || 0));
+      const invoiced = invoicedQtyMap[String(line.product_id)] || 0;
+      const remaining = Math.max(0, parseFloat(line.loaded_quantity) - invoiced);
       if (remaining > 0) initReturns[line.id] = String(remaining);
     });
   }
@@ -41,7 +53,7 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
 
   const rows = lines.map(line => {
     const loaded   = parseFloat(line.loaded_quantity) || 0;
-    const invoiced = hasInvoices ? (parseFloat(line.sold_quantity || 0)) : 0;
+    const invoiced = hasInvoices ? (invoicedQtyMap[String(line.product_id)] || 0) : 0;
     const returned = parseFloat(returns[line.id] || 0);
     const damaged  = parseFloat(damages[line.id]  || 0);
     const lost     = parseFloat(losts[line.id]    || 0);

@@ -1,9 +1,11 @@
-import { TrendingUp, Users, AlertTriangle, DollarSign, BarChart2, PieChart as PieIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { TrendingUp, Users, AlertTriangle, DollarSign, BarChart2, PieChart as PieIcon, ChevronRight } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { useGetDashboardQuery, useGetDashboardTrendQuery } from '../api/reportsApi';
+import { useGetOutstandingCustomersQuery } from '../api/customersApi';
 import { fmtCurrency, fmtDate } from '../utils/format';
 import StatsCard from '../components/ui/StatsCard';
 import SkeletonTable from '../components/ui/SkeletonTable';
@@ -34,6 +36,7 @@ function ChartSkeleton() {
 export default function Dashboard() {
   const { data, isLoading } = useGetDashboardQuery(undefined, { pollingInterval: 120000 });
   const { data: trend, isLoading: trendLoading } = useGetDashboardTrendQuery(30);
+  const { data: outstandingCustomers = [], isLoading: outLoading } = useGetOutstandingCustomersQuery(10);
 
   const { sales, collections, stock, top_products, status_dist, monthly_trend } = data || {};
 
@@ -163,6 +166,59 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Outstanding customers */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+            <Users size={16} className="text-amber-500" />
+            Customers with Outstanding Balance
+          </h3>
+        </div>
+        <div className="card-body p-0">
+          {outLoading ? (
+            <SkeletonTable rows={5} cols={3} />
+          ) : outstandingCustomers.length === 0 ? (
+            <p className="text-gray-400 text-sm py-6 text-center">No outstanding balances.</p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {outstandingCustomers.map((c, i) => (
+                <Link key={c.id} to={`/customers/${c.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{c.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {c.Route?.name && (
+                          <span className="text-xs text-gray-400">{c.Route.name}</span>
+                        )}
+                        {c.Route?.SalesRep?.name && (
+                          <>
+                            <span className="text-gray-300 text-xs">·</span>
+                            <span className="text-xs text-blue-500">{c.Route.SalesRep.name}</span>
+                          </>
+                        )}
+                        {c.phone && (
+                          <>
+                            <span className="text-gray-300 text-xs">·</span>
+                            <span className="text-xs text-gray-400">{c.phone}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-amber-600">{fmtCurrency(c.outstanding_balance)}</span>
+                    <ChevronRight size={14} className="text-gray-400" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Second charts row: 6-month trend + invoice status donut */}

@@ -13,6 +13,7 @@ export const salesApi = baseApi.injectEndpoints({
     createInvoice: b.mutation({ query: body => ({ url: '/invoices', method: 'POST', body }), invalidatesTags: ['Invoice'] }),
     postInvoice: b.mutation({ query: id => ({ url: `/invoices/${id}/post`, method: 'POST' }), invalidatesTags: ['Invoice', 'Stock', 'Journal'] }),
     deliverInvoice: b.mutation({ query: id => ({ url: `/invoices/${id}/deliver`, method: 'PUT' }), invalidatesTags: ['Invoice', 'LoadingSheet'] }),
+    cancelInvoice: b.mutation({ query: ({ id, reason }) => ({ url: `/invoices/${id}/cancel`, method: 'PUT', body: { reason } }), invalidatesTags: ['Invoice', 'LoadingSheet'] }),
 
     getReceipts: b.query({ query: params => ({ url: '/receipts', params }), providesTags: ['Receipt'] }),
     getReceipt: b.query({ query: id => `/receipts/${id}`, providesTags: (r,e,id) => [{ type: 'Receipt', id }] }),
@@ -39,7 +40,7 @@ export const salesApi = baseApi.injectEndpoints({
     returnDelivery: b.mutation({ query: ({ id, ...body }) => ({ url: `/deliveries/${id}/return`, method: 'PUT', body }), invalidatesTags: ['Delivery'] }),
 
     getLoadingSheets: b.query({ query: params => ({ url: '/loading-sheets', params }), providesTags: ['LoadingSheet'] }),
-    getLoadingSheet: b.query({ query: id => `/loading-sheets/${id}`, providesTags: (r,e,id) => [{ type:'LoadingSheet', id }] }),
+    getLoadingSheet: b.query({ query: id => `/loading-sheets/${id}`, providesTags: (r,e,id) => [{ type:'LoadingSheet', id }, 'LoadingSheet'] }),
     getActiveSheet: b.query({ query: () => '/loading-sheets/active', providesTags: ['LoadingSheet'] }),
     getVanStock: b.query({ query: id => `/loading-sheets/${id}/van-stock`, providesTags: (r,e,id) => [{ type:'LoadingSheet', id }] }),
     createLoadingSheet: b.mutation({ query: body => ({ url: '/loading-sheets', method: 'POST', body }), invalidatesTags: ['LoadingSheet', 'Stock'] }),
@@ -77,4 +78,5 @@ export const {
   useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetAvailableInvoicesQuery, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation,
   useGetFreeAllocationsQuery, useCreateFreeAllocationMutation, useTopupFreeAllocationMutation, useDistributeFreeItemsMutation, useGetFreeAllocationHistoryQuery,
   useGetCustomerReturnsQuery, useGetCustomerReturnQuery, useCreateCustomerReturnMutation, useConfirmCustomerReturnMutation, useCancelCustomerReturnMutation,
+  useCancelInvoiceMutation,
 } = salesApi;

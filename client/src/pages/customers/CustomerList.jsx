@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Pencil, Plus, Search, Phone, User } from 'lucide-react';
+import { Pencil, Plus, Search, Phone, User, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
@@ -254,7 +254,9 @@ export default function CustomerList() {
         <>
           {/* ── Desktop: original card design ── */}
           <div className="hidden md:block space-y-2">
-            {customers.map(c => (
+            {customers.map(c => {
+              const routeName = c.route_id ? routeOptions.find(r => String(r.id) === String(c.route_id))?.name : null;
+              return (
               <div key={c.id} className="card p-4 cursor-pointer active:opacity-80" onClick={() => navigate(`/customers/${c.id}`)}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -281,6 +283,11 @@ export default function CustomerList() {
                     </a>
                   )}
                   {c.contact_person && <span>{c.contact_person}</span>}
+                  {routeName && (
+                    <span className="flex items-center gap-1 text-violet-600 font-medium">
+                      <MapPin size={12} /> {routeName}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                   <div className="text-xs text-gray-500">
@@ -294,7 +301,7 @@ export default function CustomerList() {
                   )}
                 </div>
               </div>
-            ))}
+            ); })}
           </div>
 
           {/* ── Mobile: new colorful card design ── */}
@@ -304,6 +311,7 @@ export default function CustomerList() {
               const creditLimit = parseFloat(c.credit_limit || 0);
               const utilPct     = creditLimit > 0 ? Math.min(100, Math.round((outstanding / creditLimit) * 100)) : 0;
               const initials    = c.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+              const routeName   = c.route_id ? routeOptions.find(r => String(r.id) === String(c.route_id))?.name : null;
 
               return (
                 <div key={c.id}
@@ -334,7 +342,7 @@ export default function CustomerList() {
                       )}
                     </div>
 
-                    {(c.phone || c.contact_person) && (
+                    {(c.phone || c.contact_person || routeName) && (
                       <div className="flex items-center gap-4 mt-2.5 flex-wrap">
                         {c.phone && (
                           <a href={`tel:${c.phone}`} onClick={e => e.stopPropagation()}
@@ -345,6 +353,11 @@ export default function CustomerList() {
                         {c.contact_person && (
                           <span className="flex items-center gap-1 text-xs text-gray-500">
                             <User size={11} className="text-gray-400" /> {c.contact_person}
+                          </span>
+                        )}
+                        {routeName && (
+                          <span className="flex items-center gap-1 text-xs text-violet-600 font-medium">
+                            <MapPin size={11} /> {routeName}
                           </span>
                         )}
                       </div>

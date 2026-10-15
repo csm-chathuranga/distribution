@@ -15,8 +15,8 @@ import { setCredentials } from '../store/authSlice';
 import { useInstallPWA } from '../hooks/useInstallPWA';
 
 const schema = yup.object({
-  email:    yup.string().email('Invalid email').required('Email required'),
-  password: yup.string().required('Password required'),
+  email:    yup.string().required('Email or username required'),
+  password: yup.string().min(3, 'Min 3 characters').required('Password required'),
 });
 
 const FEATURES = [
@@ -141,9 +141,9 @@ export default function Login() {
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">Email</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">Email or Username</label>
                   <input
-                    type="email" autoComplete="email" placeholder="you@lankadist.lk"
+                    type="text" autoComplete="username" placeholder="Email or username"
                     className="block w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500
                                focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                     {...register('email')}

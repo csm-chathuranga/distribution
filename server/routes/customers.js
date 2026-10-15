@@ -12,6 +12,25 @@ const crud = require('../controllers/crudFactory')(Customer, {
   order: [['name', 'ASC']],
 });
 
+// GET /api/customers/outstanding — top customers with outstanding_balance > 0, sorted desc
+router.get('/outstanding', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
+  try {
+    const { User } = require('../models');
+    const limit = parseInt(req.query.limit) || 10;
+    const customers = await Customer.findAll({
+      where: { outstanding_balance: { [Op.gt]: 0 } },
+      attributes: ['id', 'name', 'phone', 'outstanding_balance'],
+      include: [
+        { model: Route, attributes: ['id', 'name'],
+          include: [{ model: User, as: 'SalesRep', attributes: ['id', 'name'] }] },
+      ],
+      order: [['outstanding_balance', 'DESC']],
+      limit,
+    });
+    res.json(customers);
+  } catch (err) { next(err); }
+});
+
 router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
   try {
     const customer = await Customer.findByPk(req.params.id, {

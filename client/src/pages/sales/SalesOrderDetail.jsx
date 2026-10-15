@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, User, Building2, Calendar, FileText, FilePlus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetSalesOrderQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation } from '../../api/salesApi';
 import { usePermission } from '../../hooks/usePermission';
@@ -96,6 +96,16 @@ export default function SalesOrderDetail() {
             <p className="font-semibold text-gray-900">{order.Warehouse?.name || '—'}</p>
           </div>
         </div>
+
+        {order.Route && (
+          <div className="flex items-center gap-3 text-sm">
+            <div className="p-2 rounded-lg bg-rose-50"><MapPin size={15} className="text-rose-500" /></div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Route</p>
+              <p className="font-semibold text-gray-900">{order.Route.name}</p>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3 text-sm">
           <div className="p-2 rounded-lg bg-amber-50"><Calendar size={15} className="text-amber-600" /></div>

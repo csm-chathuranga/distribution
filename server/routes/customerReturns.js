@@ -58,7 +58,7 @@ router.get('/:id', authorize.any('sales.view_own', 'sales.view_all', 'sales.retu
 });
 
 // Create
-router.post('/', authorize.any('sales.create', 'sales.return'), async (req, res, next) => {
+router.post('/', authorize.any('sales.create', 'sales.return', 'sales.view_own'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { lines, ...data } = req.body;

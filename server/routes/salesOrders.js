@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, sequelize: db } = require('../models');
+const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, FreeItemAllocation, FreeItemUsage, Stock, StockMovement, sequelize: db } = require('../models');
 const notify = require('../notify');
 const crud = require('../controllers/crudFactory')(SalesOrder, {
   include: [{ model: Customer, attributes: ['id', 'name', 'code'] }, { model: Warehouse, attributes: ['id', 'name'] }],
@@ -20,18 +20,44 @@ async function generateOrderNumber() {
 router.get('/', authorize('sales.view_own'), async (req, res, next) => {
   try {
     const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('sales.approve');
-    if (!canViewAll) req.query.created_by = req.user.id;
-    return crud.list(req, res, next);
+    const { search, page = 1, limit = 20, date_from, date_to, status, ...filters } = req.query;
+
+    const where = {};
+    if (!canViewAll) where.created_by = req.user.id;
+    if (filters.created_by) where.created_by = filters.created_by;
+    if (status) where.status = status;
+    if (search) {
+      where[Op.or] = [
+        { order_number: { [Op.like]: `%${search}%` } },
+        { '$Customer.name$': { [Op.like]: `%${search}%` } },
+      ];
+    }
+    if (date_from || date_to) {
+      where.order_date = {};
+      if (date_from) where.order_date[Op.gte] = date_from;
+      if (date_to)   where.order_date[Op.lte] = date_to;
+    }
+
+    const { count, rows } = await SalesOrder.findAndCountAll({
+      where,
+      include: [{ model: Customer, attributes: ['id', 'name', 'code'] }, { model: Warehouse, attributes: ['id', 'name'] }],
+      order: [['order_date', 'DESC'], ['id', 'DESC']],
+      limit:  parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+      subQuery: false,
+    });
+    return res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
 router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
   try {
-    const { User, Product, SalesOrderLine } = require('../models');
+    const { User, Product, SalesOrderLine, Route } = require('../models');
     const order = await SalesOrder.findByPk(req.params.id, {
       include: [
         { model: Customer,       attributes: ['id', 'name', 'code', 'phone'] },
         { model: Warehouse,      attributes: ['id', 'name'] },
         { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+        { model: Route,          attributes: ['id', 'name'], required: false },
         { model: SalesOrderLine, as: 'Lines',
           include: [{ model: Product, attributes: ['id', 'sku', 'name'] }] },
       ],
@@ -70,6 +96,54 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
       const order = await SalesOrder.create(data, { transaction: t });
       if (lines?.length) {
         await SalesOrderLine.bulkCreate(lines.map(l => ({ ...l, order_id: order.id })), { transaction: t });
+
+        // Deduct free quantities from the sales rep's allocation balance
+        const salesRepId = data.sales_rep_id || req.user.id;
+        for (const line of lines) {
+          const freeQty = parseFloat(line.free_quantity || 0);
+          if (freeQty <= 0) continue;
+
+          const alloc = await FreeItemAllocation.findOne({
+            where: { sales_rep_id: salesRepId, product_id: line.product_id },
+            transaction: t,
+            lock: true,
+          });
+          if (!alloc) continue; // no allocation — free qty recorded on line but no quota to deduct
+
+          const remaining = parseFloat(alloc.allocated_quantity) - parseFloat(alloc.used_quantity);
+          if (freeQty > remaining) {
+            await t.rollback();
+            return res.status(422).json({ message: `Free item quota exceeded for product ID ${line.product_id}. Only ${remaining} units remaining.` });
+          }
+
+          // Deduct from warehouse stock
+          const stock = await Stock.findOne({
+            where: { warehouse_id: order.warehouse_id, product_id: line.product_id },
+            transaction: t, lock: true,
+          });
+          if (!stock || parseFloat(stock.quantity) < freeQty) {
+            await t.rollback();
+            return res.status(422).json({ message: `Insufficient stock for free items on product ID ${line.product_id}` });
+          }
+          const newQty = parseFloat(stock.quantity) - freeQty;
+          await stock.update({ quantity: newQty }, { transaction: t });
+          await StockMovement.create({
+            warehouse_id: order.warehouse_id, product_id: line.product_id,
+            movement_type: 'OUT', source_type: 'FREE_DIST', source_id: alloc.id,
+            quantity: freeQty, balance_after: newQty, unit_cost: 0,
+            created_by: req.user.id,
+          }, { transaction: t });
+
+          // Record usage and update allocation balance
+          await FreeItemUsage.create({
+            allocation_id: alloc.id,
+            customer_id: data.customer_id,
+            quantity: freeQty,
+            notes: `Sales order ${order.order_number}`,
+            given_by: req.user.id,
+          }, { transaction: t });
+          await alloc.increment('used_quantity', { by: freeQty, transaction: t });
+        }
       }
       await t.commit();
       res.status(201).json(order);

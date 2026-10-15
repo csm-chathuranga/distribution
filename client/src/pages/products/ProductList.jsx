@@ -45,6 +45,7 @@ export default function ProductList() {
     { key: 'unit', header: 'Unit', cell: r => r.BaseUnit?.abbreviation || '-' },
     { key: 'cost_price', header: 'Cost', cell: r => fmtCurrency(r.cost_price), className: 'text-right' },
     { key: 'selling_price', header: 'Price', cell: r => <span className="font-medium text-primary-700">{fmtCurrency(r.selling_price)}</span>, className: 'text-right' },
+    { key: 'marked_price', header: 'MRP', cell: r => parseFloat(r.marked_price) > 0 ? <span className="font-medium text-indigo-600">{fmtCurrency(r.marked_price)}</span> : <span className="text-gray-300">—</span>, className: 'text-right' },
     { key: 'vat_rate', header: 'VAT', cell: r => `${r.vat_rate}%`, className: 'text-center' },
     { key: 'status', header: 'Status', cell: r => <StatusBadge status={r.is_active} /> },
     {

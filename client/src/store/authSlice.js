@@ -30,10 +30,11 @@ const authSlice = createSlice({
 export const { setCredentials, logout } = authSlice.actions;
 export default authSlice.reducer;
 
-export const selectCurrentUser = s => s.auth.user;
-export const selectToken = s => s.auth.token;
-export const selectRefreshToken = s => s.auth.refreshToken;
-export const selectPermissions = s => s.auth.permissions;
+export const selectCurrentUser       = s => s.auth.user;
+export const selectToken             = s => s.auth.token;
+export const selectRefreshToken      = s => s.auth.refreshToken;
+export const selectPermissions       = s => s.auth.permissions;
+export const selectAssignedWarehouse = s => s.auth.user?.assigned_warehouse ?? null;
 export const selectCan = (state, permission) => {
   if (['super_admin', 'admin'].includes(state.auth.user?.Role?.name)) return true;
   return state.auth.permissions.includes(permission);

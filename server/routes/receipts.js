@@ -43,11 +43,21 @@ router.get('/:id', authorize.any('finance.receipts', 'sales.view_own'), async (r
   } catch (err) { next(err); }
 });
 
-router.post('/', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
+router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_own'), async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { allocations, cheque, ...data } = req.body;
     data.created_by = req.user.id;
+    // Fall back to the linked invoice's company/branch when the user record lacks them
+    if ((!data.company_id || !data.branch_id) && allocations?.length) {
+      const refInv = await Invoice.findByPk(allocations[0].invoice_id, { attributes: ['company_id', 'branch_id'] });
+      if (refInv) {
+        data.company_id = data.company_id || refInv.company_id;
+        data.branch_id  = data.branch_id  || refInv.branch_id;
+      }
+    }
+    data.branch_id  = data.branch_id  || req.user.branch_id;
+    data.company_id = data.company_id || req.user.Branch?.company_id;
     if (!data.receipt_number) data.receipt_number = await generateReceiptNumber();
 
     const receipt = await Receipt.create(data, { transaction: t });

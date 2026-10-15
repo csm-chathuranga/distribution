@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { AlertTriangle, Package, TrendingUp, Warehouse } from 'lucide-react';
 import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
+import { selectAssignedWarehouse } from '../../store/authSlice';
 import { fmtCurrency } from '../../utils/format';
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
@@ -26,11 +28,15 @@ function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
 }
 
 export default function StockOverview() {
+  const assignedWarehouse = useSelector(selectAssignedWarehouse);
+  const isScoped = !!assignedWarehouse;
+
   const [search, setSearch] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [showLowOnly, setShowLowOnly] = useState(false);
 
-  const { data, isLoading } = useGetStockOnHandQuery({});
+  const queryParams = isScoped ? { warehouse_id: assignedWarehouse.id } : {};
+  const { data, isLoading } = useGetStockOnHandQuery(queryParams);
   const { data: warehouses } = useGetWarehousesQuery({});
 
   const warehouseOpts = warehouses?.data || [];
@@ -51,10 +57,10 @@ export default function StockOverview() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={Package}      color="blue"   label="Total SKUs"       value={data?.total ?? '—'} sub={q || warehouseId ? `${rows.length} matching` : undefined} />
-        <StatCard icon={TrendingUp}   color="green"  label="Total Stock Value" value={data ? fmtCurrency(data.total_value) : '—'} />
-        <StatCard icon={AlertTriangle} color="red"   label="Out of Stock"      value={data?.low_stock_count ?? '—'} sub="zero quantity on hand" />
-        <StatCard icon={Warehouse}    color="purple" label="Warehouses"        value={warehouseOpts.length} />
+        <StatCard icon={Package}       color="blue"   label="Total SKUs"        value={data?.total ?? '—'} sub={q || (!isScoped && warehouseId) ? `${rows.length} matching` : undefined} />
+        <StatCard icon={TrendingUp}    color="green"  label="Total Stock Value"  value={data ? fmtCurrency(data.total_value) : '—'} />
+        <StatCard icon={AlertTriangle} color="red"    label="Out of Stock"       value={data?.low_stock_count ?? '—'} sub="zero quantity on hand" />
+        <StatCard icon={Warehouse}     color="purple" label="Warehouse"          value={isScoped ? assignedWarehouse.name : warehouseOpts.length} />
       </div>
 
       {/* Filters */}
@@ -65,14 +71,21 @@ export default function StockOverview() {
           placeholder="Search by product or SKU…"
           className="input flex-1 min-w-48 text-sm"
         />
-        <select
-          value={warehouseId}
-          onChange={e => setWarehouseId(e.target.value)}
-          className="input text-sm w-52"
-        >
-          <option value="">All Warehouses</option>
-          {warehouseOpts.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-        </select>
+        {isScoped ? (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-50 border border-primary-100 text-sm text-primary-700 font-medium">
+            <Warehouse size={14} className="text-primary-500" />
+            {assignedWarehouse.name}
+          </div>
+        ) : (
+          <select
+            value={warehouseId}
+            onChange={e => setWarehouseId(e.target.value)}
+            className="input text-sm w-52"
+          >
+            <option value="">All Warehouses</option>
+            {warehouseOpts.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
+        )}
         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
           <input
             type="checkbox"

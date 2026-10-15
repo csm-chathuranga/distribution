@@ -91,72 +91,138 @@ function TopupModal({ alloc, onClose }) {
 
 // ── New Allocation modal ──────────────────────────────────────
 function NewAllocModal({ onClose }) {
-  const { data: reps = [] }        = useGetUsersForSelectQuery();
-  const { data: productsRaw }      = useGetProductsQuery({ limit: 500 });
-  const { data: warehousesRaw }    = useGetWarehousesQuery();
+  const { data: reps = [] }     = useGetUsersForSelectQuery('sales_rep');
+  const { data: productsRaw }   = useGetProductsQuery({ limit: 500, is_active: true });
+  const { data: warehousesRaw } = useGetWarehousesQuery();
   const products   = productsRaw?.data  || productsRaw  || [];
   const warehouses = warehousesRaw?.data || warehousesRaw || [];
 
   const [repId,  setRepId]  = useState('');
-  const [prodId, setProdId] = useState('');
   const [whId,   setWhId]   = useState('');
-  const [qty,    setQty]    = useState('');
+
+  const handleRepChange = (id) => {
+    setRepId(id);
+    const rep = reps.find(r => String(r.id) === String(id));
+    const assignedWh = rep?.AssignedWarehouses?.[0];
+    if (assignedWh) setWhId(String(assignedWh.id));
+  };
   const [notes,  setNotes]  = useState('');
-  const [create, { isLoading }] = useCreateFreeAllocationMutation();
+  const [qtys,   setQtys]   = useState({});   // { product_id: qty_string }
+  const [saving, setSaving] = useState(false);
+  const [create] = useCreateFreeAllocationMutation();
+
+  const setQty = (pid, val) => setQtys(q => ({ ...q, [pid]: val }));
+
+  const lines = products.filter(p => parseFloat(qtys[p.id] || 0) > 0);
 
   const handleSubmit = async () => {
-    if (!repId || !prodId || !whId || !qty) return toast.error('All fields required');
-    if (parseFloat(qty) <= 0) return toast.error('Quantity must be > 0');
+    if (!repId) return toast.error('Select a sales rep');
+    if (!whId)  return toast.error('Select a warehouse');
+    if (lines.length === 0) return toast.error('Enter quantity for at least one product');
+    setSaving(true);
     try {
-      await create({ sales_rep_id: Number(repId), product_id: Number(prodId), warehouse_id: Number(whId), quantity: parseFloat(qty), notes }).unwrap();
-      toast.success('Allocation created');
+      await Promise.all(lines.map(p =>
+        create({
+          sales_rep_id: Number(repId),
+          product_id:   p.id,
+          warehouse_id: Number(whId),
+          quantity:     parseFloat(qtys[p.id]),
+          notes,
+        }).unwrap()
+      ));
+      toast.success(`${lines.length} allocation${lines.length > 1 ? 's' : ''} created`);
       onClose();
-    } catch (e) { toast.error(e.data?.message || 'Failed'); }
+    } catch (e) {
+      toast.error(e.data?.message || 'Failed');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <Modal open title="New Free Item Allocation" onClose={onClose}>
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Sales Rep *</label>
-          <select value={repId} onChange={e => setRepId(e.target.value)} className="input w-full">
-            <option value="">Select rep…</option>
-            {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-          </select>
+    <Modal open title="New Free Item Allocation" onClose={onClose} size="xl">
+      <div className="flex gap-6" style={{ minHeight: 380 }}>
+
+        {/* Left — rep / warehouse / notes */}
+        <div className="w-64 shrink-0 space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Sales Rep *</label>
+            <select value={repId} onChange={e => handleRepChange(e.target.value)} className="input w-full">
+              <option value="">Select rep…</option>
+              {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Warehouse *</label>
+            <select value={whId} onChange={e => setWhId(e.target.value)} className="input w-full">
+              <option value="">Select warehouse…</option>
+              {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Notes (optional)</label>
+            <input type="text" value={notes} onChange={e => setNotes(e.target.value)}
+              className="input w-full" placeholder="e.g. Q4 promo" />
+          </div>
+          {lines.length > 0 && (
+            <div className="rounded-xl bg-violet-50 border border-violet-100 p-3">
+              <p className="text-xs font-semibold text-violet-700 mb-1">{lines.length} product{lines.length > 1 ? 's' : ''} selected</p>
+              {lines.map(p => (
+                <p key={p.id} className="text-xs text-violet-600 truncate">{p.name} — {qtys[p.id]} units</p>
+              ))}
+            </div>
+          )}
         </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Product *</label>
-          <select value={prodId} onChange={e => setProdId(e.target.value)} className="input w-full">
-            <option value="">Select product…</option>
-            {products.map(p => <option key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ''}</option>)}
-          </select>
+
+        {/* Right — product list with qty inputs */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-gray-700">Products</p>
+            <button
+              type="button"
+              onClick={() => setQtys({})}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Clear all
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1 rounded-xl border border-gray-100 divide-y divide-gray-50" style={{ maxHeight: 340 }}>
+            {products.map(p => {
+              const val = qtys[p.id] || '';
+              const active = parseFloat(val) > 0;
+              return (
+                <div
+                  key={p.id}
+                  className={`flex items-center justify-between px-3 py-2 gap-3 ${active ? 'bg-violet-50' : 'hover:bg-gray-50'}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium truncate ${active ? 'text-violet-800' : 'text-gray-800'}`}>{p.name}</p>
+                    {p.sku && <p className="text-xs text-gray-400">{p.sku}</p>}
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="numeric"
+                    value={val}
+                    placeholder="0"
+                    onChange={e => setQty(p.id, e.target.value)}
+                    onFocus={e => e.target.select()}
+                    className={`w-20 text-right text-sm font-bold rounded-lg border px-2 py-1 focus:outline-none focus:ring-2 focus:ring-violet-300 ${active ? 'border-violet-300 bg-white' : 'border-gray-200 bg-gray-50'}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Warehouse *</label>
-          <select value={whId} onChange={e => setWhId(e.target.value)} className="input w-full">
-            <option value="">Select warehouse…</option>
-            {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Quantity *</label>
-          <input type="number" min="1" step="1" value={qty}
-            onChange={e => setQty(e.target.value)}
-            onFocus={e => e.target.select()}
-            className="input w-full text-right text-lg font-bold" placeholder="0" />
-        </div>
-        <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Notes (optional)</label>
-          <input type="text" value={notes} onChange={e => setNotes(e.target.value)}
-            className="input w-full" placeholder="e.g. Q4 promotional items" />
-        </div>
-        <div className="flex gap-3 pt-2 border-t">
-          <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-          <button type="button" onClick={handleSubmit} disabled={isLoading}
-            className="btn btn-primary flex-1 disabled:opacity-50 font-semibold">
-            {isLoading ? 'Creating…' : 'Create Allocation'}
-          </button>
-        </div>
+      </div>
+
+      <div className="flex gap-3 pt-4 border-t mt-4">
+        <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
+        <button type="button" onClick={handleSubmit} disabled={saving}
+          className="btn btn-primary flex-1 disabled:opacity-50 font-semibold">
+          {saving ? 'Creating…' : `Create Allocation${lines.length > 1 ? `s (${lines.length})` : ''}`}
+        </button>
       </div>
     </Modal>
   );
@@ -168,9 +234,19 @@ export default function FreeItems() {
   const canCreate  = usePermission('sales.create');
   const { data: allocations = [], isLoading } = useGetFreeAllocationsQuery();
 
-  const [showNew, setShowNew] = useState(false);
-  const [topping, setTopping] = useState(null);
-  const [history, setHistory] = useState(null);
+  const [showNew,    setShowNew]    = useState(false);
+  const [topping,    setTopping]    = useState(null);
+  const [history,    setHistory]    = useState(null);
+  const [filterRepId, setFilterRepId] = useState('');
+
+  // Build unique rep list from loaded allocations
+  const repOptions = [...new Map(
+    allocations.filter(a => a.SalesRep).map(a => [a.SalesRep.id, a.SalesRep])
+  ).values()].sort((a, b) => a.name.localeCompare(b.name));
+
+  const visibleAllocations = filterRepId
+    ? allocations.filter(a => String(a.SalesRep?.id) === filterRepId)
+    : allocations;
 
   return (
     <div className="space-y-4">
@@ -185,10 +261,22 @@ export default function FreeItems() {
           </p>
         </div>
         {canApprove && (
-          <button onClick={() => setShowNew(true)}
-            className="flex items-center gap-1.5 btn btn-primary text-sm">
-            <Plus size={16} /> New Allocation
-          </button>
+          <div className="flex items-center gap-2">
+            {repOptions.length > 0 && (
+              <select
+                value={filterRepId}
+                onChange={e => setFilterRepId(e.target.value)}
+                className="input text-sm py-1.5 pr-8"
+              >
+                <option value="">All Reps</option>
+                {repOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            )}
+            <button onClick={() => setShowNew(true)}
+              className="flex items-center gap-1.5 btn btn-primary text-sm whitespace-nowrap">
+              <Plus size={16} /> New Allocation
+            </button>
+          </div>
         )}
       </div>
 
@@ -203,7 +291,7 @@ export default function FreeItems() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {allocations.map(a => {
+          {visibleAllocations.map(a => {
             const allocated = parseFloat(a.allocated_quantity);
             const used      = parseFloat(a.used_quantity);
             const remaining = allocated - used;

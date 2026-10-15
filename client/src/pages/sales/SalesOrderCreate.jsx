@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -6,18 +6,18 @@ import * as yup from 'yup';
 import { ArrowLeft, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
-import { useCreateSalesOrderMutation } from '../../api/salesApi';
+import { useCreateSalesOrderMutation, useGetFreeAllocationsQuery } from '../../api/salesApi';
 import { useGetCustomersQuery, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import { useGetUsersQuery } from '../../api/settingsApi';
-import { selectCurrentUser } from '../../store/authSlice';
+import { selectCurrentUser, selectAssignedWarehouse } from '../../store/authSlice';
 import { usePermission } from '../../hooks/usePermission';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
 import { enqueueRequest } from '../../utils/offlineQueue';
 import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
-import { today, fmtCurrency } from '../../utils/format';
+import { today, fmtCurrency, fmtNumber } from '../../utils/format';
 
 const SIZES = [
   { label: '250ml', pattern: /250/i },
@@ -40,8 +40,9 @@ export default function SalesOrderCreate() {
   const navigate       = useNavigate();
   const [searchParams] = useSearchParams();
   const preCustomerId  = searchParams.get('customer_id') ? Number(searchParams.get('customer_id')) : undefined;
-  const currentUser    = useSelector(selectCurrentUser);
-  const canManageUsers = usePermission('settings.users');
+  const currentUser       = useSelector(selectCurrentUser);
+  const assignedWarehouse = useSelector(selectAssignedWarehouse);
+  const canManageUsers    = usePermission('settings.users');
   const [create, { isLoading }] = useCreateSalesOrderMutation();
   const { isOnline, refreshCount } = useOfflineSync();
 
@@ -51,6 +52,16 @@ export default function SalesOrderCreate() {
   const { data: users }      = useGetUsersQuery({ limit: 200 }, { skip: !canManageUsers });
   const { data: productsRaw } = useGetProductsQuery({ limit: 500, is_active: true });
   const products = productsRaw?.data || [];
+
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+    resolver: yupResolver(headerSchema),
+    defaultValues: {
+      order_date:   today(),
+      sales_rep_id: currentUser?.id || '',
+      ...(preCustomerId ? { customer_id: preCustomerId } : {}),
+      ...(assignedWarehouse ? { warehouse_id: assignedWarehouse.id } : {}),
+    },
+  });
 
   const selectedWarehouseId = watch('warehouse_id');
   const { data: stockRaw } = useGetStockOnHandQuery(
@@ -64,37 +75,55 @@ export default function SalesOrderCreate() {
     return m;
   }, [stockRaw]);
 
+  // Free item quota — fetch current user's allocations and map product_id → remaining
+  const { data: freeAllocs = [] } = useGetFreeAllocationsQuery();
+  const allocMap = useMemo(() => {
+    const m = {};
+    freeAllocs.forEach(a => {
+      m[a.product_id] = parseFloat(a.allocated_quantity) - parseFloat(a.used_quantity);
+    });
+    return m;
+  }, [freeAllocs]);
+
   // qty state: { [productId]: { qty: '', free: '' } }
   const [qtys, setQtys]         = useState({});
   const [sizeFilter,    setSizeFilter]    = useState(null);
+  const [search,        setSearch]        = useState('');
   const [orderDisc,     setOrderDisc]     = useState('');
   const [orderDiscType, setOrderDiscType] = useState('pct'); // 'pct' | 'amt'
+  const [pricingMode,   setPricingMode]   = useState('free'); // 'free' | 'mrp'
 
   const setQty      = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
   const setFree     = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
 
-  // Group products by category
+  // Group products by category (filtered by search)
   const grouped = useMemo(() => {
+    const q = search.trim().toLowerCase();
     const map = {};
-    products.forEach(p => {
-      const cat = p.Category?.name || 'Uncategorized';
-      if (!map[cat]) map[cat] = [];
-      map[cat].push(p);
-    });
+    products
+      .filter(p => !q || p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q))
+      .forEach(p => {
+        const cat = p.Category?.name || 'Uncategorized';
+        if (!map[cat]) map[cat] = [];
+        map[cat].push(p);
+      });
     return map;
-  }, [products]);
-
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
-    resolver: yupResolver(headerSchema),
-    defaultValues: {
-      order_date:   today(),
-      sales_rep_id: currentUser?.id || '',
-      ...(preCustomerId ? { customer_id: preCustomerId } : {}),
-    },
-  });
+  }, [products, search]);
 
   const selectedCustomerId = watch('customer_id');
   const selectedCustomer   = customers?.data?.find(c => String(c.id) === String(selectedCustomerId));
+
+  // Once data loads, apply pre-selected values from query params / assigned warehouse
+  useEffect(() => {
+    if (assignedWarehouse) setValue('warehouse_id', assignedWarehouse.id);
+  }, [warehouses?.data, assignedWarehouse, setValue]);
+
+  useEffect(() => {
+    if (!preCustomerId || !customers?.data) return;
+    setValue('customer_id', preCustomerId);
+    const cust = customers.data.find(c => String(c.id) === String(preCustomerId));
+    if (cust?.route_id) setValue('route_id', cust.route_id);
+  }, [customers?.data, preCustomerId, setValue]);
   const creditLimit        = parseFloat(selectedCustomer?.credit_limit || 0);
   const outstanding        = parseFloat(selectedCustomer?.outstanding_balance || 0);
   const overLimit          = creditLimit > 0 && outstanding >= creditLimit;
@@ -105,12 +134,14 @@ export default function SalesOrderCreate() {
   const routeOpts     = [{ value: '', label: '— No route —' }, ...(routes?.data?.map(r => ({ value: r.id, label: r.name })) || [])];
   const userOpts      = [{ value: '', label: '— No rep —' }, ...(users?.data?.map(u => ({ value: u.id, label: u.name })) || [])];
 
-  // Compute totals
+  // Compute totals — MRP mode uses marked_price (falls back to selling_price)
   const lines = products
     .map(p => {
       const qty   = parseFloat(qtys[p.id]?.qty  || 0);
-      const free  = parseFloat(qtys[p.id]?.free || 0);
-      const price = parseFloat(p.selling_price || 0);
+      const free  = pricingMode === 'free' ? parseFloat(qtys[p.id]?.free || 0) : 0;
+      const price = pricingMode === 'mrp' && parseFloat(p.marked_price) > 0
+        ? parseFloat(p.marked_price)
+        : parseFloat(p.selling_price || 0);
       const total = qty * price;
       return { product: p, qty, free, price, total };
     })
@@ -194,8 +225,16 @@ export default function SalesOrderCreate() {
             </div>
           )}
 
-          <SelectField label="Warehouse" required options={warehouseOpts}
-            error={errors.warehouse_id?.message} {...register('warehouse_id')} />
+          {assignedWarehouse ? (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Warehouse</label>
+              <div className="input bg-gray-50 text-gray-700 cursor-default">{assignedWarehouse.name}</div>
+              <input type="hidden" {...register('warehouse_id')} value={assignedWarehouse.id} />
+            </div>
+          ) : (
+            <SelectField label="Warehouse" required options={warehouseOpts}
+              error={errors.warehouse_id?.message} {...register('warehouse_id')} />
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <SelectField label="Route" options={routeOpts}
@@ -219,13 +258,37 @@ export default function SalesOrderCreate() {
 
         {/* Catalogue order table */}
         <div className="card overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
             <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Products</h2>
-            {lines.length > 0 && (
-              <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
-                {lines.length} item{lines.length > 1 ? 's' : ''} added
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {lines.length > 0 && (
+                <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                  {lines.length} item{lines.length > 1 ? 's' : ''} added
+                </span>
+              )}
+              {/* Pricing mode toggle */}
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold flex-shrink-0">
+                <button type="button" onClick={() => setPricingMode('free')}
+                  className={`px-2.5 py-1.5 transition-colors ${pricingMode === 'free' ? 'bg-purple-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                  Free Items
+                </button>
+                <button type="button" onClick={() => setPricingMode('mrp')}
+                  className={`px-2.5 py-1.5 transition-colors ${pricingMode === 'mrp' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                  MRP + Discount
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="px-3 py-2 border-b border-gray-100">
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search products…"
+              className="w-full h-9 px-3 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+            />
           </div>
 
           {/* Size filter chips */}
@@ -244,12 +307,12 @@ export default function SalesOrderCreate() {
           </div>
 
           {/* Column headers */}
-          <div className="grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+          <div className={`grid gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider ${pricingMode === 'mrp' ? 'grid-cols-[minmax(0,1fr)_52px_96px_100px]' : 'grid-cols-[minmax(0,1fr)_52px_96px_100px_52px]'}`}>
             <div className="px-3 py-2">Description</div>
             <div className="px-1 py-2 text-center">Qty</div>
-            <div className="px-1 py-2 text-right">Price</div>
-            <div className="px-1 py-2 text-right">Amount</div>
-            <div className="px-1 py-2 text-center">Free</div>
+            <div className="px-1 py-2 text-right">{pricingMode === 'mrp' ? 'MRP (LKR)' : 'Price (LKR)'}</div>
+            <div className="px-1 py-2 text-right">Amt (LKR)</div>
+            {pricingMode === 'free' && <div className="px-1 py-2 text-center">Free</div>}
           </div>
 
           {Object.entries(grouped)
@@ -270,14 +333,16 @@ export default function SalesOrderCreate() {
               {prods.map((p, idx) => {
                 const qty   = qtys[p.id]?.qty  ?? '';
                 const free  = qtys[p.id]?.free ?? '';
-                const price = parseFloat(p.selling_price || 0);
+                const price = pricingMode === 'mrp' && parseFloat(p.marked_price) > 0
+                  ? parseFloat(p.marked_price)
+                  : parseFloat(p.selling_price || 0);
                 const amt   = (parseFloat(qty) || 0) * price;
                 const hasQty = parseFloat(qty) > 0;
 
                 return (
                   <div
                     key={p.id}
-                    className={`grid grid-cols-[1fr_56px_72px_80px_56px] gap-0 border-b border-gray-100 items-center ${
+                    className={`grid ${pricingMode === 'mrp' ? 'grid-cols-[minmax(0,1fr)_52px_96px_100px]' : 'grid-cols-[minmax(0,1fr)_52px_96px_100px_52px]'} gap-0 border-b border-gray-100 items-center ${
                       hasQty ? 'bg-green-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                     }`}
                   >
@@ -307,43 +372,77 @@ export default function SalesOrderCreate() {
 
                     {/* Qty input */}
                     <div className="px-1 py-1.5">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={qty}
-                        onChange={e => setQty(p.id, e.target.value)}
-                        placeholder="0"
-                        className={`w-full h-10 text-center text-base font-bold rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                          hasQty ? 'border-green-400 bg-green-50 text-green-800' : 'border-gray-200 bg-white text-gray-700'
-                        }`}
-                      />
+                      {(() => {
+                        // If warehouse selected, missing record = 0 stock; if no warehouse, don't enforce
+                        const available = selectedWarehouseId ? (stockMap[p.id] ?? 0) : null;
+                        const overStock = available !== null && parseFloat(qty) > available;
+                        return (
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min="0"
+                            max={available !== null ? available : undefined}
+                            value={qty}
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (available !== null && parseFloat(val) > available) return;
+                              setQty(p.id, val);
+                            }}
+                            placeholder="0"
+                            className={`w-full h-10 text-center text-base font-bold rounded-lg border focus:outline-none focus:ring-2 ${
+                              overStock
+                                ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-400'
+                                : hasQty
+                                ? 'border-green-400 bg-green-50 text-green-800 focus:ring-primary-500'
+                                : 'border-gray-200 bg-white text-gray-700 focus:ring-primary-500'
+                            }`}
+                          />
+                        );
+                      })()}
                     </div>
 
                     {/* Unit price */}
                     <div className="px-1 py-2 text-right">
-                      <span className="text-xs font-medium text-gray-600 font-mono">{fmtCurrency(price)}</span>
+                      <span className="text-sm font-bold text-gray-800 font-mono">{fmtNumber(price)}</span>
                     </div>
 
                     {/* Amount */}
                     <div className="px-1 py-2 text-right">
                       <span className={`text-sm font-bold font-mono ${hasQty ? 'text-green-700' : 'text-gray-300'}`}>
-                        {hasQty ? fmtCurrency(amt) : '—'}
+                        {hasQty ? fmtNumber(amt) : '—'}
                       </span>
                     </div>
 
-                    {/* Free qty */}
-                    <div className="px-1 py-1.5">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={free}
-                        onChange={e => setFree(p.id, e.target.value)}
-                        placeholder="0"
-                        className="w-full h-9 text-center text-xs font-medium rounded-lg border border-gray-200 bg-white text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                      />
-                    </div>
+                    {/* Free qty — only in free-items mode */}
+                    {pricingMode === 'free' && <div className="px-1 py-1.5">
+                      {(() => {
+                        const quota = allocMap[p.id];
+                        const hasQuota = quota !== undefined;
+                        const overQuota = hasQuota && parseFloat(free || 0) > quota;
+                        return (
+                          <>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min="0"
+                              max={hasQuota ? quota : undefined}
+                              value={free}
+                              onChange={e => setFree(p.id, e.target.value)}
+                              placeholder="0"
+                              disabled={hasQuota && quota <= 0}
+                              className={`w-full h-9 text-center text-xs font-medium rounded-lg border bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 ${
+                                overQuota ? 'border-red-400 text-red-600' : 'border-gray-200 text-purple-700'
+                              } disabled:opacity-40`}
+                            />
+                            {hasQuota && (
+                              <p className={`text-[9px] text-center mt-0.5 font-semibold ${quota <= 0 ? 'text-red-400' : overQuota ? 'text-red-500' : 'text-purple-500'}`}>
+                                {quota <= 0 ? 'No quota' : `/${fmtNumber(quota, 0)}`}
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>}
                   </div>
                 );
               })}
@@ -362,8 +461,8 @@ export default function SalesOrderCreate() {
             </div>
           )}
         </div>
-        {/* Order-level discount & total */}
-        {lines.length > 0 && (
+        {/* Order-level discount & total — only in MRP mode */}
+        {lines.length > 0 && pricingMode === 'mrp' && (
           <div className="card p-4 space-y-3">
             <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Order Discount</h2>
             <div className="flex gap-2 items-center">

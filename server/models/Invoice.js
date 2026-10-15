@@ -20,7 +20,7 @@ module.exports = (sequelize) => {
       defaultValue: 'TAX_INVOICE',
     },
     status: {
-      type: DataTypes.ENUM('DRAFT', 'POSTED', 'PAID', 'PARTIAL', 'OVERDUE', 'CANCELLED'),
+      type: DataTypes.ENUM('DRAFT', 'POSTED', 'PAID', 'PARTIAL', 'OVERDUE', 'DELIVERED', 'CANCELLED'),
       defaultValue: 'DRAFT',
     },
     subtotal: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0.00 },
