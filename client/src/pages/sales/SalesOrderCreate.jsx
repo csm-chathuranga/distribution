@@ -23,7 +23,7 @@ const SIZES = [
   { label: '250ml', pattern: /250/i },
   { label: '500ml', pattern: /500/i },
   { label: '750ml', pattern: /750/i },
-  { label: '1L',    pattern: /(?<![0-9.])1[Ll](?![Ll0-9])/ },
+  { label: '1L',    pattern: /(?:^|[^0-9.])1[Ll](?![Ll0-9])/ },
   { label: '1.5L',  pattern: /1\.5[Ll]/i },
 ];
 

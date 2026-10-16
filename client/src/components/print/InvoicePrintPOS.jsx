@@ -1,6 +1,6 @@
 import { fmtDate } from '../../utils/format';
 
-const W = '70mm';
+const W = '76mm';
 const mono = 'Courier New, monospace';
 
 function fmtAmt(val) {
