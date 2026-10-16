@@ -108,7 +108,7 @@ export default function Login() {
         style={{ backgroundImage: 'linear-gradient(160deg, #0c1f4a 0%, #0d2060 40%, #071430 100%), radial-gradient(ellipse at 70% 10%, #1a3a8a 0%, transparent 55%)' }}>
 
         {/* ── Brand ── */}
-        <div className="flex flex-col items-center pt-14 pb-6 px-6">
+        <div className="flex flex-col items-center pt-6 pb-6 px-6">
           <div className="w-20 h-20 rounded-[22px] flex items-center justify-center shadow-2xl mb-5"
             style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
             <Truck size={38} className="text-white" strokeWidth={1.8} />
@@ -196,7 +196,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="text-center text-slate-700 text-xs pb-6 mt-auto">
+        <p className="text-center text-slate-700 text-xs pb-12 mt-auto">
           Lanka Distribution Management System · v1.0
         </p>
       </div>

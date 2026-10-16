@@ -31,7 +31,8 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
   const root = {
     fontFamily: mono,
-    fontSize: '10px',
+    fontSize: '14px',
+    fontWeight: '800',
     color: '#000',
     background: '#fff',
     width: W,
@@ -42,24 +43,24 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
   const center = { textAlign: 'center' };
   const right  = { textAlign: 'right' };
-  const bold   = { fontWeight: 'bold' };
+  const bold   = { fontWeight: '800' };
   const row    = { display: 'flex', justifyContent: 'space-between' };
 
   return (
     <div style={root}>
 
       {/* Company header */}
-      <div style={{ ...center, ...bold, fontSize: '13px' }}>
+      <div style={{ ...center, ...bold, fontSize: '17px' }}>
         {company?.name || 'Lanka Distribution'}
       </div>
       {company?.address && (
-        <div style={{ ...center, fontSize: '9px', marginTop: '2px' }}>{company.address}</div>
+        <div style={{ ...center, fontSize: '13px', marginTop: '2px' }}>{company.address}</div>
       )}
       {company?.phone && (
-        <div style={{ ...center, fontSize: '9px' }}>Tel: {company.phone}</div>
+        <div style={{ ...center, fontSize: '13px' }}>Tel: {company.phone}</div>
       )}
       {(company?.vat_number || company?.tin_number) && (
-        <div style={{ ...center, fontSize: '9px' }}>
+        <div style={{ ...center, fontSize: '13px' }}>
           {company?.vat_number && `VAT: ${company.vat_number}`}
           {company?.vat_number && company?.tin_number && '  '}
           {company?.tin_number && `TIN: ${company.tin_number}`}
@@ -69,29 +70,29 @@ export default function InvoicePrintPOS({ invoice, company }) {
       <Divider />
 
       {/* Document type + number */}
-      <div style={{ ...center, ...bold, fontSize: '11px' }}>{typeLabel}</div>
-      <div style={{ ...center, fontSize: '9px' }}>{invoice.invoice_number}</div>
+      <div style={{ ...center, ...bold, fontSize: '15px' }}>{typeLabel}</div>
+      <div style={{ ...center, fontSize: '13px' }}>{invoice.invoice_number}</div>
 
       <Divider dashed />
 
       {/* Customer */}
       <div style={row}>
-        <span style={{ color: '#555' }}>Customer:</span>
+        <span style={{ color: '#333' }}>Customer:</span>
         <span style={bold}>{invoice.Customer?.name || '—'}</span>
       </div>
       {invoice.Customer?.code && (
         <div style={row}>
-          <span style={{ color: '#555' }}>Code:</span>
+          <span style={{ color: '#333' }}>Code:</span>
           <span>{invoice.Customer.code}</span>
         </div>
       )}
       <div style={row}>
-        <span style={{ color: '#555' }}>Date:</span>
+        <span style={{ color: '#333' }}>Date:</span>
         <span>{fmtDate(invoice.invoice_date)}</span>
       </div>
       {invoice.due_date && (
         <div style={row}>
-          <span style={{ color: '#555' }}>Due:</span>
+          <span style={{ color: '#333' }}>Due:</span>
           <span>{fmtDate(invoice.due_date)}</span>
         </div>
       )}
@@ -99,11 +100,11 @@ export default function InvoicePrintPOS({ invoice, company }) {
       <Divider dashed />
 
       {/* Items header */}
-      <div style={{ display: 'flex', fontSize: '9px' }}>
+      <div style={{ display: 'flex', fontSize: '13px' }}>
         <span style={{ flex: 1, ...bold }}>ITEM</span>
-        <span style={{ width: '36px', textAlign: 'right', ...bold }}>QTY</span>
-        <span style={{ width: '50px', textAlign: 'right', ...bold }}>PRICE</span>
-        <span style={{ width: '54px', textAlign: 'right', ...bold }}>TOTAL</span>
+        <span style={{ width: '42px', textAlign: 'right', ...bold }}>QTY</span>
+        <span style={{ width: '58px', textAlign: 'right', ...bold }}>PRICE</span>
+        <span style={{ width: '62px', textAlign: 'right', ...bold }}>TOTAL</span>
       </div>
 
       <Divider />
@@ -113,20 +114,20 @@ export default function InvoicePrintPOS({ invoice, company }) {
         const freeQty = line.free_quantity ? parseInt(line.free_quantity) : 0;
         return (
           <div key={line.id || i} style={{ marginBottom: '3px' }}>
-            <div style={{ fontSize: '10px', ...bold, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: '14px', ...bold, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {line.Product?.name || `Product #${line.product_id}`}
             </div>
             {line.Product?.sku && (
-              <div style={{ fontSize: '8px', color: '#555' }}>{line.Product.sku}</div>
+              <div style={{ fontSize: '12px', color: '#333' }}>{line.Product.sku}</div>
             )}
             <div style={{ display: 'flex' }}>
-              <span style={{ flex: 1, fontSize: '9px', color: '#555' }}>
+              <span style={{ flex: 1, fontSize: '13px', color: '#333' }}>
                 {parseFloat(line.discount_rate || 0) > 0 && `Disc ${line.discount_rate}%`}
                 {freeQty > 0 && ` +${freeQty} free`}
               </span>
-              <span style={{ width: '36px', textAlign: 'right' }}>{line.quantity}</span>
-              <span style={{ width: '50px', textAlign: 'right' }}>{fmtAmt(line.unit_price)}</span>
-              <span style={{ width: '54px', textAlign: 'right', ...bold }}>{fmtAmt(line.line_total)}</span>
+              <span style={{ width: '42px', textAlign: 'right' }}>{line.quantity}</span>
+              <span style={{ width: '58px', textAlign: 'right' }}>{fmtAmt(line.unit_price)}</span>
+              <span style={{ width: '62px', textAlign: 'right', ...bold }}>{fmtAmt(line.line_total)}</span>
             </div>
           </div>
         );
@@ -154,7 +155,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
       <Divider />
 
-      <div style={{ ...row, ...bold, fontSize: '12px' }}>
+      <div style={{ ...row, ...bold, fontSize: '16px' }}>
         <span>TOTAL</span>
         <span>LKR {fmtAmt(total)}</span>
       </div>
@@ -179,14 +180,14 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {invoice.notes && (
         <>
           <Divider dashed />
-          <div style={{ fontSize: '9px' }}>Note: {invoice.notes}</div>
+          <div style={{ fontSize: '13px' }}>Note: {invoice.notes}</div>
         </>
       )}
 
       <Divider dashed />
 
       {/* Signature */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '9px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '13px' }}>
         <div style={{ textAlign: 'center', width: '45%' }}>
           <div style={{ borderTop: '1px solid #000', paddingTop: '3px', marginTop: '20px' }}>Prepared By</div>
         </div>
@@ -196,10 +197,10 @@ export default function InvoicePrintPOS({ invoice, company }) {
       </div>
 
       {/* Footer */}
-      <div style={{ ...center, fontSize: '8px', color: '#555', marginTop: '8px' }}>
+      <div style={{ ...center, fontSize: '12px', color: '#333', marginTop: '8px' }}>
         {new Date().toLocaleString('en-LK')}
       </div>
-      <div style={{ ...center, fontSize: '8px', color: '#555' }}>
+      <div style={{ ...center, fontSize: '12px', color: '#333' }}>
         Computer generated document
       </div>
 
