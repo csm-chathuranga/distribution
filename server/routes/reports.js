@@ -371,42 +371,46 @@ router.get('/daily-collections', async (req, res, next) => {
 
     const rows = await sequelize.query(`
       SELECT
-        i.id, i.invoice_number, i.invoice_date, i.due_date,
-        ROUND(i.total_amount, 2) AS total_amount,
-        ROUND(i.paid_amount,  2) AS paid_amount,
-        ROUND(i.balance_due,  2) AS balance_due,
-        i.status,
+        r.id AS receipt_id,
+        r.receipt_number,
+        r.receipt_date,
+        r.payment_method,
+        ROUND(r.amount, 2) AS collected_amount,
         c.id   AS customer_id,
         c.name AS customer_name,
         c.phone AS customer_phone,
-        COALESCE(u.id,   0)   AS sales_rep_id,
-        COALESCE(u.name,'—') AS sales_rep_name,
-        COALESCE(rt.name,'—') AS route_name
-      FROM invoices i
-      JOIN customers c  ON c.id  = i.customer_id
-      LEFT JOIN users u ON u.id  = i.sales_rep_id
+        COALESCE(i.invoice_number, '—') AS invoice_number,
+        COALESCE(i.sales_rep_id, 0)     AS sales_rep_id,
+        COALESCE(us.name, '—')          AS sales_rep_name,
+        COALESCE(rt.name, '—')          AS route_name,
+        COALESCE(uc.name, '—')          AS collected_by_name,
+        ra.invoice_id,
+        ROUND(ra.allocated_amount, 0)   AS allocated_amount
+      FROM receipts r
+      JOIN customers c ON c.id = r.customer_id
+      LEFT JOIN receipt_allocations ra ON ra.receipt_id = r.id
+      LEFT JOIN invoices i  ON i.id  = ra.invoice_id
+      LEFT JOIN users us    ON us.id = i.sales_rep_id
       LEFT JOIN loading_sheets ls ON ls.id = i.loading_sheet_id
-      LEFT JOIN routes rt ON rt.id = ls.route_id
-      WHERE DATE(i.invoice_date) = :date
-        AND i.status IN ('POSTED','PARTIAL','OVERDUE','PAID')
-        AND i.invoice_type != 'CREDIT_NOTE'
-        ${repId ? 'AND i.sales_rep_id = :repId' : ''}
-      ORDER BY u.name, i.status DESC, c.name
+      LEFT JOIN routes rt   ON rt.id = ls.route_id
+      LEFT JOIN users uc    ON uc.id = r.created_by
+      WHERE DATE(r.receipt_date) = :date
+        ${repId ? 'AND (i.sales_rep_id = :repId OR uc.id = :repId)' : ''}
+      ORDER BY uc.name, r.id DESC
     `, { type: QueryTypes.SELECT, replacements: { date: targetDate, repId } });
 
-    const totalInvoiced  = rows.reduce((s, r) => s + parseFloat(r.total_amount), 0);
-    const totalCollected = rows.reduce((s, r) => s + parseFloat(r.paid_amount),  0);
-    const totalPending   = rows.reduce((s, r) => s + parseFloat(r.balance_due),  0);
+    // Deduplicate by receipt_id for summary (one receipt may have multiple allocation rows)
+    const uniqueReceipts = [...new Map(rows.map(r => [r.receipt_id, r])).values()];
+    const totalCollected = uniqueReceipts.reduce((s, r) => s + parseFloat(r.collected_amount), 0);
 
     res.json({
       date: targetDate,
       summary: {
-        invoice_count:   rows.length,
-        paid_count:      rows.filter(r => r.status === 'PAID').length,
-        total_invoiced:  totalInvoiced,
+        receipt_count:   uniqueReceipts.length,
         total_collected: totalCollected,
-        total_pending:   totalPending,
-        collection_rate: totalInvoiced > 0 ? Math.round((totalCollected / totalInvoiced) * 100) : 0,
+        cash_total:      uniqueReceipts.filter(r => r.payment_method === 'CASH').reduce((s, r) => s + parseFloat(r.collected_amount), 0),
+        cheque_total:    uniqueReceipts.filter(r => r.payment_method === 'CHEQUE').reduce((s, r) => s + parseFloat(r.collected_amount), 0),
+        transfer_total:  uniqueReceipts.filter(r => r.payment_method === 'BANK_TRANSFER').reduce((s, r) => s + parseFloat(r.collected_amount), 0),
       },
       rows,
     });
@@ -443,22 +447,23 @@ router.get('/aged-creditors', authorize('reports.finance'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
-// GET /api/reports/van-damage-loss — all damaged/lost items from closed loading sheets
+// GET /api/reports/van-damage-loss — damaged/lost items from loading sheets + manually reported
 router.get('/van-damage-loss', authorize('reports.inventory'), async (req, res, next) => {
   try {
     const { from, to } = req.query;
     const rows = await sequelize.query(`
       SELECT
-        ls.sheet_number,
-        ls.sheet_date,
-        COALESCE(driver.name, rep.name, '—') AS driver_name,
-        p.name AS product_name,
+        'LOADING_SHEET'                                             AS source,
+        ls.sheet_date                                              AS date,
+        ls.sheet_number                                            AS reference,
+        COALESCE(driver.name, rep.name, '—')                      AS reported_by,
+        p.name                                                     AS product_name,
         p.sku,
-        w.name AS warehouse_name,
+        w.name                                                     AS warehouse_name,
         lsl.loaded_quantity,
-        lsl.damaged_quantity,
-        lsl.lost_quantity,
-        lsl.damage_notes,
+        lsl.damaged_quantity                                       AS damaged_quantity,
+        lsl.lost_quantity                                          AS lost_quantity,
+        lsl.damage_notes                                           AS notes,
         lsl.unit_cost,
         (lsl.damaged_quantity + lsl.lost_quantity) * lsl.unit_cost AS write_off_value
       FROM loading_sheet_lines lsl
@@ -471,11 +476,38 @@ router.get('/van-damage-loss', authorize('reports.inventory'), async (req, res, 
         AND (lsl.damaged_quantity > 0 OR lsl.lost_quantity > 0)
         ${from ? 'AND ls.sheet_date >= :from' : ''}
         ${to   ? 'AND ls.sheet_date <= :to'   : ''}
-      ORDER BY ls.sheet_date DESC, ls.sheet_number
+
+      UNION ALL
+
+      SELECT
+        'REPORTED'                  AS source,
+        DATE(sm.created_at)         AS date,
+        sm.source_type              AS reference,
+        COALESCE(u.name, '—')       AS reported_by,
+        p.name                      AS product_name,
+        p.sku,
+        w.name                      AS warehouse_name,
+        NULL                        AS loaded_quantity,
+        sm.quantity                 AS damaged_quantity,
+        0                           AS lost_quantity,
+        sm.notes                    AS notes,
+        0                           AS unit_cost,
+        0                           AS write_off_value
+      FROM stock_movements sm
+      JOIN products p ON p.id = sm.product_id
+      JOIN warehouses w ON w.id = sm.warehouse_id
+      LEFT JOIN users u ON u.id = sm.created_by
+      WHERE sm.movement_type = 'OUT'
+        AND sm.source_type IN ('DAMAGE', 'EXPIRED', 'OTHER')
+        ${from ? 'AND DATE(sm.created_at) >= :from' : ''}
+        ${to   ? 'AND DATE(sm.created_at) <= :to'   : ''}
+
+      ORDER BY date DESC
     `, { type: QueryTypes.SELECT, replacements: { from, to } });
-    const totalDamaged   = rows.reduce((s, r) => s + parseFloat(r.damaged_quantity || 0), 0);
-    const totalLost      = rows.reduce((s, r) => s + parseFloat(r.lost_quantity    || 0), 0);
-    const totalWriteOff  = rows.reduce((s, r) => s + parseFloat(r.write_off_value  || 0), 0);
+
+    const totalDamaged  = rows.reduce((s, r) => s + parseFloat(r.damaged_quantity || 0), 0);
+    const totalLost     = rows.reduce((s, r) => s + parseFloat(r.lost_quantity    || 0), 0);
+    const totalWriteOff = rows.reduce((s, r) => s + parseFloat(r.write_off_value  || 0), 0);
     res.json({ rows, summary: { totalDamaged, totalLost, totalWriteOff } });
   } catch (err) { next(err); }
 });

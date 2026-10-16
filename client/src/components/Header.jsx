@@ -52,7 +52,7 @@ export default function Header({ minimal = false }) {
     const pageTitle = PAGE_TITLES[location.pathname] || 'Lanka Dist';
 
     return (
-      <header className="bg-white flex-shrink-0 z-10"
+      <header className="bg-white flex-shrink-0 z-50"
         style={{ boxShadow: '0 1px 0 0 #f0f0f0, 0 2px 8px rgba(0,0,0,0.06)' }}>
         <div className="h-14 flex items-center justify-between px-4">
           {/* Brand logo left */}

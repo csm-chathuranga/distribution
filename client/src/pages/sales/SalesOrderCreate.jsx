@@ -92,6 +92,17 @@ export default function SalesOrderCreate() {
   const [orderDisc,     setOrderDisc]     = useState('');
   const [orderDiscType, setOrderDiscType] = useState('pct'); // 'pct' | 'amt'
   const [pricingMode,   setPricingMode]   = useState('free'); // 'free' | 'mrp'
+  const [gpsCoords,     setGpsCoords]     = useState(null);
+
+  // Silently capture GPS on page load so it's ready when the order is submitted
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => setGpsCoords({ latitude: coords.latitude, longitude: coords.longitude }),
+      () => {}, // ignore denial silently
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
 
   const setQty      = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
   const setFree     = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
@@ -162,6 +173,7 @@ export default function SalesOrderCreate() {
       subtotal_amount: subtotal,
       discount_amount: discountAmt,
       total_amount: orderTotal,
+      ...(gpsCoords || {}),
       lines: lines.map(l => ({
         product_id:    l.product.id,
         quantity:      l.qty,

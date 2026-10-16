@@ -96,12 +96,7 @@ export default function Login() {
     try {
       const result = await login(data).unwrap();
       dispatch(setCredentials(result));
-      const roleName = result.user?.Role?.name;
-      if (roleName === 'sales_rep' || roleName === 'driver' || roleName === 'delivery') {
-        navigate('/customers');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } catch (err) {
       toast.error(err.data?.message || 'Login failed');
     }

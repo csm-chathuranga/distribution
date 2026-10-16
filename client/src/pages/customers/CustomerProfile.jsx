@@ -239,7 +239,7 @@ export default function CustomerProfile() {
             {recentInvoices.length === 0 ? (
               <p className="text-center text-gray-400 py-8 text-sm">No invoices yet</p>
             ) : recentInvoices.map(inv => (
-              <div key={inv.id} className="flex items-center gap-3 px-4 py-3">
+              <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer active:opacity-70 transition-colors" onClick={() => navigate(`/invoices/${inv.id}`)}>
                 <InvoiceStatusDot status={inv.status} />
                 <div className="flex-1 min-w-0">
                   <p className="font-mono text-sm font-semibold text-gray-800">{inv.invoice_number}</p>

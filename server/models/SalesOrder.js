@@ -22,6 +22,8 @@ module.exports = (sequelize) => {
     vat_amount: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0.00 },
     total_amount: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0.00 },
     notes: DataTypes.TEXT,
+    latitude: { type: DataTypes.DECIMAL(10, 7), allowNull: true },
+    longitude: { type: DataTypes.DECIMAL(10, 7), allowNull: true },
     approved_by: DataTypes.INTEGER,
     approved_at: DataTypes.DATE,
     created_by: { type: DataTypes.INTEGER, allowNull: false },

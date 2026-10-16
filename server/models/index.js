@@ -182,10 +182,14 @@ Customer.hasMany(Receipt, { foreignKey: 'customer_id' });
 Receipt.belongsTo(Customer, { foreignKey: 'customer_id' });
 Receipt.belongsTo(Branch, { foreignKey: 'branch_id' });
 Receipt.belongsTo(JournalEntry, { foreignKey: 'journal_id' });
+Receipt.belongsTo(User, { as: 'CreatedBy', foreignKey: 'created_by' });
 Receipt.hasMany(Cheque, { foreignKey: 'receipt_id' });
 Cheque.belongsTo(Receipt, { foreignKey: 'receipt_id' });
 Receipt.belongsToMany(Invoice, { through: ReceiptAllocation, foreignKey: 'receipt_id' });
 Invoice.belongsToMany(Receipt, { through: ReceiptAllocation, foreignKey: 'invoice_id' });
+Receipt.hasMany(ReceiptAllocation, { foreignKey: 'receipt_id' });
+ReceiptAllocation.belongsTo(Receipt, { foreignKey: 'receipt_id' });
+ReceiptAllocation.belongsTo(Invoice, { foreignKey: 'invoice_id' });
 
 // ── Payments ─────────────────────────────────────────────
 Supplier.hasMany(Payment, { foreignKey: 'supplier_id' });

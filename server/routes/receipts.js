@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { Receipt, Customer, Invoice, Cheque, ReceiptAllocation, JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
+const { Receipt, Customer, Invoice, Cheque, ReceiptAllocation, JournalEntry, JournalLine, Account, AccountingPeriod, User, sequelize } = require('../models');
 
 // GET /api/receipts/advance/:customerId — total unallocated (advance) balance for a customer
 router.get('/advance/:customerId', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
@@ -20,7 +20,10 @@ router.get('/advance/:customerId', authorize.any('finance.receipts', 'sales.crea
   } catch (err) { next(err); }
 });
 const crud = require('../controllers/crudFactory')(Receipt, {
-  include: [{ model: Customer, attributes: ['id', 'name'] }],
+  include: [
+    { model: Customer, attributes: ['id', 'name'] },
+    { model: User, as: 'CreatedBy', attributes: ['id', 'name'] },
+  ],
   order: [['receipt_date', 'DESC']],
 });
 
@@ -48,7 +51,9 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
   try {
     const { allocations, cheque, ...data } = req.body;
     data.created_by = req.user.id;
-    // Fall back to the linked invoice's company/branch when the user record lacks them
+    data.branch_id  = data.branch_id  || req.user.branch_id;
+    data.company_id = data.company_id || req.user.Branch?.company_id;
+    // Fall back to linked invoice's company/branch when user record lacks them
     if ((!data.company_id || !data.branch_id) && allocations?.length) {
       const refInv = await Invoice.findByPk(allocations[0].invoice_id, { attributes: ['company_id', 'branch_id'] });
       if (refInv) {
@@ -56,8 +61,18 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
         data.branch_id  = data.branch_id  || refInv.branch_id;
       }
     }
-    data.branch_id  = data.branch_id  || req.user.branch_id;
-    data.company_id = data.company_id || req.user.Branch?.company_id;
+    // Last resort: look up from the customer's most recent invoice
+    if ((!data.company_id || !data.branch_id) && data.customer_id) {
+      const custInv = await Invoice.findOne({
+        where: { customer_id: data.customer_id },
+        attributes: ['company_id', 'branch_id'],
+        order: [['id', 'DESC']],
+      });
+      if (custInv) {
+        data.company_id = data.company_id || custInv.company_id;
+        data.branch_id  = data.branch_id  || custInv.branch_id;
+      }
+    }
     if (!data.receipt_number) data.receipt_number = await generateReceiptNumber();
 
     const receipt = await Receipt.create(data, { transaction: t });

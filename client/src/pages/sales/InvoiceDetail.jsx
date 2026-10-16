@@ -440,6 +440,18 @@ export default function InvoiceDetail() {
           <div className="px-4 py-3 border-b border-gray-100">
             <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Items ({lines.length})</h2>
           </div>
+          {/* Free items banner */}
+          {lines.some(l => parseFloat(l.free_quantity ?? 0) > 0) && (
+            <div className="mx-4 my-3 rounded-xl bg-amber-50 border border-amber-300 px-3 py-2.5">
+              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5">🎁 Free Items Included</p>
+              {lines.filter(l => parseFloat(l.free_quantity ?? 0) > 0).map(l => (
+                <div key={l.id} className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-amber-900">{l.Product?.name}</span>
+                  <span className="font-bold text-amber-700">× {parseFloat(l.free_quantity)}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="divide-y divide-gray-100">
             {lines.map((line, i) => (
               <div key={line.id || i} className="px-4 py-3 flex items-start justify-between gap-3">
@@ -450,6 +462,9 @@ export default function InvoiceDetail() {
                   <p className="text-xs text-gray-400 font-mono mt-0.5">
                     {[line.Product?.sku, parseFloat(line.vat_rate || 0) > 0 ? `VAT ${parseFloat(line.vat_rate)}%` : null].filter(Boolean).join(' · ') || '—'}
                   </p>
+                  {parseFloat(line.free_quantity ?? 0) > 0 && (
+                    <p className="text-xs text-green-600 font-semibold mt-0.5">+{parseFloat(line.free_quantity)} free</p>
+                  )}
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="font-semibold text-gray-900 font-mono">{fmtCurrency(line.line_total)}</p>

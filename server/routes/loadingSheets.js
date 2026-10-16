@@ -15,7 +15,7 @@ const include = [
   { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes'],
     include: [
       { model: Customer, attributes: ['id', 'name', 'address'] },
-      { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'unit_price', 'line_total'],
+      { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'free_quantity', 'unit_price', 'line_total'],
         include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
     ],
   },
@@ -93,19 +93,35 @@ router.get('/:id/van-stock', async (req, res, next) => {
       include: [
         { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'vat_rate'] }] },
         { model: Warehouse, attributes: ['id', 'name'] },
+        { model: Invoice, as: 'Invoices', attributes: ['id', 'status'],
+          include: [{ model: InvoiceLine, as: 'Lines', attributes: ['product_id', 'quantity'] }] },
       ],
     });
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'LOADED') return res.status(400).json({ message: 'Sheet must be LOADED' });
-    const lines = (sheet.Lines || []).map(line => ({
-      line_id: line.id,
-      product_id: line.product_id,
-      product: line.Product,
-      loaded: parseFloat(line.loaded_quantity),
-      sold: parseFloat(line.sold_quantity || 0),
-      remaining: Math.max(0, parseFloat(line.loaded_quantity) - parseFloat(line.sold_quantity || 0)),
-      unit_cost: parseFloat(line.unit_cost),
-    }));
+
+    // Build sold qty map from actual invoice lines (exclude CANCELLED invoices)
+    const soldMap = {};
+    for (const inv of (sheet.Invoices || [])) {
+      if (inv.status === 'CANCELLED') continue;
+      for (const il of (inv.Lines || [])) {
+        soldMap[il.product_id] = (soldMap[il.product_id] || 0) + parseFloat(il.quantity || 0);
+      }
+    }
+
+    const lines = (sheet.Lines || []).map(line => {
+      const loaded = parseFloat(line.loaded_quantity);
+      const sold   = soldMap[line.product_id] || 0;
+      return {
+        line_id: line.id,
+        product_id: line.product_id,
+        product: line.Product,
+        loaded,
+        sold,
+        remaining: Math.max(0, loaded - sold),
+        unit_cost: parseFloat(line.unit_cost),
+      };
+    });
     res.json({ sheet_id: sheet.id, sheet_number: sheet.sheet_number, warehouse_id: sheet.warehouse_id, warehouse: sheet.Warehouse, lines });
   } catch (err) { next(err); }
 });

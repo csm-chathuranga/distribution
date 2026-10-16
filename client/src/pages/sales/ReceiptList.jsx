@@ -56,6 +56,7 @@ export default function ReceiptList() {
     { key: 'receipt_date', header: 'Date', cell: r => fmtDate(r.receipt_date) },
     { key: 'payment_method', header: 'Method', cell: r => <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${METHOD_BADGE[r.payment_method] || ''}`}>{r.payment_method?.replace('_', ' ')}</span> },
     { key: 'amount', header: 'Amount', cell: r => <span className="font-semibold text-green-700">{fmtCurrency(r.amount)}</span>, className: 'text-right' },
+    { key: 'collected_by', header: 'Collected By', cell: r => r.CreatedBy?.name || '-' },
     { key: 'reference', header: 'Reference', cell: r => r.reference || '-' },
     {
       key: 'print', header: '', className: 'text-right',

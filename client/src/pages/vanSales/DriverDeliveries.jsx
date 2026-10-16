@@ -298,30 +298,52 @@ export default function DriverDeliveries() {
 
               {/* Expanded line items */}
               {expanded && inv.Lines?.length > 0 && (
-                <div className="mx-4 mb-3 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden">
-                  <div className="grid grid-cols-[1fr_auto_auto] text-[10px] font-semibold text-gray-400 uppercase px-3 py-2 border-b border-gray-100">
-                    <span>Product</span>
-                    <span className="text-right pr-4">Qty</span>
-                    <span className="text-right">Total</span>
-                  </div>
-                  {inv.Lines.map((line, i) => {
-                    const lineTotal = parseFloat(line.line_total ?? 0) || parseFloat(line.unit_price ?? 0) * parseFloat(line.quantity ?? 0);
-                    return (
-                      <div
-                        key={line.id}
-                        className={`grid grid-cols-[1fr_auto_auto] px-3 py-2 text-sm ${i < inv.Lines.length - 1 ? 'border-b border-gray-100' : ''}`}
-                      >
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-800 truncate">{line.Product?.name ?? `Product #${line.product_id ?? '?'}`}</p>
-                          {line.Product?.sku && <p className="text-xs text-gray-400">{line.Product.sku}</p>}
+                <div className="mx-4 mb-3 space-y-2">
+                  {/* Free items reminder banner */}
+                  {inv.Lines.some(l => parseFloat(l.free_quantity ?? 0) > 0) && (
+                    <div className="rounded-xl bg-amber-50 border border-amber-300 px-3 py-2.5">
+                      <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5">⚠️ Hand Over Free Items</p>
+                      {inv.Lines.filter(l => parseFloat(l.free_quantity ?? 0) > 0).map(l => (
+                        <div key={l.id} className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-amber-900 truncate">{l.Product?.name}</span>
+                          <span className="font-bold text-amber-700 ml-2 flex-shrink-0">× {parseFloat(l.free_quantity)}</span>
                         </div>
-                        <span className="text-right pr-4 text-gray-600 self-center">{parseFloat(line.quantity ?? 0)}</span>
-                        <span className="text-right text-gray-700 font-medium self-center">
-                          {lineTotal.toLocaleString('en-LK', { maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Regular line items table */}
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 overflow-hidden">
+                    <div className="grid grid-cols-[1fr_auto_auto] text-[10px] font-semibold text-gray-400 uppercase px-3 py-2 border-b border-gray-100">
+                      <span>Product</span>
+                      <span className="text-right pr-4">Qty</span>
+                      <span className="text-right">Total</span>
+                    </div>
+                    {inv.Lines.map((line, i) => {
+                      const lineTotal = parseFloat(line.line_total ?? 0) || parseFloat(line.unit_price ?? 0) * parseFloat(line.quantity ?? 0);
+                      const freeQty   = parseFloat(line.free_quantity ?? 0);
+                      return (
+                        <div
+                          key={line.id}
+                          className={`px-3 py-2 text-sm ${i < inv.Lines.length - 1 ? 'border-b border-gray-100' : ''}`}
+                        >
+                          <div className="grid grid-cols-[1fr_auto_auto] items-center">
+                            <div className="min-w-0">
+                              <p className="font-medium text-gray-800 truncate">{line.Product?.name ?? `Product #${line.product_id ?? '?'}`}</p>
+                              {line.Product?.sku && <p className="text-xs text-gray-400">{line.Product.sku}</p>}
+                            </div>
+                            <span className="text-right pr-4 text-gray-600">{parseFloat(line.quantity ?? 0)}</span>
+                            <span className="text-right text-gray-700 font-medium">
+                              {lineTotal.toLocaleString('en-LK', { maximumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                          {freeQty > 0 && (
+                            <p className="text-xs text-green-600 font-semibold mt-0.5">+{freeQty} free</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -357,21 +379,21 @@ export default function DriverDeliveries() {
               )}
 
               {done && (
-                <div className="px-4 pb-4 pt-1">
-                  <div className="flex items-center gap-2 text-green-600 text-sm font-medium mb-2">
-                    <CheckCircle size={15} />
+                <div className="px-4 pb-3 pt-1 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                    <CheckCircle size={11} />
                     Delivered
                     {inv.delivered_at && (
-                      <span className="text-xs text-gray-400 ml-1">
-                        {new Date(inv.delivered_at).toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' })}
+                      <span className="font-normal text-green-600">
+                        · {new Date(inv.delivered_at).toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     )}
-                  </div>
+                  </span>
                   <button
                     onClick={() => setCollectTarget(inv)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold"
                   >
-                    <Banknote size={15} /> Collect Payment
+                    <Banknote size={13} /> Collect Payment
                   </button>
                 </div>
               )}
