@@ -10,7 +10,8 @@ import { usePermission } from '../../hooks/usePermission';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import InvoicePrint from '../../components/print/InvoicePrint';
-import { printComponent } from '../../utils/print';
+import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
+import { printComponent, printPOS } from '../../utils/print';
 import { fmtCurrency, fmtDate, today } from '../../utils/format';
 
 function CollectPaymentModal({ invoice, onClose }) {
@@ -151,7 +152,7 @@ export default function InvoiceDetail() {
   const [postInvoice,    { isLoading: posting }]    = usePostInvoiceMutation();
   const [allocateReceipt, { isLoading: allocating }] = useAllocateReceiptMutation();
   const [deliverInvoice,  { isLoading: delivering }] = useDeliverInvoiceMutation();
-  const handlePrint = () => printComponent(<InvoicePrint invoice={invoice} company={company} />);
+  const handlePrint = () => printPOS(<InvoicePrintPOS invoice={invoice} company={company} />);
 
   const handleDeliver = async () => {
     try {
