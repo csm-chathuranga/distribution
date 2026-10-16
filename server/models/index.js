@@ -167,7 +167,7 @@ SalesOrderLine.belongsTo(Product, { foreignKey: 'product_id' });
 // ── Invoices ─────────────────────────────────────────────
 Customer.hasMany(Invoice, { foreignKey: 'customer_id' });
 Invoice.belongsTo(Customer, { foreignKey: 'customer_id' });
-Invoice.belongsTo(SalesOrder, { foreignKey: 'order_id' });
+Invoice.belongsTo(SalesOrder, { as: 'Order', foreignKey: 'order_id' });
 Invoice.belongsTo(Branch, { foreignKey: 'branch_id' });
 Invoice.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
 Invoice.belongsTo(JournalEntry, { foreignKey: 'journal_id' });

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
+const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, SalesOrder, sequelize } = require('../models');
 
 const notify = require('../notify');
 const { Op } = require('sequelize');
@@ -12,11 +12,12 @@ const include = [
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
   { model: User, as: 'Driver', attributes: ['id', 'name'] },
   { model: Vehicle, attributes: ['id', 'registration_number', 'make', 'model'] },
-  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes'],
+  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes', 'order_id'],
     include: [
       { model: Customer, attributes: ['id', 'name', 'address'] },
       { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'free_quantity', 'unit_price', 'line_total'],
         include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+      { model: SalesOrder, as: 'Order', attributes: ['id', 'latitude', 'longitude'] },
     ],
   },
 ];

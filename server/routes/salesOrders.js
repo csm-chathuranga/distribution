@@ -144,6 +144,25 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
           }, { transaction: t });
           await alloc.increment('used_quantity', { by: freeQty, transaction: t });
         }
+
+        // Reserve billed quantities so free stock drops immediately on order creation
+        for (const line of lines) {
+          const billedQty = parseFloat(line.quantity || 0);
+          if (billedQty <= 0) continue;
+          const stock = await Stock.findOne({
+            where: { warehouse_id: order.warehouse_id, product_id: line.product_id },
+            transaction: t, lock: true,
+          });
+          if (!stock) continue;
+          const freeStock = parseFloat(stock.quantity) - parseFloat(stock.reserved_quantity);
+          if (freeStock < billedQty) {
+            await t.rollback();
+            return res.status(422).json({
+              message: `Insufficient free stock for product ID ${line.product_id}. Available: ${freeStock.toFixed(2)}, Required: ${billedQty}`,
+            });
+          }
+          await stock.increment('reserved_quantity', { by: billedQty, transaction: t });
+        }
       }
       await t.commit();
       res.status(201).json(order);
@@ -220,6 +239,26 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
         line_total:    l.line_total,
       }));
       if (lines.length) await InvoiceLine.bulkCreate(lines, { transaction: t });
+
+      // Release reservations and deduct actual stock for each billed line
+      for (const l of order.Lines) {
+        const billedQty = parseFloat(l.quantity || 0);
+        if (billedQty <= 0) continue;
+        const stock = await Stock.findOne({
+          where: { warehouse_id: order.warehouse_id, product_id: l.product_id },
+          transaction: t, lock: true,
+        });
+        if (!stock) continue;
+        const newQty      = parseFloat(stock.quantity) - billedQty;
+        const newReserved = Math.max(0, parseFloat(stock.reserved_quantity) - billedQty);
+        await stock.update({ quantity: newQty, reserved_quantity: newReserved }, { transaction: t });
+        await StockMovement.create({
+          warehouse_id: order.warehouse_id, product_id: l.product_id,
+          movement_type: 'OUT', source_type: 'INVOICE', source_id: invoice.id,
+          quantity: billedQty, balance_after: newQty, unit_cost: 0,
+          created_by: req.user.id,
+        }, { transaction: t });
+      }
 
       await order.update({ status: 'INVOICED' }, { transaction: t });
       await t.commit();

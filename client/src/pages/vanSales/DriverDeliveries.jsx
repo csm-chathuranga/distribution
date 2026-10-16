@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Package, User, MapPin, ChevronDown, ChevronUp, Banknote } from 'lucide-react';
+import { CheckCircle, XCircle, Package, User, MapPin, ChevronDown, ChevronUp, Banknote, Navigation } from 'lucide-react';
 import { useGetActiveSheetQuery, useGetLoadingSheetQuery, useCreateReceiptMutation } from '../../api/salesApi';
 import { useDeliverInvoiceMutation, useCancelInvoiceMutation } from '../../api/salesApi';
 
@@ -283,6 +283,17 @@ export default function DriverDeliveries() {
                       <MapPin size={11} className="shrink-0" />
                       <span className="truncate">{inv.Customer.address}</span>
                     </div>
+                  )}
+                  {inv.Order?.latitude && inv.Order?.longitude && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${inv.Order.latitude},${inv.Order.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full active:opacity-70"
+                    >
+                      <Navigation size={10} /> Navigate
+                    </a>
                   )}
                 </div>
                 <div className="text-right ml-3 shrink-0 flex flex-col items-end">

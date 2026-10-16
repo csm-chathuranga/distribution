@@ -153,7 +153,9 @@ async function performPost(invoice, userId, t) {
       if (stock) {
         const deductQty = isCreditNote ? -totalShipQty : totalShipQty;
         const newQty = parseFloat(stock.quantity) - deductQty;
-        await stock.update({ quantity: newQty }, { transaction: t });
+        // Release any reservation made at order creation (billedQty); clamp to 0 for direct invoices
+        const newReserved = Math.max(0, parseFloat(stock.reserved_quantity || 0) - billedQty);
+        await stock.update({ quantity: newQty, reserved_quantity: newReserved }, { transaction: t });
         await StockMovement.create({
           warehouse_id: invoice.warehouse_id, product_id: line.product_id,
           movement_type: isCreditNote ? 'IN' : 'OUT', source_type: 'INVOICE', source_id: invoice.id,
