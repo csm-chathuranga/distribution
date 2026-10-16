@@ -25,6 +25,8 @@ router.post('/', authorize('purchase.create'), async (req, res, next) => {
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
     if (!data.po_number)  data.po_number  = await generatePONumber();
+    if (!data.po_date && data.order_date) data.po_date = data.order_date;
+    delete data.order_date;
     const { sequelize } = require('../models');
     const t = await sequelize.transaction();
     try {

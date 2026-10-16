@@ -198,7 +198,7 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
         invoice_date:   today.toISOString().slice(0,10),
         due_date:       dueDate,
         invoice_type:   'TAX_INVOICE',
-        status:         'DRAFT',
+        status:         'POSTED',
         subtotal:       order.total_amount,
         total_amount:   order.total_amount,
         balance_due:    order.total_amount,
