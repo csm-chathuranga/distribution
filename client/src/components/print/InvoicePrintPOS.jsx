@@ -102,9 +102,9 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {/* Items header */}
       <div style={{ display: 'flex', fontSize: '13px' }}>
         <span style={{ flex: 1, ...bold }}>ITEM</span>
-        <span style={{ width: '42px', textAlign: 'right', ...bold }}>QTY</span>
-        <span style={{ width: '58px', textAlign: 'right', ...bold }}>PRICE</span>
-        <span style={{ width: '62px', textAlign: 'right', ...bold }}>TOTAL</span>
+        <span style={{ width: '52px', textAlign: 'right', ...bold }}>QTY</span>
+        <span style={{ width: '68px', textAlign: 'right', ...bold }}>PRICE</span>
+        <span style={{ width: '72px', textAlign: 'right', ...bold }}>TOTAL</span>
       </div>
 
       <Divider />
@@ -113,21 +113,23 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {lines.map((line, i) => {
         const freeQty = line.free_quantity ? parseInt(line.free_quantity) : 0;
         return (
-          <div key={line.id || i} style={{ marginBottom: '3px' }}>
-            <div style={{ fontSize: '14px', ...bold, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div key={line.id || i} style={{ marginBottom: '4px' }}>
+            <div style={{ fontSize: '14px', ...bold }}>
               {line.Product?.name || `Product #${line.product_id}`}
             </div>
             {line.Product?.sku && (
               <div style={{ fontSize: '12px', color: '#333' }}>{line.Product.sku}</div>
             )}
-            <div style={{ display: 'flex' }}>
-              <span style={{ flex: 1, fontSize: '13px', color: '#333' }}>
+            {(parseFloat(line.discount_rate || 0) > 0 || freeQty > 0) && (
+              <div style={{ fontSize: '13px', color: '#c00' }}>
                 {parseFloat(line.discount_rate || 0) > 0 && `Disc ${line.discount_rate}%`}
                 {freeQty > 0 && ` +${freeQty} free`}
-              </span>
-              <span style={{ width: '42px', textAlign: 'right' }}>{line.quantity}</span>
-              <span style={{ width: '58px', textAlign: 'right' }}>{fmtAmt(line.unit_price)}</span>
-              <span style={{ width: '62px', textAlign: 'right', ...bold }}>{fmtAmt(line.line_total)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <span style={{ width: '52px', textAlign: 'right' }}>{line.quantity}</span>
+              <span style={{ width: '68px', textAlign: 'right' }}>{fmtAmt(line.unit_price)}</span>
+              <span style={{ width: '72px', textAlign: 'right', ...bold }}>{fmtAmt(line.line_total)}</span>
             </div>
           </div>
         );
