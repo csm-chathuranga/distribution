@@ -169,7 +169,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {balance > 0 && (
         <>
           <Divider />
-          <div style={{ ...row, ...bold }}>
+          <div style={{ ...row, ...bold, fontSize: '16px' }}>
             <span>BALANCE DUE</span>
             <span>LKR {fmtAmt(balance)}</span>
           </div>
@@ -189,6 +189,9 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {/* Signature */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '13px' }}>
         <div style={{ textAlign: 'center', width: '45%' }}>
+          {invoice.SalesRep?.name && (
+            <div style={{ fontWeight: '800', marginBottom: '2px' }}>{invoice.SalesRep.name}</div>
+          )}
           <div style={{ borderTop: '1px solid #000', paddingTop: '3px', marginTop: '20px' }}>Prepared By</div>
         </div>
         <div style={{ textAlign: 'center', width: '45%' }}>

@@ -175,6 +175,7 @@ Invoice.hasMany(InvoiceLine, { as: 'Lines', foreignKey: 'invoice_id' });
 InvoiceLine.belongsTo(Invoice, { foreignKey: 'invoice_id' });
 InvoiceLine.belongsTo(Product, { foreignKey: 'product_id' });
 Invoice.belongsTo(LoadingSheet, { foreignKey: 'loading_sheet_id', as: 'VanSheet' });
+Invoice.belongsTo(User, { as: 'SalesRep', foreignKey: 'sales_rep_id' });
 LoadingSheet.hasMany(Invoice, { foreignKey: 'loading_sheet_id', as: 'Invoices' });
 
 // ── Receipts ─────────────────────────────────────────────

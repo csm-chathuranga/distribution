@@ -1,4 +1,4 @@
-const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, sequelize } = require('../models');
+const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, User, sequelize } = require('../models');
 const notify = require('../notify');
 const { Op } = require('sequelize');
 
@@ -6,6 +6,7 @@ const include = [
   { model: Customer, attributes: ['id', 'name', 'code', 'customer_type'] },
   { model: InvoiceLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
   { model: LoadingSheet, as: 'VanSheet', attributes: ['id', 'sheet_number'] },
+  { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
 ];
 
 exports.list = async (req, res, next) => {
