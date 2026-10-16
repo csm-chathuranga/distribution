@@ -38,13 +38,27 @@ router.put('/:id/cancel', authorize.any('sales.create', 'sales.view_own'), async
   try {
     const { reason } = req.body;
     if (!reason?.trim()) return res.status(400).json({ message: 'Cancellation reason is required' });
-    const invoice = await Invoice.findByPk(req.params.id);
+    const { Customer } = require('../models');
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [{ model: Customer, attributes: ['name'] }],
+    });
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
     if (!['POSTED', 'PARTIAL', 'OVERDUE'].includes(invoice.status)) {
       return res.status(422).json({ message: 'Invoice cannot be cancelled in its current status' });
     }
     await invoice.update({ status: 'CANCELLED', notes: reason.trim() });
     res.json({ message: 'Invoice cancelled' });
+
+    const cancelledBy = req.user.name || `User #${req.user.id}`;
+    const customerName = invoice.Customer?.name || `Invoice #${invoice.invoice_number}`;
+    const body = `${invoice.invoice_number} for ${customerName} cancelled by ${cancelledBy}. Reason: ${reason.trim()}`;
+    const link = `/invoices/${invoice.id}`;
+    if (invoice.sales_rep_id && invoice.sales_rep_id !== req.user.id) {
+      notify({ userId: invoice.sales_rep_id, type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
+    }
+    notify({ roleName: 'admin',       type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
+    notify({ roleName: 'manager',     type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
+    notify({ roleName: 'super_admin', type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
   } catch (err) { next(err); }
 });
 
