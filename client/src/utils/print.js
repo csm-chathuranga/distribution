@@ -42,10 +42,10 @@ export function printPOS(element) {
   <title>POS Print</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff; width: 76mm; }
+    body { background: #fff; width: 80mm; }
     @media print {
-      @page { size: 76mm auto; margin: 2mm 2mm; }
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 76mm; }
+      @page { size: 80mm auto; margin: 0mm 2mm; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 80mm; }
     }
   </style>
 </head>
