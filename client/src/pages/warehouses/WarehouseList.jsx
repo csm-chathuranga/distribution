@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Pencil, Package, Users, X, UserPlus } from 'lucide-react';
+import { Pencil, Package, Users, X, UserPlus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetWarehousesQuery, useCreateWarehouseMutation, useUpdateWarehouseMutation, useGetWarehouseStockQuery, useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation } from '../../api/warehousesApi';
+import { useGetWarehousesQuery, useCreateWarehouseMutation, useUpdateWarehouseMutation, useDeleteWarehouseMutation, useGetWarehouseStockQuery, useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation } from '../../api/warehousesApi';
 import { useGetBranchesQuery, useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { usePermission } from '../../hooks/usePermission';
 import Table from '../../components/ui/Table';
@@ -184,6 +184,15 @@ export default function WarehouseList() {
   const [staffWh, setStaffWh] = useState(null);
   const { data, isLoading } = useGetWarehousesQuery({});
   const { data: branches } = useGetBranchesQuery({});
+  const [deleteWarehouse] = useDeleteWarehouseMutation();
+
+  const handleDelete = async (r) => {
+    if (!window.confirm(`Delete warehouse "${r.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteWarehouse(r.id).unwrap();
+      toast.success('Warehouse deleted');
+    } catch (e) { toast.error(e.data?.message || 'Failed to delete'); }
+  };
 
   const openEdit = (r) => { setEditing(r); setFormKey(k => k + 1); setFormOpen(true); };
   const openNew = () => { setEditing(null); setFormKey(k => k + 1); setFormOpen(true); };
@@ -200,6 +209,7 @@ export default function WarehouseList() {
           <>
             <button onClick={() => setStaffWh(r)} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Manage Staff"><Users size={14} /></button>
             <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Pencil size={14} /></button>
+            <button onClick={() => handleDelete(r)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 size={14} /></button>
           </>
         )}
       </div>

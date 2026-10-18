@@ -77,6 +77,21 @@ router.post('/:id/users', authorize('inventory.create'), async (req, res, next) 
   } catch (err) { next(err); }
 });
 
+// DELETE /warehouses/:id — delete warehouse (blocked if it has stock)
+router.delete('/:id', authorize('inventory.create'), async (req, res, next) => {
+  try {
+    const warehouse = await Warehouse.findByPk(req.params.id);
+    if (!warehouse) return res.status(404).json({ message: 'Warehouse not found' });
+    const stockCount = await Stock.count({ where: { warehouse_id: req.params.id } });
+    if (stockCount > 0) {
+      return res.status(422).json({ message: 'Cannot delete warehouse with existing stock. Transfer or clear stock first.' });
+    }
+    await WarehouseUser.destroy({ where: { warehouse_id: req.params.id } });
+    await warehouse.destroy();
+    res.json({ message: 'Warehouse deleted' });
+  } catch (err) { next(err); }
+});
+
 // DELETE /warehouses/:id/users/:userId — remove assignment
 router.delete('/:id/users/:userId', authorize('inventory.create'), async (req, res, next) => {
   try {

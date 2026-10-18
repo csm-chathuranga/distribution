@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { ArrowLeft, WifiOff } from 'lucide-react';
+import { WifiOff, X, Plus, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useCreateSalesOrderMutation, useGetFreeAllocationsQuery } from '../../api/salesApi';
@@ -64,6 +64,15 @@ export default function SalesOrderCreate() {
   });
 
   const selectedWarehouseId = watch('warehouse_id');
+  const selectedSalesRepId  = watch('sales_rep_id');
+
+  // Auto-set warehouse when admin picks a sales rep who has an assigned warehouse
+  useEffect(() => {
+    if (!canManageUsers || !selectedSalesRepId || !users?.data) return;
+    const rep = users.data.find(u => String(u.id) === String(selectedSalesRepId));
+    const wh  = rep?.AssignedWarehouses?.[0];
+    if (wh) setValue('warehouse_id', wh.id);
+  }, [selectedSalesRepId, users?.data, canManageUsers, setValue]);
   const { data: stockRaw } = useGetStockOnHandQuery(
     { warehouse_id: selectedWarehouseId },
     { skip: !selectedWarehouseId }
@@ -93,6 +102,20 @@ export default function SalesOrderCreate() {
   const [orderDiscType, setOrderDiscType] = useState('pct'); // 'pct' | 'amt'
   const [pricingMode,   setPricingMode]   = useState('free'); // 'free' | 'mrp'
   const [gpsCoords,     setGpsCoords]     = useState(null);
+  const [returns,       setReturns]       = useState([]);
+
+  const [returnDropPos, setReturnDropPos] = useState({});
+  const addReturn = () => setReturns(prev => [...prev, { _id: Date.now(), product_id: '', product_name: '', quantity: '', unit_price: '', reason: 'EXPIRED', action: 'DEDUCT', search: '', open: false }]);
+  const removeReturn = (_id) => setReturns(prev => prev.filter(r => r._id !== _id));
+  const updateReturn = (_id, field, value) => setReturns(prev => prev.map(r => r._id === _id ? { ...r, [field]: value } : r));
+  const pickReturnProduct = (_id, product) => setReturns(prev => prev.map(r => r._id === _id ? { ...r, product_id: product.id, product_name: product.name, unit_price: product.selling_price || '', search: product.name, open: false } : r));
+  const openReturnDrop = (_id, el) => {
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setReturnDropPos(prev => ({ ...prev, [_id]: { top: rect.bottom + 4, left: rect.left, width: rect.width } }));
+    }
+    updateReturn(_id, 'open', true);
+  };
 
   // Silently capture GPS on page load so it's ready when the order is submitted
   useEffect(() => {
@@ -135,6 +158,13 @@ export default function SalesOrderCreate() {
     const cust = customers.data.find(c => String(c.id) === String(preCustomerId));
     if (cust?.route_id) setValue('route_id', cust.route_id);
   }, [customers?.data, preCustomerId, setValue]);
+
+  // Auto-fill route when customer is manually selected from dropdown
+  useEffect(() => {
+    if (!selectedCustomerId || !customers?.data) return;
+    const cust = customers.data.find(c => String(c.id) === String(selectedCustomerId));
+    if (cust?.route_id) setValue('route_id', cust.route_id);
+  }, [selectedCustomerId, customers?.data, setValue]);
   const creditLimit        = parseFloat(selectedCustomer?.credit_limit || 0);
   const outstanding        = parseFloat(selectedCustomer?.outstanding_balance || 0);
   const overLimit          = creditLimit > 0 && outstanding >= creditLimit;
@@ -163,6 +193,16 @@ export default function SalesOrderCreate() {
   const discountAmt  = orderDiscType === 'pct' ? subtotal * discVal / 100 : Math.min(discVal, subtotal);
   const orderTotal   = Math.max(0, subtotal - discountAmt);
 
+  const validReturns = returns.filter(r => r.product_id && parseFloat(r.quantity) > 0);
+  const returnDeduction = validReturns
+    .filter(r => r.action === 'DEDUCT')
+    .reduce((sum, r) => {
+      const product = products.find(p => String(p.id) === String(r.product_id));
+      const price = parseFloat(r.unit_price) > 0 ? parseFloat(r.unit_price) : parseFloat(product?.selling_price || 0);
+      return sum + parseFloat(r.quantity) * price;
+    }, 0);
+  const netTotal = Math.max(0, orderTotal - returnDeduction);
+
   const onSubmit = async (headerData) => {
     if (lines.length === 0) {
       toast.error('Add at least one item with a quantity');
@@ -172,7 +212,8 @@ export default function SalesOrderCreate() {
       ...headerData,
       subtotal_amount: subtotal,
       discount_amount: discountAmt,
-      total_amount: orderTotal,
+      return_deduction: returnDeduction,
+      total_amount: netTotal,
       ...(gpsCoords || {}),
       lines: lines.map(l => ({
         product_id:    l.product.id,
@@ -182,6 +223,17 @@ export default function SalesOrderCreate() {
         discount_rate: 0,
         line_total:    l.total,
       })),
+      returns: validReturns.map(r => {
+        const product = products.find(p => String(p.id) === String(r.product_id));
+        const price = parseFloat(r.unit_price) > 0 ? parseFloat(r.unit_price) : parseFloat(product?.selling_price || 0);
+        return {
+          product_id: Number(r.product_id),
+          quantity:   parseFloat(r.quantity),
+          unit_price: price,
+          reason:     r.reason,
+          action:     r.action,
+        };
+      }),
     };
 
     if (!navigator.onLine) {
@@ -202,15 +254,7 @@ export default function SalesOrderCreate() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 pb-28">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/sales-orders')} className="p-2 text-gray-500 hover:text-gray-900 active:opacity-70">
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-lg font-bold text-gray-900">New Sales Order</h1>
-      </div>
-
+    <div className="max-w-2xl mx-auto space-y-4" style={{ paddingBottom: 170 }}>
       {!isOnline && (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium">
           <WifiOff size={15} className="text-red-400 flex-shrink-0" />
@@ -238,28 +282,20 @@ export default function SalesOrderCreate() {
           )}
 
           {assignedWarehouse ? (
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Warehouse</label>
-              <div className="input bg-gray-50 text-gray-700 cursor-default">{assignedWarehouse.name}</div>
-              <input type="hidden" {...register('warehouse_id')} value={assignedWarehouse.id} />
-            </div>
+            <input type="hidden" {...register('warehouse_id')} value={assignedWarehouse.id} />
           ) : (
             <SelectField label="Warehouse" required options={warehouseOpts}
               error={errors.warehouse_id?.message} {...register('warehouse_id')} />
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${canManageUsers ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <SelectField label="Route" options={routeOpts}
               error={errors.route_id?.message} {...register('route_id')} />
             {canManageUsers ? (
               <SelectField label="Sales Rep" options={userOpts}
                 error={errors.sales_rep_id?.message} {...register('sales_rep_id')} />
             ) : (
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Sales Rep</label>
-                <div className="input bg-gray-50 text-gray-700 cursor-default">{currentUser?.name}</div>
-                <input type="hidden" {...register('sales_rep_id')} value={currentUser?.id} />
-              </div>
+              <input type="hidden" {...register('sales_rep_id')} value={currentUser?.id} />
             )}
           </div>
 
@@ -318,15 +354,6 @@ export default function SalesOrderCreate() {
             ))}
           </div>
 
-          {/* Column headers */}
-          <div className={`grid gap-0 border-b border-gray-200 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider ${pricingMode === 'mrp' ? 'grid-cols-[minmax(0,1fr)_52px_96px_100px]' : 'grid-cols-[minmax(0,1fr)_52px_96px_100px_52px]'}`}>
-            <div className="px-3 py-2">Description</div>
-            <div className="px-1 py-2 text-center">Qty</div>
-            <div className="px-1 py-2 text-right">{pricingMode === 'mrp' ? 'MRP (LKR)' : 'Price (LKR)'}</div>
-            <div className="px-1 py-2 text-right">Amt (LKR)</div>
-            {pricingMode === 'free' && <div className="px-1 py-2 text-center">Free</div>}
-          </div>
-
           {Object.entries(grouped)
             .map(([cat, prods]) => [
               cat,
@@ -337,124 +364,121 @@ export default function SalesOrderCreate() {
             .filter(([, prods]) => prods.length > 0)
             .map(([category, prods]) => (
             <div key={category}>
-              {/* Category header */}
-              <div className="px-3 py-2 bg-gray-100 border-b border-gray-200">
-                <span className="text-sm font-bold text-gray-700">{category}</span>
+              {/* Category header — gradient */}
+              <div className="px-3 py-2.5" style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)' }}>
+                <span className="text-sm font-bold text-white tracking-wide">{category}</span>
               </div>
 
               {prods.map((p, idx) => {
-                const qty   = qtys[p.id]?.qty  ?? '';
-                const free  = qtys[p.id]?.free ?? '';
-                const price = pricingMode === 'mrp' && parseFloat(p.marked_price) > 0
+                const qty      = qtys[p.id]?.qty  ?? '';
+                const free     = qtys[p.id]?.free ?? '';
+                const price    = pricingMode === 'mrp' && parseFloat(p.marked_price) > 0
                   ? parseFloat(p.marked_price)
                   : parseFloat(p.selling_price || 0);
-                const amt   = (parseFloat(qty) || 0) * price;
-                const hasQty = parseFloat(qty) > 0;
+                const amt      = (parseFloat(qty) || 0) * price;
+                const hasQty   = parseFloat(qty) > 0;
+                const available = selectedWarehouseId ? (stockMap[p.id] ?? 0) : null;
+                const overStock = available !== null && parseFloat(qty) > available;
 
                 return (
                   <div
                     key={p.id}
-                    className={`grid ${pricingMode === 'mrp' ? 'grid-cols-[minmax(0,1fr)_52px_96px_100px]' : 'grid-cols-[minmax(0,1fr)_52px_96px_100px_52px]'} gap-0 border-b border-gray-100 items-center ${
-                      hasQty ? 'bg-green-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                    className={`px-3 py-3 border-b border-gray-100 transition-colors ${
+                      hasQty ? 'bg-green-50/70' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'
                     }`}
                   >
-                    {/* Description */}
-                    <div className="px-3 py-2">
-                      <p className="text-sm font-semibold text-gray-900 leading-tight">{p.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        {p.sku && <span className="text-xs text-gray-400 font-mono">{p.sku}</span>}
-                        {parseFloat(p.marked_price) > 0 && (
-                          <span className="text-xs font-semibold text-indigo-600">
-                            MRP: {fmtCurrency(p.marked_price)}
-                          </span>
-                        )}
-                        {selectedWarehouseId && (
-                          <span className={`text-xs font-semibold ${
-                            (stockMap[p.id] ?? 0) <= 0
-                              ? 'text-red-500'
-                              : (stockMap[p.id] ?? 0) < 10
-                              ? 'text-amber-600'
-                              : 'text-emerald-600'
-                          }`}>
-                            Stock: {stockMap[p.id] ?? 0}
-                          </span>
-                        )}
+                    <div className="flex items-start gap-3">
+                      {/* Left: name + badges + live amount */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 leading-snug">{p.name}</p>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                          {p.sku && (
+                            <span className="text-xs text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{p.sku}</span>
+                          )}
+                          {selectedWarehouseId && (
+                            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                              (stockMap[p.id] ?? 0) <= 0
+                                ? 'bg-red-100 text-red-600'
+                                : (stockMap[p.id] ?? 0) < 10
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              Stock: {stockMap[p.id] ?? 0}
+                            </span>
+                          )}
+                          {parseFloat(p.marked_price) > 0 && (
+                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+                              MRP {fmtCurrency(p.marked_price)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <span className="text-sm font-semibold text-gray-500 font-mono">{fmtCurrency(price)}</span>
+                          {hasQty && (
+                            <>
+                              <span className="text-xs text-gray-400">× {qty} =</span>
+                              <span className="text-sm font-bold text-green-700 font-mono">{fmtCurrency(amt)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: large QTY input */}
+                      <div className="flex-shrink-0 w-16">
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max={available !== null ? available : undefined}
+                          value={qty}
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (available !== null && parseFloat(val) > available) return;
+                            setQty(p.id, val);
+                          }}
+                          placeholder="0"
+                          className={`w-full h-12 text-center text-lg font-bold rounded-xl border-2 focus:outline-none focus:ring-2 transition-colors ${
+                            overStock
+                              ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-400'
+                              : hasQty
+                              ? 'border-green-400 bg-green-50 text-green-800 focus:ring-green-400'
+                              : 'border-gray-200 bg-gray-50 text-gray-700 focus:ring-primary-500'
+                          }`}
+                        />
                       </div>
                     </div>
 
-                    {/* Qty input */}
-                    <div className="px-1 py-1.5">
-                      {(() => {
-                        // If warehouse selected, missing record = 0 stock; if no warehouse, don't enforce
-                        const available = selectedWarehouseId ? (stockMap[p.id] ?? 0) : null;
-                        const overStock = available !== null && parseFloat(qty) > available;
-                        return (
+                    {/* Free qty row — only in free-items mode */}
+                    {pricingMode === 'free' && (() => {
+                      const quota    = allocMap[p.id];
+                      const hasQuota = quota !== undefined;
+                      const overQuota = hasQuota && parseFloat(free || 0) > quota;
+                      return (
+                        <div className="mt-2.5 flex items-center gap-2">
+                          <span className="text-xs font-semibold text-gray-500">Free qty:</span>
                           <input
                             type="number"
                             inputMode="numeric"
                             min="0"
-                            max={available !== null ? available : undefined}
-                            value={qty}
-                            onChange={e => {
-                              const val = e.target.value;
-                              if (available !== null && parseFloat(val) > available) return;
-                              setQty(p.id, val);
-                            }}
+                            max={hasQuota ? quota : undefined}
+                            value={free}
+                            onChange={e => setFree(p.id, e.target.value)}
                             placeholder="0"
-                            className={`w-full h-10 text-center text-base font-bold rounded-lg border focus:outline-none focus:ring-2 ${
-                              overStock
-                                ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-400'
-                                : hasQty
-                                ? 'border-green-400 bg-green-50 text-green-800 focus:ring-primary-500'
-                                : 'border-gray-200 bg-white text-gray-700 focus:ring-primary-500'
-                            }`}
+                            disabled={hasQuota && quota <= 0}
+                            className={`w-20 h-9 text-center text-sm font-bold rounded-lg border-2 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 transition-colors ${
+                              overQuota ? 'border-red-400 text-red-600' : 'border-purple-200 text-purple-700'
+                            } disabled:opacity-40`}
                           />
-                        );
-                      })()}
-                    </div>
-
-                    {/* Unit price */}
-                    <div className="px-1 py-2 text-right">
-                      <span className="text-sm font-bold text-gray-800 font-mono">{fmtNumber(price)}</span>
-                    </div>
-
-                    {/* Amount */}
-                    <div className="px-1 py-2 text-right">
-                      <span className={`text-sm font-bold font-mono ${hasQty ? 'text-green-700' : 'text-gray-300'}`}>
-                        {hasQty ? fmtNumber(amt) : '—'}
-                      </span>
-                    </div>
-
-                    {/* Free qty — only in free-items mode */}
-                    {pricingMode === 'free' && <div className="px-1 py-1.5">
-                      {(() => {
-                        const quota = allocMap[p.id];
-                        const hasQuota = quota !== undefined;
-                        const overQuota = hasQuota && parseFloat(free || 0) > quota;
-                        return (
-                          <>
-                            <input
-                              type="number"
-                              inputMode="numeric"
-                              min="0"
-                              max={hasQuota ? quota : undefined}
-                              value={free}
-                              onChange={e => setFree(p.id, e.target.value)}
-                              placeholder="0"
-                              disabled={hasQuota && quota <= 0}
-                              className={`w-full h-9 text-center text-xs font-medium rounded-lg border bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 ${
-                                overQuota ? 'border-red-400 text-red-600' : 'border-gray-200 text-purple-700'
-                              } disabled:opacity-40`}
-                            />
-                            {hasQuota && (
-                              <p className={`text-[9px] text-center mt-0.5 font-semibold ${quota <= 0 ? 'text-red-400' : overQuota ? 'text-red-500' : 'text-purple-500'}`}>
-                                {quota <= 0 ? 'No quota' : `/${fmtNumber(quota, 0)}`}
-                              </p>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>}
+                          {hasQuota && (
+                            <div className={`text-xs font-bold px-2 py-1 rounded ${
+                              quota <= 0 ? 'bg-red-100 text-red-500' : overQuota ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {quota <= 0 ? 'No quota' : `Quota: ${fmtNumber(quota, 0)}`}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -473,6 +497,119 @@ export default function SalesOrderCreate() {
             </div>
           )}
         </div>
+        {/* Returns & Collections */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RotateCcw size={15} className="text-orange-500" />
+              <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Returns & Collections</h2>
+            </div>
+            <button type="button" onClick={addReturn}
+              className="flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg active:opacity-70">
+              <Plus size={12} /> Add
+            </button>
+          </div>
+
+          {returns.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-1">No returns — tap Add to record customer returns</p>
+          )}
+
+          {returns.map(r => {
+            const product = products.find(p => String(p.id) === String(r.product_id));
+            const price = parseFloat(r.unit_price) > 0 ? parseFloat(r.unit_price) : parseFloat(product?.selling_price || 0);
+            const deductAmt = r.action === 'DEDUCT' && parseFloat(r.quantity) > 0 ? parseFloat(r.quantity) * price : 0;
+            return (
+              <div key={r._id} className="border border-orange-200 bg-orange-50 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-orange-700 uppercase tracking-wide">Return Item</span>
+                  <button type="button" onClick={() => removeReturn(r._id)} className="text-gray-400 hover:text-red-500 p-0.5">
+                    <X size={14} />
+                  </button>
+                </div>
+
+                {/* Searchable product picker */}
+                <input
+                  type="text"
+                  value={r.search ?? r.product_name}
+                  onChange={e => { updateReturn(r._id, 'search', e.target.value); updateReturn(r._id, 'open', true); }}
+                  onFocus={e => openReturnDrop(r._id, e.currentTarget)}
+                  onBlur={() => setTimeout(() => updateReturn(r._id, 'open', false), 150)}
+                  placeholder="Search returned product…"
+                  className="input text-sm w-full"
+                  autoComplete="off"
+                />
+                {r.open && returnDropPos[r._id] && (
+                  <div style={{
+                    position: 'fixed',
+                    top: returnDropPos[r._id].top,
+                    left: returnDropPos[r._id].left,
+                    width: returnDropPos[r._id].width,
+                    zIndex: 9999,
+                  }} className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                    {products
+                      .filter(p => !r.search || p.name.toLowerCase().includes((r.search || '').toLowerCase()) || (p.sku || '').toLowerCase().includes((r.search || '').toLowerCase()))
+                      .slice(0, 30)
+                      .map(p => (
+                        <button key={p.id} type="button"
+                          onMouseDown={() => pickReturnProduct(r._id, p)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 border-b border-gray-50 last:border-0">
+                          <span className="font-medium text-gray-900">{p.name}</span>
+                          {p.sku && <span className="ml-2 text-xs text-gray-400 font-mono">{p.sku}</span>}
+                        </button>
+                      ))}
+                    {products.filter(p => !r.search || p.name.toLowerCase().includes((r.search || '').toLowerCase())).length === 0 && (
+                      <div className="px-3 py-3 text-sm text-gray-400 text-center">No products found</div>
+                    )}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="number" inputMode="numeric" min="0" placeholder="Qty returned"
+                    value={r.quantity} onChange={e => updateReturn(r._id, 'quantity', e.target.value)}
+                    className="input text-sm" />
+                  <input type="number" inputMode="decimal" min="0"
+                    placeholder={product ? `Price (${fmtCurrency(product.selling_price)})` : 'Unit price'}
+                    value={r.unit_price} onChange={e => updateReturn(r._id, 'unit_price', e.target.value)}
+                    className="input text-sm" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={r.reason} onChange={e => updateReturn(r._id, 'reason', e.target.value)}
+                    className="input text-sm">
+                    <option value="EXPIRED">Expired</option>
+                    <option value="DAMAGED">Damaged</option>
+                    <option value="WRONG_ITEM">Wrong Item</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  <select value={r.action} onChange={e => updateReturn(r._id, 'action', e.target.value)}
+                    className="input text-sm">
+                    <option value="DEDUCT">Deduct from bill</option>
+                    <option value="REPLACE">Replacement given</option>
+                  </select>
+                </div>
+
+                {deductAmt > 0 && (
+                  <div className="text-right text-sm font-bold text-red-600">
+                    Deduction: − {fmtCurrency(deductAmt)}
+                  </div>
+                )}
+                {r.action === 'REPLACE' && (
+                  <div className="text-xs text-blue-600 font-medium">
+                    Replacement — add the replacement product to the order above
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {returnDeduction > 0 && (
+            <div className="flex justify-between text-sm font-bold text-red-600 pt-2 border-t border-orange-200">
+              <span>Total Return Deductions</span>
+              <span>− {fmtCurrency(returnDeduction)}</span>
+            </div>
+          )}
+        </div>
+
         {/* Order-level discount & total — only in MRP mode */}
         {lines.length > 0 && pricingMode === 'mrp' && (
           <div className="card p-4 space-y-3">
@@ -519,7 +656,7 @@ export default function SalesOrderCreate() {
       </form>
 
       {/* Sticky submit */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3">
+      <div className="fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3" style={{ bottom: 88 }}>
         <button
           type="button"
           onClick={handleSubmit(onSubmit)}
@@ -531,8 +668,10 @@ export default function SalesOrderCreate() {
             : lines.length === 0
             ? 'Enter quantities to continue'
             : !isOnline
-            ? `Save Offline · ${fmtCurrency(orderTotal)}`
-            : `Create Order · ${fmtCurrency(orderTotal)}`}
+            ? `Save Offline · ${fmtCurrency(netTotal)}`
+            : returnDeduction > 0
+            ? `Create Order · ${fmtCurrency(netTotal)} (−${fmtCurrency(returnDeduction)} returns)`
+            : `Create Order · ${fmtCurrency(netTotal)}`}
         </button>
       </div>
     </div>

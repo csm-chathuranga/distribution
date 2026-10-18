@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Printer, Truck, Trash2, Plus, X, FileText, CheckSquare } from 'lucide-react';
+import { RotateCcw, Printer, Truck, Trash2, Plus, X, FileText, CheckSquare } from 'lucide-react';
 import { useGetLoadingSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetExpensesQuery, useCreateExpenseMutation, useGetAvailableInvoicesQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation } from '../../api/salesApi';
 import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { useGetCompanyQuery } from '../../api/reportsApi';
@@ -374,12 +374,8 @@ export default function LoadingSheetDetail() {
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Header */}
       <div className="space-y-3">
-        {/* Top row: back + status */}
-        <div className="flex items-center justify-between">
-          <button onClick={() => navigate('/loading-sheets')}
-            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
-            <ArrowLeft size={16} /> Back
-          </button>
+        {/* Top row: status */}
+        <div className="flex items-center justify-end">
           <StatusBadge status={sheet.status} />
         </div>
 

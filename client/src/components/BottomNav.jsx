@@ -21,32 +21,27 @@ const DRIVER_TABS = [
 
 function Tab({ to, icon: Icon, label, color }) {
   return (
-    <NavLink to={to} end className="flex-1 flex justify-center items-center py-2">
+    <NavLink to={to} end className="flex-1 flex justify-center items-center h-full">
       {({ isActive }) => (
-        <div className="flex flex-col items-center gap-1 relative">
+        isActive ? (
           <div
-            className="w-11 h-10 flex items-center justify-center rounded-2xl transition-all duration-200"
-            style={isActive ? { background: color + '18' } : {}}
+            className="flex items-center gap-2 rounded-2xl transition-all duration-300"
+            style={{
+              padding: '10px 16px',
+              background: color + '18',
+            }}
           >
-            <Icon
-              size={20}
-              strokeWidth={isActive ? 2.2 : 1.6}
-              style={{ color: isActive ? color : '#94a3b8' }}
-            />
+            <Icon size={22} strokeWidth={2.3} style={{ color, flexShrink: 0 }} />
+            <span style={{ color, fontSize: 14, fontWeight: 700, lineHeight: 1, whiteSpace: 'nowrap' }}>
+              {label}
+            </span>
           </div>
-          <span
-            className="text-[10px] font-semibold leading-none transition-colors duration-200"
-            style={{ color: isActive ? color : '#94a3b8' }}
-          >
-            {label}
-          </span>
-          {isActive && (
-            <span
-              className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
-              style={{ background: color }}
-            />
-          )}
-        </div>
+        ) : (
+          <div className="flex items-center justify-center transition-all duration-200 rounded-xl"
+            style={{ width: 48, height: 48 }}>
+            <Icon size={24} strokeWidth={1.6} style={{ color: '#94a3b8' }} />
+          </div>
+        )
       )}
     </NavLink>
   );
@@ -63,15 +58,20 @@ export default function BottomNav() {
   if (!tabs) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe"
-      style={{
-        background: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(0,0,0,0.06)',
-        boxShadow: '0 -8px 32px rgba(0,0,0,0.08)',
-      }}>
-      <div className="flex items-center px-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50"
+      style={{ padding: '8px 12px env(safe-area-inset-bottom, 12px)' }}>
+      <div
+        className="flex items-center"
+        style={{
+          height: 64,
+          background: 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderRadius: 20,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+          padding: '0 4px',
+        }}
+      >
         {tabs.map(tab => <Tab key={tab.to} {...tab} />)}
       </div>
     </nav>

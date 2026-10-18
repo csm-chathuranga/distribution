@@ -17,12 +17,17 @@ export default function InvoicePrintPOS({ invoice, company }) {
   if (!invoice) return null;
 
   const lines   = invoice.Lines || [];
+  const returns = invoice.Order?.Returns || [];
   const paid    = parseFloat(invoice.paid_amount    || 0);
   const balance = parseFloat(invoice.balance_due    || 0);
   const vat     = parseFloat(invoice.vat_amount     || 0);
   const disc    = parseFloat(invoice.discount_amount || 0);
   const sub     = parseFloat(invoice.subtotal       || 0);
   const total   = parseFloat(invoice.total_amount   || 0);
+  const returnDeduction = returns
+    .filter(r => r.action === 'DEDUCT')
+    .reduce((s, r) => s + parseFloat(r.quantity) * parseFloat(r.unit_price), 0);
+  const REASON_LABEL = { EXPIRED: 'Expired', DAMAGED: 'Damaged', WRONG_ITEM: 'Wrong Item', OTHER: 'Other' };
 
   const typeLabel =
     invoice.invoice_type === 'CREDIT_NOTE' ? 'CREDIT NOTE'
@@ -133,6 +138,34 @@ export default function InvoicePrintPOS({ invoice, company }) {
           </div>
         );
       })}
+
+      {/* Returns & Collections */}
+      {returns.length > 0 && (
+        <>
+          <Divider dashed />
+          <div style={{ ...bold, fontSize: '15px', marginBottom: '4px' }}>RETURNS / COLLECTIONS</div>
+          {returns.map((r, i) => (
+            <div key={r.id || i} style={{ marginBottom: '3px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ flex: 1 }}>{r.Product?.name || `Product #${r.product_id}`}</span>
+                <span style={{ width: '42px', textAlign: 'right' }}>{r.quantity}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#555' }}>
+                <span>{REASON_LABEL[r.reason] || r.reason} · {r.action === 'REPLACE' ? 'Replaced' : 'Deducted'}</span>
+                {r.action === 'DEDUCT' && (
+                  <span style={{ color: '#c00', ...bold }}>− {fmtAmt(parseFloat(r.quantity) * parseFloat(r.unit_price))}</span>
+                )}
+              </div>
+            </div>
+          ))}
+          {returnDeduction > 0 && (
+            <div style={{ ...row, color: '#c00', ...bold, marginTop: '4px' }}>
+              <span>Return Deduction</span>
+              <span>− {fmtAmt(returnDeduction)}</span>
+            </div>
+          )}
+        </>
+      )}
 
       <Divider />
 

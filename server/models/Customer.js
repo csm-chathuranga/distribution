@@ -24,5 +24,7 @@ module.exports = (sequelize) => {
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     account_id: DataTypes.INTEGER,
     visit_order: { type: DataTypes.INTEGER, defaultValue: 0 },
+    last_latitude:  { type: DataTypes.DECIMAL(10, 7), allowNull: true },
+    last_longitude: { type: DataTypes.DECIMAL(10, 7), allowNull: true },
   }, { tableName: 'customers' });
 };

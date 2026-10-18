@@ -49,6 +49,7 @@ const SalesCommission = require('./SalesCommission')(sequelize);
 const FreeItemAllocation = require('./FreeItemAllocation')(sequelize);
 const FreeItemUsage = require('./FreeItemUsage')(sequelize);
 const WarehouseUser = require('./WarehouseUser')(sequelize);
+const OrderReturn = require('./OrderReturn')(sequelize);
 
 // Junction tables
 const RolePermission = sequelize.define('RolePermission', {}, { tableName: 'role_permissions', timestamps: false });
@@ -175,6 +176,11 @@ Invoice.hasMany(InvoiceLine, { as: 'Lines', foreignKey: 'invoice_id' });
 InvoiceLine.belongsTo(Invoice, { foreignKey: 'invoice_id' });
 InvoiceLine.belongsTo(Product, { foreignKey: 'product_id' });
 Invoice.belongsTo(LoadingSheet, { foreignKey: 'loading_sheet_id', as: 'VanSheet' });
+
+// ── Order Returns ─────────────────────────────────────────
+SalesOrder.hasMany(OrderReturn, { as: 'Returns', foreignKey: 'order_id' });
+OrderReturn.belongsTo(SalesOrder, { foreignKey: 'order_id' });
+OrderReturn.belongsTo(Product, { foreignKey: 'product_id' });
 Invoice.belongsTo(User, { as: 'SalesRep', foreignKey: 'sales_rep_id' });
 LoadingSheet.hasMany(Invoice, { foreignKey: 'loading_sheet_id', as: 'Invoices' });
 
@@ -317,4 +323,5 @@ module.exports = {
   SalesCommission,
   FreeItemAllocation, FreeItemUsage,
   WarehouseUser,
+  OrderReturn,
 };

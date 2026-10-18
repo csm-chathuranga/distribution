@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useCreateCustomerReturnMutation, useGetActiveSheetQuery, useGetLoadingSheetQuery } from '../../api/salesApi';
@@ -96,13 +96,6 @@ export default function CustomerReturnCreate() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-28">
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/customer-returns')} className="p-2 text-gray-500 hover:text-gray-900">
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-lg font-bold text-gray-900">New Return Note</h1>
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="card p-4 space-y-3">
           <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Return Details</h2>

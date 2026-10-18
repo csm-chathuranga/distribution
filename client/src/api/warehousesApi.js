@@ -22,6 +22,10 @@ export const warehousesApi = baseApi.injectEndpoints({
       query: ({ id, ...body }) => ({ url: `/warehouses/${id}`, method: 'PUT', body }),
       invalidatesTags: ['Warehouse'],
     }),
+    deleteWarehouse: b.mutation({
+      query: (id) => ({ url: `/warehouses/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Warehouse'],
+    }),
     getWarehouseUsers: b.query({
       query: id => `/warehouses/${id}/users`,
       providesTags: (r, e, id) => [{ type: 'WarehouseUser', id }],
@@ -39,6 +43,6 @@ export const warehousesApi = baseApi.injectEndpoints({
 
 export const {
   useGetWarehousesQuery, useGetWarehouseQuery, useGetWarehouseStockQuery,
-  useCreateWarehouseMutation, useUpdateWarehouseMutation,
+  useCreateWarehouseMutation, useUpdateWarehouseMutation, useDeleteWarehouseMutation,
   useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation,
 } = warehousesApi;

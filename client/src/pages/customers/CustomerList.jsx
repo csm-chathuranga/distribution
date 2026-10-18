@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Pencil, Plus, Search, Phone, User, MapPin } from 'lucide-react';
+import { Pencil, Plus, Search, Phone, User, MapPin, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
@@ -26,12 +26,42 @@ const TYPE_COLORS = {
   INSTITUTION: 'bg-amber-100 text-amber-700',
 };
 
-const TYPE_AVATAR = {
-  WHOLESALER:  'from-blue-400 to-blue-600',
-  RETAILER:    'from-emerald-400 to-emerald-600',
-  DIRECT:      'from-violet-400 to-violet-600',
-  INSTITUTION: 'from-amber-400 to-amber-600',
-};
+const NAME_GRADIENTS = [
+  'linear-gradient(135deg,#f97316,#ef4444)',
+  'linear-gradient(135deg,#8b5cf6,#6366f1)',
+  'linear-gradient(135deg,#10b981,#059669)',
+  'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+  'linear-gradient(135deg,#f59e0b,#d97706)',
+  'linear-gradient(135deg,#ec4899,#be185d)',
+  'linear-gradient(135deg,#06b6d4,#0284c7)',
+  'linear-gradient(135deg,#84cc16,#16a34a)',
+  'linear-gradient(135deg,#f43f5e,#e11d48)',
+  'linear-gradient(135deg,#a855f7,#7c3aed)',
+];
+
+function nameGradient(name = '') {
+  const hash = name.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return NAME_GRADIENTS[hash % NAME_GRADIENTS.length];
+}
+
+const CARD_TINTS = [
+  'rgba(249,115,22,0.07)',
+  'rgba(139,92,246,0.07)',
+  'rgba(16,185,129,0.07)',
+  'rgba(59,130,246,0.07)',
+  'rgba(245,158,11,0.07)',
+  'rgba(236,72,153,0.07)',
+  'rgba(6,182,212,0.07)',
+  'rgba(132,204,22,0.07)',
+  'rgba(244,63,94,0.07)',
+  'rgba(168,85,247,0.07)',
+];
+
+function cardGradient(name = '') {
+  const hash = name.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const tint = CARD_TINTS[hash % CARD_TINTS.length];
+  return `linear-gradient(135deg, ${tint} 0%, #ffffff 50%)`;
+}
 
 const schema = yup.object({
   name:           yup.string().required('Customer name is required').max(255),
@@ -45,7 +75,7 @@ const schema = yup.object({
   credit_days:    yup.number().integer().min(0).default(0).typeError('Enter days'),
   credit_limit:   yup.number().min(0).default(0).typeError('Enter amount'),
   account_id:     yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
-  route_id:       yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
+  route_id:       yup.number().required('Route is required').typeError('Select a route'),
 });
 
 function CustomerForm({ onClose, editing }) {
@@ -122,6 +152,7 @@ function CustomerForm({ onClose, editing }) {
           render={({ field, fieldState }) => (
             <SelectField
               label="Route"
+              required
               placeholder="Select route…"
               options={routeOptions}
               value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur}
@@ -190,13 +221,15 @@ export default function CustomerList() {
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search customers…"
-            className="input pl-9 w-full"
+            className="w-full pl-10 pr-4 font-medium text-gray-800 placeholder-gray-400 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all"
+            style={{ height: 52, borderRadius: 16, fontSize: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           />
         </div>
         <select
           value={routeFilter}
           onChange={e => { setRouteFilter(e.target.value); setPage(1); }}
-          className="input w-40 sm:w-48 flex-shrink-0"
+          className="bg-white border border-gray-200 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all flex-shrink-0"
+          style={{ height: 52, borderRadius: 16, fontSize: 16, paddingLeft: 14, paddingRight: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minWidth: 130 }}
         >
           {canViewAll && <option value="">All Routes</option>}
           {routeOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -256,9 +289,15 @@ export default function CustomerList() {
           <div className="hidden md:block space-y-2">
             {customers.map(c => {
               const routeName = c.route_id ? routeOptions.find(r => String(r.id) === String(c.route_id))?.name : null;
+              const desktopInitials = c.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
               return (
               <div key={c.id} className="card p-4 cursor-pointer active:opacity-80" onClick={() => navigate(`/customers/${c.id}`)}>
                 <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm"
+                      style={{ background: nameGradient(c.name) }}>
+                      <span className="text-white font-bold text-sm">{desktopInitials}</span>
+                    </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-bold text-gray-900 leading-snug">{c.name}</p>
@@ -269,6 +308,7 @@ export default function CustomerList() {
                       )}
                     </div>
                     {c.code && <p className="text-xs font-mono text-gray-400 mt-0.5">{c.code}</p>}
+                  </div>
                   </div>
                   {canCreate && (
                     <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg flex-shrink-0">
@@ -315,20 +355,22 @@ export default function CustomerList() {
 
               return (
                 <div key={c.id}
-                  className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden cursor-pointer active:opacity-75 transition-opacity"
+                  className="rounded-2xl shadow-md border border-gray-100 overflow-hidden cursor-pointer active:opacity-75 transition-opacity"
+                  style={{ background: cardGradient(c.name) }}
                   onClick={() => navigate(`/customers/${c.id}`)}>
 
                   <div className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className={`w-11 h-11 rounded-xl flex-shrink-0 bg-gradient-to-br ${TYPE_AVATAR[c.customer_type] || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-sm`}>
-                        <span className="text-white font-bold text-sm">{initials}</span>
+                      <div className="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-md"
+                        style={{ background: nameGradient(c.name) }}>
+                        <span className="text-white font-extrabold text-xl leading-none">{initials}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm leading-tight">{c.name}</p>
+                        <p className="font-bold text-gray-900 leading-snug">{c.name}</p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {c.code && <span className="text-xs font-mono text-gray-400">{c.code}</span>}
                           {c.customer_type && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${TYPE_COLORS[c.customer_type] || 'bg-gray-100 text-gray-600'}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${TYPE_COLORS[c.customer_type] || 'bg-gray-100 text-gray-600'}`}>
                               {c.customer_type}
                             </span>
                           )}
@@ -361,6 +403,20 @@ export default function CustomerList() {
                           </span>
                         )}
                       </div>
+                    )}
+
+                    {c.last_latitude && c.last_longitude && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.last_latitude},${c.last_longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="mt-2.5 flex items-center gap-2 rounded-xl font-semibold transition-colors active:opacity-70"
+                        style={{ padding: '8px 12px', background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)', color: '#fff', fontSize: 13, display: 'flex', width: 'fit-content' }}
+                      >
+                        <Navigation size={14} strokeWidth={2.5} />
+                        Get Directions
+                      </a>
                     )}
 
                     <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">

@@ -24,11 +24,18 @@ router.put('/:id/deliver', authorize.any('sales.create', 'sales.view_own'), asyn
     res.json({ message: 'Marked as delivered', delivered_at: invoice.delivered_at });
     const deliveredBy = req.user.name || `User #${req.user.id}`;
     const deliveryBody = `${invoice.invoice_number} marked delivered by ${deliveredBy}`;
-    notify({ roleName: 'admin',       type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: `/invoices/${invoice.id}` });
-    notify({ roleName: 'manager',     type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: `/invoices/${invoice.id}` });
-    notify({ roleName: 'super_admin', type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: `/invoices/${invoice.id}` });
-    if (invoice.sales_rep_id && invoice.sales_rep_id !== req.user.id) {
-      notify({ userId: invoice.sales_rep_id, type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: `${invoice.invoice_number} has been delivered to the customer`, link: `/invoices/${invoice.id}` });
+    const deliveryLink = `/invoices/${invoice.id}`;
+    notify({ roleName: 'admin',       type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: deliveryLink });
+    notify({ roleName: 'manager',     type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: deliveryLink });
+    notify({ roleName: 'super_admin', type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: deliveryLink });
+    const repBody = `${invoice.invoice_number} has been delivered to the customer`;
+    const notifiedIds = new Set([req.user.id]);
+    if (invoice.sales_rep_id && !notifiedIds.has(invoice.sales_rep_id)) {
+      notify({ userId: invoice.sales_rep_id, type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: repBody, link: deliveryLink });
+      notifiedIds.add(invoice.sales_rep_id);
+    }
+    if (invoice.created_by && !notifiedIds.has(invoice.created_by)) {
+      notify({ userId: invoice.created_by, type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: repBody, link: deliveryLink });
     }
   } catch (err) { next(err); }
 });
@@ -53,12 +60,17 @@ router.put('/:id/cancel', authorize.any('sales.create', 'sales.view_own'), async
     const customerName = invoice.Customer?.name || `Invoice #${invoice.invoice_number}`;
     const body = `${invoice.invoice_number} for ${customerName} cancelled by ${cancelledBy}. Reason: ${reason.trim()}`;
     const link = `/invoices/${invoice.id}`;
-    if (invoice.sales_rep_id && invoice.sales_rep_id !== req.user.id) {
-      notify({ userId: invoice.sales_rep_id, type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
-    }
     notify({ roleName: 'admin',       type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
     notify({ roleName: 'manager',     type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
     notify({ roleName: 'super_admin', type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
+    const cancelNotifiedIds = new Set([req.user.id]);
+    if (invoice.sales_rep_id && !cancelNotifiedIds.has(invoice.sales_rep_id)) {
+      notify({ userId: invoice.sales_rep_id, type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
+      cancelNotifiedIds.add(invoice.sales_rep_id);
+    }
+    if (invoice.created_by && !cancelNotifiedIds.has(invoice.created_by)) {
+      notify({ userId: invoice.created_by, type: 'INVOICE_CANCELLED', title: 'Invoice Cancelled', body, link });
+    }
   } catch (err) { next(err); }
 });
 

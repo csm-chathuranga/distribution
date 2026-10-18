@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Phone, Mail, MapPin, User, Building2,
+  Phone, Mail, MapPin, User, Building2,
   FileText, CreditCard, ShoppingCart, TrendingUp, AlertCircle, CheckCircle, Clock,
   Pencil,
 } from 'lucide-react';
@@ -96,11 +96,8 @@ export default function CustomerProfile() {
 
   return (
     <div className="space-y-4 pb-6">
-      {/* Back + Header */}
+      {/* Header */}
       <div className="flex items-start gap-3">
-        <button onClick={() => navigate('/customers')} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 mt-0.5">
-          <ArrowLeft size={18} />
-        </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-bold text-gray-900">{c.name}</h1>

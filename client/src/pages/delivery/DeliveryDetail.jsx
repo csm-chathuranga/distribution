@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { ArrowLeft, Printer, MapPin, Truck, CheckCircle, RotateCcw, Package, User, Route } from 'lucide-react';
+import { Printer, MapPin, Truck, CheckCircle, RotateCcw, Package, User, Route } from 'lucide-react';
 import MapModal from '../../components/MapModal';
 import toast from 'react-hot-toast';
 import {
@@ -75,14 +75,7 @@ export default function DeliveryDetail() {
     <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${stickyBarShown ? 'pb-28 md:pb-6' : 'pb-6'}`}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-2">
-        <button
-          onClick={() => navigate('/deliveries')}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 active:opacity-70"
-        >
-          <ArrowLeft size={16} /> Back
-        </button>
-
+      <div className="flex items-center justify-end gap-2">
         <div className="flex items-center gap-2">
           <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
             <Printer size={15} /> Print

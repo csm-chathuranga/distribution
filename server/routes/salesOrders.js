@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, FreeItemAllocation, FreeItemUsage, Stock, StockMovement, sequelize: db } = require('../models');
+const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, FreeItemAllocation, FreeItemUsage, Stock, StockMovement, OrderReturn, sequelize: db } = require('../models');
 const notify = require('../notify');
 const crud = require('../controllers/crudFactory')(SalesOrder, {
   include: [{ model: Customer, attributes: ['id', 'name', 'code'] }, { model: Warehouse, attributes: ['id', 'name'] }],
@@ -20,11 +20,12 @@ async function generateOrderNumber() {
 router.get('/', authorize('sales.view_own'), async (req, res, next) => {
   try {
     const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('sales.approve');
-    const { search, page = 1, limit = 20, date_from, date_to, status, ...filters } = req.query;
+    const { search, page = 1, limit = 20, date_from, date_to, status, sales_rep_id, ...filters } = req.query;
 
     const where = {};
     if (!canViewAll) where.created_by = req.user.id;
     if (filters.created_by) where.created_by = filters.created_by;
+    if (sales_rep_id) where.sales_rep_id = sales_rep_id;
     if (status) where.status = status;
     if (search) {
       where[Op.or] = [
@@ -60,6 +61,8 @@ router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
         { model: Route,          attributes: ['id', 'name'], required: false },
         { model: SalesOrderLine, as: 'Lines',
           include: [{ model: Product, attributes: ['id', 'sku', 'name'] }] },
+        { model: OrderReturn, as: 'Returns',
+          include: [{ model: Product, attributes: ['id', 'sku', 'name'] }] },
       ],
     });
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -68,7 +71,7 @@ router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
 });
 router.post('/', authorize('sales.create'), async (req, res, next) => {
   try {
-    const { lines, ...data } = req.body;
+    const { lines, returns = [], ...data } = req.body;
     data.created_by = req.user.id;
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
@@ -164,6 +167,22 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
           await stock.increment('reserved_quantity', { by: billedQty, transaction: t });
         }
       }
+      // Save return lines
+      if (returns.length) {
+        await OrderReturn.bulkCreate(
+          returns.map(r => ({ ...r, order_id: order.id })),
+          { transaction: t }
+        );
+      }
+
+      // Update customer's last known GPS location
+      if (data.customer_id && data.latitude && data.longitude) {
+        Customer.update(
+          { last_latitude: data.latitude, last_longitude: data.longitude },
+          { where: { id: data.customer_id } }
+        ).catch(() => {});
+      }
+
       await t.commit();
       res.status(201).json(order);
       const orderBody = `${req.user.name} created order ${order.order_number}`;
@@ -181,7 +200,10 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
     const { Op } = require('sequelize');
 
     const order = await SalesOrder.findByPk(req.params.id, {
-      include: [{ model: SalesOrderLine, as: 'Lines' }],
+      include: [
+        { model: SalesOrderLine, as: 'Lines' },
+        { model: OrderReturn, as: 'Returns', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+      ],
     });
     if (!order) return res.status(404).json({ message: 'Order not found' });
     if (order.status !== 'CONFIRMED') return res.status(422).json({ message: 'Only confirmed orders can be invoiced' });

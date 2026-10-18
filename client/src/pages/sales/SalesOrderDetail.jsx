@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin } from 'lucide-react';
+import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetSalesOrderQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation } from '../../api/salesApi';
 import { usePermission } from '../../hooks/usePermission';
@@ -54,18 +54,11 @@ export default function SalesOrderDetail() {
 
   return (
     <div className="space-y-4 pb-24">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/sales-orders')} className="p-2 text-gray-500 hover:text-gray-900 active:opacity-70">
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold text-gray-900 font-mono">{order.order_number}</h1>
-            <StatusBadge status={order.status} />
-          </div>
-          <p className="text-xs text-gray-400 mt-0.5">{fmtDate(order.order_date)}</p>
-        </div>
+      {/* Order title row */}
+      <div className="flex items-center gap-2 flex-wrap pt-1">
+        <h1 className="text-lg font-bold text-gray-900 font-mono">{order.order_number}</h1>
+        <StatusBadge status={order.status} />
+        <span className="text-xs text-gray-400 ml-auto">{fmtDate(order.order_date)}</span>
       </div>
 
       {/* Info card */}

@@ -4,7 +4,7 @@ export const salesApi = baseApi.injectEndpoints({
   endpoints: b => ({
     getSalesOrders: b.query({ query: params => ({ url: '/sales-orders', params }), providesTags: ['SalesOrder'] }),
     getSalesOrder: b.query({ query: id => `/sales-orders/${id}`, providesTags: (r,e,id) => [{ type:'SalesOrder', id }] }),
-    createSalesOrder: b.mutation({ query: body => ({ url: '/sales-orders', method: 'POST', body }), invalidatesTags: ['SalesOrder'] }),
+    createSalesOrder: b.mutation({ query: body => ({ url: '/sales-orders', method: 'POST', body }), invalidatesTags: ['SalesOrder', 'FreeAlloc', 'Stock'] }),
     confirmSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}/confirm`, method: 'PUT' }), invalidatesTags: ['SalesOrder'] }),
     invoiceSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}/invoice`, method: 'POST' }), invalidatesTags: ['SalesOrder', 'Invoice'] }),
 
