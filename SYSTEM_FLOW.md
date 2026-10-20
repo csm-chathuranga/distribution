@@ -254,6 +254,45 @@ Each free item is injected as a zero-price line (`unit_price: 0, vat_rate: 0, co
 
 ---
 
+### 13. Customer GPS & Directions
+**Flow:** GPS coordinates captured when a sales order is created in the field → stored on the Customer record → used to show a "Get Directions" button on the CustomerList mobile card.
+
+| Layer | File |
+|-------|------|
+| Model fields | `server/models/Customer.js` — `last_latitude DECIMAL(10,7)`, `last_longitude DECIMAL(10,7)` |
+| Update logic | `server/routes/salesOrders.js` — after order committed, silently updates customer GPS if `data.latitude`/`data.longitude` present |
+| UI | `client/src/pages/customers/CustomerList.jsx` — Google Maps directions link shown when `c.last_latitude && c.last_longitude` |
+
+**Migration:** `019_add_location_to_customers.js` (raw SQL, SHOW COLUMNS guard pattern)
+
+**Directions URL:** `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+
+---
+
+### 14. Free Issue via GRN (Bulk Topup)
+**Flow:** When receiving goods, warehouse manager can link a sales rep for free issue allocation. Each GRN line can have a `free_issue_qty`. On GRN post, the system auto-topups (creates or increments) `FreeItemAllocation` records for the linked rep.
+
+| Layer | File |
+|-------|------|
+| Model field | `server/models/GoodsReceived.js` — `free_sales_rep_id INT NULL` |
+| Model field | `server/models/GoodsReceivedLine.js` — `free_issue_qty DECIMAL(12,4) DEFAULT 0` |
+| Association | `server/models/index.js` — `GoodsReceived.belongsTo(User, { as: 'FreeRep', foreignKey: 'free_sales_rep_id' })` |
+| Post logic | `server/routes/goodsReceived.js` — POST /:id/post, after stock movements, topups FreeItemAllocation per line with qty > 0 |
+| UI create | `client/src/pages/purchasing/GRNCreate.jsx` — card-per-item layout; product search full-width top; Qty/Cost/FreeQty/Amount in row below; free issue qty column shown only when rep selected |
+| UI detail | `client/src/pages/purchasing/GRNDetail.jsx` — "Free Issue Rep" in receipt details (amber); "Free Issue" column in items table |
+| UI list | `client/src/pages/purchasing/GRNList.jsx` — "Free Issue Rep" column |
+| RTK | `client/src/api/purchasingApi.js` — postGRN invalidates `['GoodsReceived', 'Stock', 'FreeAlloc']` |
+
+**Migration:** `020_grn_free_issue.js` — adds `free_sales_rep_id` to `goods_received` and `free_issue_qty` to `goods_received_lines`
+
+**Topup logic (idempotent):**
+```js
+FreeItemAllocation.findOrCreate({ where: { sales_rep_id, product_id }, defaults: { allocated_quantity: 0, ... } })
+alloc.increment('allocated_quantity', { by: freeQty, transaction: t })
+```
+
+---
+
 ## DB Migrations
 
 | # | File | What it does |
@@ -273,6 +312,8 @@ Each free item is injected as a zero-price line (`unit_price: 0, vat_rate: 0, co
 | 013 | `013_add_delivered_at_to_invoices.js` | Adds `delivered_at DATETIME NULL` and `delivered_by INT NULL` to `invoices` table for van delivery tracking |
 | 014 | `014_van_damage_loss_journal.js` | Extends `journal_entries.source_type` enum with `VAN_CLOSE`; adds account `6800 Van Damage & Loss` (EXPENSE, sub_type=VAN_LOSS, is_system=true) |
 | 015 | `015_free_item_allocations.js` | Creates `free_item_allocations` (manager assigns promo quota per product/rep/warehouse) and `free_item_usages` (tracks each zero-price invoice line) tables |
+| 019 | `019_add_location_to_customers.js` | Adds `last_latitude DECIMAL(10,7)` and `last_longitude DECIMAL(10,7)` to `customers` table |
+| 020 | `020_grn_free_issue.js` | Adds `free_sales_rep_id INT NULL` to `goods_received`; `free_issue_qty DECIMAL(12,4) DEFAULT 0` to `goods_received_lines` |
 
 ---
 
@@ -312,4 +353,4 @@ Each free item is injected as a zero-price line (`unit_price: 0, vat_rate: 0, co
 
 ---
 
-*Last updated: 2026-10-13*
+*Last updated: 2026-10-21*

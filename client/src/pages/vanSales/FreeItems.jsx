@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gift, Plus, ChevronUp, History, Package } from 'lucide-react';
+import { Gift, Plus, ChevronUp, History, Package, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
 import { usePermission } from '../../hooks/usePermission';
@@ -238,46 +238,66 @@ export default function FreeItems() {
   const [topping,    setTopping]    = useState(null);
   const [history,    setHistory]    = useState(null);
   const [filterRepId, setFilterRepId] = useState('');
+  const [searchQ,    setSearchQ]    = useState('');
 
   // Build unique rep list from loaded allocations
   const repOptions = [...new Map(
     allocations.filter(a => a.SalesRep).map(a => [a.SalesRep.id, a.SalesRep])
   ).values()].sort((a, b) => a.name.localeCompare(b.name));
 
-  const visibleAllocations = filterRepId
-    ? allocations.filter(a => String(a.SalesRep?.id) === filterRepId)
-    : allocations;
+  const visibleAllocations = allocations.filter(a => {
+    if (filterRepId && String(a.SalesRep?.id) !== filterRepId) return false;
+    if (searchQ.trim()) {
+      const q = searchQ.toLowerCase();
+      return (a.Product?.name || '').toLowerCase().includes(q) ||
+             (a.Product?.sku  || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Gift size={20} className="text-purple-600" /> Free Item Allocations
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {canApprove ? 'Manage promotional item quotas per sales rep' : 'Your free item quota — tap Distribute to give items to customers'}
-          </p>
-        </div>
-        {canApprove && (
-          <div className="flex items-center gap-2">
-            {repOptions.length > 0 && (
-              <select
-                value={filterRepId}
-                onChange={e => setFilterRepId(e.target.value)}
-                className="input text-sm py-1.5 pr-8"
-              >
-                <option value="">All Reps</option>
-                {repOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            )}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Gift size={20} className="text-purple-600" /> Free Item Allocations
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {canApprove ? 'Manage promotional item quotas per sales rep' : 'Your free item quota — tap Distribute to give items to customers'}
+            </p>
+          </div>
+          {canApprove && repOptions.length > 0 && (
+            <select
+              value={filterRepId}
+              onChange={e => setFilterRepId(e.target.value)}
+              className="input text-sm py-1.5 pr-8"
+            >
+              <option value="">All Reps</option>
+              {repOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          )}
+          {canApprove && (
             <button onClick={() => setShowNew(true)}
               className="flex items-center gap-1.5 btn btn-primary text-sm whitespace-nowrap">
               <Plus size={16} /> New Allocation
             </button>
+          )}
+        </div>
+        {/* Search row */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              placeholder="Search product…"
+              className="input text-sm py-1.5 pl-8 w-full"
+            />
           </div>
-        )}
+        </div>
       </div>
 
       {/* Cards */}
@@ -297,8 +317,8 @@ export default function FreeItems() {
             const remaining = allocated - used;
             const isEmpty   = remaining <= 0;
             return (
-              <div key={a.id} className={`card p-4 border-l-4 ${isEmpty ? 'border-red-300 opacity-75' : 'border-purple-400'}`}>
-                <div className="flex items-start justify-between gap-2 mb-3">
+              <div key={a.id} className={`card p-3 border-l-4 ${isEmpty ? 'border-red-300 opacity-75' : 'border-purple-400'}`}>
+                <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 text-sm leading-snug truncate">{a.Product?.name}</p>
                     <p className="text-xs text-gray-400 font-mono">{a.Product?.sku}</p>
@@ -307,16 +327,16 @@ export default function FreeItems() {
                     )}
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className={`text-xl font-bold font-mono ${isEmpty ? 'text-red-500' : 'text-green-600'}`}>{fmtNumber(remaining)}</p>
-                    <p className="text-xs text-gray-400">of {fmtNumber(allocated)} units</p>
+                    <p className={`text-lg font-bold font-mono ${isEmpty ? 'text-red-500' : 'text-green-600'}`}>{fmtNumber(remaining, 0)}</p>
+                    <p className="text-xs text-gray-400">of {fmtNumber(allocated, 0)} units</p>
                   </div>
                 </div>
 
                 <QuotaBar used={used} total={allocated} />
-                <p className="text-xs text-gray-400 mt-1">{fmtNumber(used)} used · from {a.Warehouse?.name}</p>
+                <p className="text-xs text-gray-400 mt-1">{fmtNumber(used, 0)} used · from {a.Warehouse?.name}</p>
                 {a.notes && <p className="text-xs text-gray-500 italic mt-1 truncate">{a.notes}</p>}
 
-                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
                   <button onClick={() => setHistory(a)}
                     className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors">
                     <History size={13} /> History

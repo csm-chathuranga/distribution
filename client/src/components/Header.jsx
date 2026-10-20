@@ -122,6 +122,61 @@ export default function Header({ minimal = false }) {
               <RefreshCw size={21} className={spinning ? 'animate-spin' : ''} />
             </button>
 
+            <div className="relative" ref={bellRef}>
+              <button onClick={() => setBellOpen(v => !v)}
+                className="relative flex items-center justify-center rounded-2xl text-gray-600 active:opacity-60 transition-all"
+                style={{ width: 48, height: 48, background: 'rgba(0,0,0,0.05)' }}>
+                <Bell size={23} />
+                {unread > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white font-bold rounded-full flex items-center justify-center leading-none"
+                    style={{ fontSize: 10 }}>
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </button>
+
+              {bellOpen && (
+                <div className="absolute right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                  style={{ width: 'min(320px, calc(100vw - 20px))' }}>
+                  <div className="px-4 pt-3 pb-2 border-b border-gray-100">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                      {unread > 0 && <span className="text-xs text-white bg-red-500 font-bold px-1.5 rounded-full leading-none flex items-center justify-center" style={{ height: 18 }}>{unread}</span>}
+                    </div>
+                    {(unread > 0 || notifications?.length > 0) && (
+                      <div className="flex items-center gap-3">
+                        {unread > 0 && (
+                          <button onClick={() => markAllRead?.()} className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                            <CheckCheck size={12} /> Mark all read
+                          </button>
+                        )}
+                        {notifications?.length > 0 && (
+                          <button onClick={() => { clearAll?.(); setBellOpen(false); }}
+                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 font-medium transition-colors">
+                            <X size={12} /> Clear
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {(!notifications || notifications.length === 0) ? (
+                      <p className="text-sm text-gray-400 text-center py-8">No notifications</p>
+                    ) : notifications.slice(0, 20).map(n => (
+                      <button key={n.id} onClick={() => handleNotifClick(n)}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex gap-3 items-start transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}>
+                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-800 leading-snug">{n.title}</p>
+                          {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Avatar — circular gradient */}
             <button onClick={() => navigate('/profile')}
               className="flex items-center justify-center text-white font-extrabold rounded-full active:opacity-70 shadow-md transition-all"

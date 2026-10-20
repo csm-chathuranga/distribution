@@ -11,7 +11,7 @@ export const purchasingApi = baseApi.injectEndpoints({
     getGRNs: b.query({ query: params => ({ url: '/goods-received', params }), providesTags: ['GoodsReceived'] }),
     getGRN: b.query({ query: id => `/goods-received/${id}`, providesTags: (r,e,id) => [{ type:'GoodsReceived', id }] }),
     createGRN: b.mutation({ query: body => ({ url: '/goods-received', method: 'POST', body }), invalidatesTags: ['GoodsReceived', 'Stock'] }),
-    postGRN: b.mutation({ query: id => ({ url: `/goods-received/${id}/post`, method: 'POST' }), invalidatesTags: ['GoodsReceived', 'Stock'] }),
+    postGRN: b.mutation({ query: id => ({ url: `/goods-received/${id}/post`, method: 'POST' }), invalidatesTags: ['GoodsReceived', 'Stock', 'FreeAlloc'] }),
     deleteGRN: b.mutation({ query: id => ({ url: `/goods-received/${id}`, method: 'DELETE' }), invalidatesTags: ['GoodsReceived'] }),
 
     getSupplierReturns: b.query({ query: params => ({ url: '/supplier-returns', params }), providesTags: ['SupplierReturn'] }),

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -39,9 +39,12 @@ const makeSchema = (isAdvance) => yup.object({
 
 export default function ReceiptCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [createReceipt, { isLoading }] = useCreateReceiptMutation();
   const { data: customers } = useGetCustomersQuery({ limit: 500 });
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const prefilledCustomerId = searchParams.get('customer_id');
+  const backUrl = prefilledCustomerId ? `/customers/${prefilledCustomerId}` : '/receipts';
+  const [selectedCustomer, setSelectedCustomer] = useState(prefilledCustomerId || null);
   const [isAdvance, setIsAdvance] = useState(false);
 
   const { data: invoices } = useGetInvoicesQuery(
@@ -51,7 +54,7 @@ export default function ReceiptCreate() {
 
   const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
     resolver: yupResolver(makeSchema(isAdvance)),
-    defaultValues: { receipt_date: today(), payment_method: 'CASH', allocations: [] },
+    defaultValues: { receipt_date: today(), payment_method: 'CASH', allocations: [], customer_id: prefilledCustomerId ? Number(prefilledCustomerId) : undefined },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'allocations' });
   const paymentMethod  = watch('payment_method');
@@ -81,7 +84,7 @@ export default function ReceiptCreate() {
     try {
       await createReceipt({ ...data, company_id: 1, branch_id: 1 }).unwrap();
       toast.success(isAdvance ? 'Advance payment recorded' : 'Receipt created');
-      navigate('/receipts');
+      navigate(backUrl);
     } catch (e) { toast.error(e.data?.message || 'Failed'); }
   };
 
@@ -92,7 +95,7 @@ export default function ReceiptCreate() {
           <h1 className="text-2xl font-bold text-gray-900">New Receipt</h1>
           <p className="text-sm text-gray-500 mt-0.5">Record a customer payment</p>
         </div>
-        <button onClick={() => navigate('/receipts')} className="btn-secondary">Cancel</button>
+        <button onClick={() => navigate(backUrl)} className="btn-secondary">Cancel</button>
       </div>
 
       {/* Advance toggle */}
@@ -121,18 +124,18 @@ export default function ReceiptCreate() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="card p-6 space-y-4">
           <h2 className="font-semibold text-gray-700 border-b pb-2">Payment Details</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField label="Customer" required options={customerOpts} error={errors.customer_id?.message}
               {...register('customer_id', { onChange: e => setSelectedCustomer(e.target.value) })} />
             <SelectField label="Payment Method" required options={PAYMENT_METHODS} error={errors.payment_method?.message} {...register('payment_method')} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField label="Receipt Date" required type="date" error={errors.receipt_date?.message} {...register('receipt_date')} />
             <TextField label="Amount (LKR)" required type="number" step="0.01" error={errors.amount?.message} {...register('amount')} />
           </div>
           <TextField label="Reference" placeholder="Bank ref / voucher number" error={errors.reference?.message} {...register('reference')} />
           {paymentMethod === 'CHEQUE' && (
-            <div className="grid grid-cols-3 gap-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
               <TextField label="Cheque Number" required error={errors.cheque_number?.message} {...register('cheque_number')} />
               <TextField label="Cheque Date" required type="date" error={errors.cheque_date?.message} {...register('cheque_date')} />
               <TextField label="Bank Name" error={errors.bank_name?.message} {...register('bank_name')} />
@@ -179,7 +182,7 @@ export default function ReceiptCreate() {
         )}
 
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate('/receipts')} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={() => navigate(backUrl)} className="btn-secondary">Cancel</button>
           <button type="submit" disabled={isLoading} className="btn-primary">
             {isLoading ? 'Saving...' : isAdvance ? 'Record Advance Payment' : 'Create Receipt'}
           </button>

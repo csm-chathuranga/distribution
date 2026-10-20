@@ -205,7 +205,7 @@ export default function InvoiceDetail() {
   const showStickyBar        = showPostBtn || showPayBtn || showMarkDeliveredBtn || showDeliverBtn;
 
   return (
-    <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${showStickyBar ? 'pb-28 md:pb-6' : 'pb-6'}`}>
+    <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${showStickyBar ? 'md:pb-6' : 'pb-6'}`} style={showStickyBar ? { paddingBottom: 260 } : {}}>
 
       {/* Top bar */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
@@ -268,6 +268,9 @@ export default function InvoiceDetail() {
             <h1 className="text-lg font-bold text-gray-900 leading-snug">{invoice.Customer?.name || '—'}</h1>
             {invoice.Customer?.customer_type && (
               <p className="text-xs text-gray-500 mt-0.5">{invoice.Customer.customer_type}</p>
+            )}
+            {invoice.Customer?.Route?.name && (
+              <p className="text-xs text-violet-600 font-medium mt-0.5">{invoice.Customer.Route.name}</p>
             )}
           </div>
           <div className="text-right flex-shrink-0">
@@ -480,6 +483,44 @@ export default function InvoiceDetail() {
         </div>
       )}
 
+      {/* Returns / Collections — visible to driver so they know what to collect back */}
+      {(invoice.Order?.Returns?.length > 0) && (() => {
+        const REASON_LABEL = { EXPIRED: 'Expired', DAMAGED: 'Damaged', WRONG_ITEM: 'Wrong Item', OTHER: 'Other' };
+        return (
+          <div className="card overflow-hidden">
+            <div className="px-4 py-3 border-b border-orange-100 bg-orange-50">
+              <h2 className="text-sm font-semibold text-orange-700 uppercase tracking-wide">
+                Returns / Collections ({invoice.Order.Returns.length})
+              </h2>
+              <p className="text-xs text-orange-500 mt-0.5">Items to collect back from customer</p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {invoice.Order.Returns.map((ret, i) => (
+                <div key={ret.id || i} className="px-4 py-3 flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm">{ret.Product?.name || `Product #${ret.product_id}`}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${ret.action === 'DEDUCT' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {ret.action === 'DEDUCT' ? 'Deduct' : 'Replace'}
+                      </span>
+                      <span className="text-xs text-gray-400">{REASON_LABEL[ret.reason] || ret.reason}</span>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-gray-900">× {parseInt(ret.quantity)}</p>
+                    {ret.action === 'DEDUCT' && (
+                      <p className="text-xs text-red-600 font-mono">
+                        −{fmtCurrency(parseFloat(ret.quantity) * parseFloat(ret.unit_price || 0))}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {mapOpen && invoice.latitude && invoice.longitude && (
         <MapModal lat={invoice.latitude} lng={invoice.longitude}
           label={invoice.Customer?.name || 'Customer Location'} onClose={() => setMapOpen(false)} />
@@ -487,7 +528,7 @@ export default function InvoiceDetail() {
 
       {/* Mobile sticky bar */}
       {showStickyBar && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 pb-safe space-y-2">
+        <div className="md:hidden fixed left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 space-y-2" style={{ bottom: 88 }}>
           {showPostBtn && (
             <button onClick={() => setConfirmPost(true)}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors">

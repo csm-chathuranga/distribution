@@ -24,15 +24,30 @@ export default function InvoicePrint({ invoice, company }) {
         <tbody>
           <tr>
             <td style={{ verticalAlign: 'top', width: '55%' }}>
-              <div style={{ fontSize: '30px', fontWeight: '800', color: '#1e3a5f', letterSpacing: '-0.5px' }}>
-                {company?.name || 'Lanka Distribution'}
+              {/* Principal brand */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                <img src="/max_beve.jpeg" alt="Max Beverages" style={{ height: '56px', objectFit: 'contain' }} />
+                <div style={{ fontSize: '26px', fontWeight: '900', color: '#111', letterSpacing: '-0.5px', textTransform: 'uppercase' }}>
+                  Max Beverages (Pvt) Ltd
+                </div>
               </div>
-              {company?.address && <div style={{ marginTop: '4px', color: '#333', lineHeight: '1.4', fontWeight: '800' }}>{company.address}</div>}
-              {company?.phone  && <div style={{ color: '#333', fontWeight: '800' }}>Tel: {company.phone}</div>}
-              {company?.email  && <div style={{ color: '#333', fontWeight: '800' }}>{company.email}</div>}
-              <div style={{ marginTop: '6px', fontSize: '18px', color: '#444', fontWeight: '800' }}>
-                {company?.vat_number && <span>VAT Reg: <strong>{company.vat_number}</strong>&nbsp;&nbsp;</span>}
-                {company?.tin_number && <span>TIN: <strong>{company.tin_number}</strong></span>}
+              <div style={{ color: '#444', fontSize: '13px', marginTop: '2px', lineHeight: '1.5', fontWeight: '600' }}>
+                640/4, Metro Park, Thunandahena, Korathota, Kaduwela.
+              </div>
+              <div style={{ color: '#444', fontSize: '13px', fontWeight: '600' }}>
+                Tel: +94 112 054 943 &nbsp;|&nbsp; +94 770 139 200
+              </div>
+              {/* Distributor */}
+              <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #ddd' }}>
+                <div style={{ fontSize: '15px', fontWeight: '800', color: '#111' }}>
+                  {company?.name || 'Rathnayaka Distribution (Pvt) Ltd'}
+                </div>
+                {company?.phone && <div style={{ fontSize: '13px', color: '#444', fontWeight: '600' }}>Tel: {company.phone}</div>}
+                {company?.address && <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.4' }}>{company.address}</div>}
+                <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                  {company?.vat_number && <span>VAT: <strong>{company.vat_number}</strong>&nbsp;&nbsp;</span>}
+                  {company?.tin_number && <span>TIN: <strong>{company.tin_number}</strong></span>}
+                </div>
               </div>
             </td>
             <td style={{ verticalAlign: 'top', textAlign: 'right' }}>

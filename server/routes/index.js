@@ -37,4 +37,13 @@ router.use('/customer-returns', auth, require('./customerReturns'));
 router.use('/commission',       auth, require('./commission'));
 router.use('/free-allocations', auth, require('./freeAllocations'));
 
+// Public — no auth required
+router.get('/public/company', async (req, res, next) => {
+  try {
+    const { Company } = require('../models');
+    const company = await Company.findOne({ attributes: ['name', 'logo_url'] });
+    res.json(company || { name: 'Lanka Dist.' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
-import FloatingNotification from '../components/FloatingNotification';
 import LocationTracker from '../components/LocationTracker';
 import { selectCurrentUser } from '../store/authSlice';
 import { useFirestoreSync } from '../hooks/useFirestoreSync';
@@ -24,7 +23,6 @@ export default function MainLayout() {
         <main className="flex-1 overflow-y-auto p-4 pb-24">
           <Outlet />
         </main>
-        <FloatingNotification />
         <BottomNav />
       </div>
     );

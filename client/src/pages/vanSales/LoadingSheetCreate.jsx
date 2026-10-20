@@ -65,9 +65,9 @@ export default function LoadingSheetCreate() {
     replace(buildLinesFromInvoices(next));
   };
   const toggleAllInv = () => {
-    const next = selectedInvIds.size === availableInvoices.length
+    const next = selectedInvIds.size === filteredInvoices.length
       ? new Set()
-      : new Set(availableInvoices.map(i => i.id));
+      : new Set(filteredInvoices.map(i => i.id));
     setSelectedInvIds(next);
     replace(buildLinesFromInvoices(next));
   };
@@ -92,6 +92,10 @@ export default function LoadingSheetCreate() {
   const { fields, append, remove, replace } = useFieldArray({ control, name: 'lines' });
   const lines       = watch('lines');
   const warehouseId = watch('warehouse_id');
+  const selectedRouteId = watch('route_id');
+  const filteredInvoices = selectedRouteId
+    ? availableInvoices.filter(inv => inv.Customer?.Route?.id === Number(selectedRouteId))
+    : availableInvoices;
 
   const { data: stockData } = useGetStockOnHandQuery(
     { warehouse_id: warehouseId, limit: 1000 },
@@ -277,25 +281,25 @@ export default function LoadingSheetCreate() {
                 <h3 className="text-sm font-semibold text-gray-800">Link Invoices</h3>
                 <p className="text-xs text-gray-400 mt-0.5">Attach posted invoices to this loading sheet</p>
               </div>
-              {availableInvoices.length > 0 && (
+              {filteredInvoices.length > 0 && (
                 <button type="button" onClick={toggleAllInv}
                   className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-800">
                   <CheckSquare size={13} />
-                  {selectedInvIds.size === availableInvoices.length ? 'Deselect all' : 'Select all'}
+                  {selectedInvIds.size === filteredInvoices.length ? 'Deselect all' : 'Select all'}
                 </button>
               )}
             </div>
 
             {loadingInvoices ? (
               <div className="p-6 text-center text-sm text-gray-400">Loading invoices…</div>
-            ) : availableInvoices.length === 0 ? (
+            ) : filteredInvoices.length === 0 ? (
               <div className="p-8 text-center">
                 <FileText size={28} className="mx-auto text-gray-200 mb-2" />
-                <p className="text-sm text-gray-400">No unassigned posted invoices available</p>
+                <p className="text-sm text-gray-400">{selectedRouteId ? 'No invoices for this route' : 'No unassigned posted invoices available'}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
-                {availableInvoices.map(inv => (
+                {filteredInvoices.map(inv => (
                   <label key={inv.id}
                     className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${selectedInvIds.has(inv.id) ? 'bg-primary-50/40' : ''}`}>
                     <input type="checkbox" checked={selectedInvIds.has(inv.id)} onChange={() => toggleInv(inv.id)}
@@ -308,6 +312,9 @@ export default function LoadingSheetCreate() {
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
                         <span>{inv.Customer?.name || '—'}</span>
                         <span>{fmtDate(inv.invoice_date)}</span>
+                        {inv.Customer?.Route?.name && (
+                          <span className="text-violet-600 font-medium">{inv.Customer.Route.name}</span>
+                        )}
                       </div>
                     </div>
                     <span className="font-bold text-gray-800 font-mono text-sm flex-shrink-0">{fmtCurrency(inv.total_amount)}</span>
@@ -319,7 +326,7 @@ export default function LoadingSheetCreate() {
             {selectedInvIds.size > 0 && (
               <div className="px-4 py-2.5 bg-primary-50 border-t border-primary-100 text-xs font-semibold text-primary-700">
                 {selectedInvIds.size} invoice{selectedInvIds.size !== 1 ? 's' : ''} selected · {fmtCurrency(
-                  availableInvoices.filter(i => selectedInvIds.has(i.id)).reduce((s, i) => s + parseFloat(i.total_amount), 0)
+                  availableInvoices.filter(i => selectedInvIds.has(i.id)).reduce((s, i) => s + parseFloat(i.total_amount), 0)  // keep full list for total accuracy
                 )} total
               </div>
             )}

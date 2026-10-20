@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
     product_id: { type: DataTypes.INTEGER, allowNull: false },
     po_line_id: DataTypes.INTEGER,
     quantity: { type: DataTypes.DECIMAL(12, 4), allowNull: false },
+    free_issue_qty: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0 },
     unit_cost: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     discount_rate: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
     vat_rate: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },

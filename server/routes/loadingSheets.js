@@ -12,7 +12,7 @@ const include = [
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
   { model: User, as: 'Driver', attributes: ['id', 'name'] },
   { model: Vehicle, attributes: ['id', 'registration_number', 'make', 'model'] },
-  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes', 'order_id'],
+  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'paid_amount', 'balance_due', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes', 'order_id'],
     include: [
       { model: Customer, attributes: ['id', 'name', 'address'] },
       { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'free_quantity', 'unit_price', 'line_total'],
@@ -67,7 +67,7 @@ router.get('/available-invoices', authorize('sales.approve'), async (req, res, n
     const invoices = await Invoice.findAll({
       where,
       include: [
-        { model: Customer, attributes: ['id', 'name', 'code'] },
+        { model: Customer, attributes: ['id', 'name', 'code'], include: [{ model: Route, attributes: ['id', 'name'] }] },
         { model: InvoiceLine, as: 'Lines',
           include: [{ model: Product, attributes: ['id', 'name', 'sku', 'cost_price'] }] },
       ],
@@ -162,7 +162,7 @@ router.get('/:id/available-invoices', authorize('sales.approve'), async (req, re
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     const invoices = await Invoice.findAll({
       where: { status: 'POSTED', loading_sheet_id: null, branch_id: sheet.branch_id },
-      include: [{ model: Customer, attributes: ['id', 'name', 'code'] }],
+      include: [{ model: Customer, attributes: ['id', 'name', 'code'], include: [{ model: Route, attributes: ['id', 'name'] }] }],
       order: [['invoice_date', 'DESC'], ['id', 'DESC']],
       limit: 200,
     });

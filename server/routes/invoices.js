@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
 const c = require('../controllers/invoiceController');
-const { Invoice } = require('../models');
+const { Invoice, User, Role } = require('../models');
 const notify = require('../notify');
 
 router.get('/', authorize.any('sales.view_own', 'sales.view_all'), c.list);
@@ -29,7 +29,13 @@ router.put('/:id/deliver', authorize.any('sales.create', 'sales.view_own'), asyn
     notify({ roleName: 'manager',     type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: deliveryLink });
     notify({ roleName: 'super_admin', type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: deliveryBody, link: deliveryLink });
     const repBody = `${invoice.invoice_number} has been delivered to the customer`;
-    const notifiedIds = new Set([req.user.id]);
+    // Find users already covered by role-based notifications to avoid duplicates
+    const roleNotifiedUsers = await User.findAll({
+      include: [{ model: Role, where: { name: ['admin', 'manager', 'super_admin'] } }],
+      attributes: ['id'], raw: true,
+    });
+    const roleNotifiedIds = new Set(roleNotifiedUsers.map(u => u.id));
+    const notifiedIds = new Set([req.user.id, ...roleNotifiedIds]);
     if (invoice.sales_rep_id && !notifiedIds.has(invoice.sales_rep_id)) {
       notify({ userId: invoice.sales_rep_id, type: 'INVOICE_DELIVERED', title: 'Invoice Delivered', body: repBody, link: deliveryLink });
       notifiedIds.add(invoice.sales_rep_id);

@@ -52,6 +52,7 @@ export default function GRNList() {
     },
     { key: 'supplier', header: 'Supplier', cell: r => r.Supplier?.name },
     { key: 'grn_date', header: 'Date', cell: r => fmtDate(r.grn_date) },
+    { key: 'free_rep', header: 'Free Issue Rep', cell: r => r.FreeRep ? <span className="text-amber-700 font-medium">{r.FreeRep.name}</span> : <span className="text-gray-300">—</span> },
     { key: 'total_amount', header: 'Total', cell: r => fmtCurrency(r.total_amount), className: 'text-right font-medium' },
     { key: 'status', header: 'Status', cell: r => <StatusBadge status={r.status} /> },
     {

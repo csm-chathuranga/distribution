@@ -151,6 +151,7 @@ GoodsReceived.belongsTo(Supplier, { foreignKey: 'supplier_id' });
 GoodsReceived.belongsTo(PurchaseOrder, { foreignKey: 'po_id' });
 GoodsReceived.belongsTo(Warehouse, { foreignKey: 'warehouse_id' });
 GoodsReceived.hasMany(GoodsReceivedLine, { as: 'Lines', foreignKey: 'grn_id' });
+GoodsReceived.belongsTo(User, { as: 'FreeRep', foreignKey: 'free_sales_rep_id' });
 GoodsReceivedLine.belongsTo(GoodsReceived, { foreignKey: 'grn_id' });
 GoodsReceivedLine.belongsTo(Product, { foreignKey: 'product_id' });
 

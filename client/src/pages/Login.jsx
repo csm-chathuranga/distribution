@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
   Eye, EyeOff, Download, CheckCircle2,
-  Truck, WifiOff, Bell, ArrowRight, Loader2, X,
+  Truck, ArrowRight, Loader2, X,
   Share, MoreVertical, PlusSquare,
 } from 'lucide-react';
 import { useLoginMutation } from '../api/settingsApi';
@@ -19,11 +19,6 @@ const schema = yup.object({
   password: yup.string().min(3, 'Min 3 characters').required('Password required'),
 });
 
-const FEATURES = [
-  { icon: WifiOff, label: 'Works Offline' },
-  { icon: Bell,    label: 'Push Alerts'  },
-  { icon: Truck,   label: 'Van Sales'    },
-];
 
 // Detect iOS so we show the right install steps
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -89,7 +84,15 @@ export default function Login() {
   const navigate   = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
   const [showPw, setShowPw]    = useState(false);
+  const [companyName, setCompanyName] = useState('Lanka Dist.');
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(schema) });
+
+  useEffect(() => {
+    fetch('/api/public/company')
+      .then(r => r.json())
+      .then(d => { if (d?.name) setCompanyName(d.name); })
+      .catch(() => {});
+  }, []);
   const { isInstalled, showInstructions, dismissInstructions, install } = useInstallPWA();
 
   const onSubmit = async (data) => {
@@ -113,18 +116,9 @@ export default function Login() {
             style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
             <Truck size={38} className="text-white" strokeWidth={1.8} />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Lanka Dist.</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight text-center">{companyName}</h1>
           <p className="text-slate-400 text-sm mt-1 mb-6">Distribution Management System</p>
 
-          <div className="flex gap-2 flex-wrap justify-center">
-            {FEATURES.map(({ icon: Icon, label }) => (
-              <span key={label}
-                className="flex items-center gap-1.5 bg-white/10 border border-white/10 text-slate-300 text-xs font-medium px-3 py-1.5 rounded-full">
-                <Icon size={11} className="text-green-400" />
-                {label}
-              </span>
-            ))}
-          </div>
         </div>
 
         {/* ── Form ── */}

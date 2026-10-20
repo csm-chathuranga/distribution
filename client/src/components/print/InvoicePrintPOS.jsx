@@ -53,18 +53,24 @@ export default function InvoicePrintPOS({ invoice, company }) {
   return (
     <div style={root}>
 
-      {/* Company header */}
-      <div style={{ ...center, ...bold, fontSize: '21px' }}>
-        {company?.name || 'Lanka Distribution'}
+      {/* Principal brand */}
+      <div style={{ ...center, marginBottom: '4px' }}>
+        <img src="/max_beve.jpeg" alt="Max Beverages" style={{ height: '60px', objectFit: 'contain' }} />
       </div>
-      {company?.address && (
-        <div style={{ ...center, fontSize: '17px', marginTop: '2px' }}>{company.address}</div>
-      )}
-      {company?.phone && (
-        <div style={{ ...center, fontSize: '17px' }}>Tel: {company.phone}</div>
-      )}
+      <div style={{ ...center, ...bold, fontSize: '20px' }}>MAX BEVERAGES (PVT) LTD</div>
+      <div style={{ ...center, fontSize: '15px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
+      <div style={{ ...center, fontSize: '15px' }}>Korathota, Kaduwela.</div>
+      <div style={{ ...center, fontSize: '15px' }}>Tel: +94 112 054 943 | +94 770 139 200</div>
+
+      <Divider dashed />
+
+      {/* Distributor */}
+      <div style={{ ...center, ...bold, fontSize: '18px' }}>
+        {company?.name || 'Rathnayaka Distribution (Pvt) Ltd'}
+      </div>
+      {company?.phone && <div style={{ ...center, fontSize: '15px' }}>Tel: {company.phone}</div>}
       {(company?.vat_number || company?.tin_number) && (
-        <div style={{ ...center, fontSize: '17px' }}>
+        <div style={{ ...center, fontSize: '14px' }}>
           {company?.vat_number && `VAT: ${company.vat_number}`}
           {company?.vat_number && company?.tin_number && '  '}
           {company?.tin_number && `TIN: ${company.tin_number}`}
@@ -121,9 +127,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
             <div style={{ fontSize: '18px', ...bold }}>
               {line.Product?.name || `Product #${line.product_id}`}
             </div>
-            {line.Product?.sku && (
-              <div style={{ fontSize: '16px', color: '#333' }}>{line.Product.sku}</div>
-            )}
+
             {(parseFloat(line.discount_rate || 0) > 0 || freeQty > 0) && (
               <div style={{ fontSize: '17px', color: '#c00' }}>
                 {parseFloat(line.discount_rate || 0) > 0 && `Disc ${line.discount_rate}%`}
@@ -131,7 +135,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ width: '65px', textAlign: 'right' }}>{line.quantity}</span>
+              <span style={{ width: '65px', textAlign: 'right' }}>{parseInt(line.quantity)}</span>
               <span style={{ width: '85px', textAlign: 'right' }}>{fmtAmt(line.unit_price)}</span>
               <span style={{ width: '90px', textAlign: 'right', ...bold }}>{fmtAmt(line.line_total)}</span>
             </div>
@@ -223,13 +227,14 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {/* Signature */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '17px' }}>
         <div style={{ textAlign: 'center', width: '45%' }}>
-          {invoice.SalesRep?.name && (
-            <div style={{ fontWeight: '800', marginBottom: '2px' }}>{invoice.SalesRep.name}</div>
-          )}
-          <div style={{ borderTop: '1px solid #000', paddingTop: '3px', marginTop: '20px' }}>Prepared By</div>
+          <div style={{ minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: '2px' }}>
+            {invoice.SalesRep?.name && <span style={{ fontWeight: '800' }}>{invoice.SalesRep.name}</span>}
+          </div>
+          <div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Prepared By</div>
         </div>
         <div style={{ textAlign: 'center', width: '45%' }}>
-          <div style={{ borderTop: '1px solid #000', paddingTop: '3px', marginTop: '20px' }}>Received By</div>
+          <div style={{ minHeight: '28px', marginBottom: '2px' }} />
+          <div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Received By</div>
         </div>
       </div>
 

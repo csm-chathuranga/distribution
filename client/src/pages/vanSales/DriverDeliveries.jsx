@@ -11,68 +11,86 @@ const STATUS_BADGE = {
   CANCELLED: 'bg-gray-100 text-gray-500',
 };
 
-function CollectModal({ invoice, onConfirm, onClose }) {
-  const [amount, setAmount] = useState(String(parseFloat(invoice.total_amount) || ''));
-  const [method, setMethod] = useState('CASH');
-  const [chequeNo, setChequeNo] = useState('');
+const METHODS = ['CASH', 'CHEQUE', 'BANK_TRANSFER'];
+const methodLabel = m => m === 'BANK_TRANSFER' ? 'Transfer' : m.charAt(0) + m.slice(1).toLowerCase();
 
-  const valid = parseFloat(amount) > 0 && (method !== 'CHEQUE' || chequeNo.trim());
+function PaymentRow({ row, onChange, onRemove, canRemove, total }) {
+  return (
+    <div className="border border-gray-100 rounded-xl p-3 space-y-2 bg-gray-50">
+      <div className="flex gap-1.5">
+        {METHODS.map(m => (
+          <button key={m} type="button" onClick={() => onChange({ ...row, method: m, chequeNo: '' })}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${row.method === m ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+            {methodLabel(m)}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2 items-center">
+        <input
+          type="number" inputMode="decimal"
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+          placeholder="Amount (LKR)"
+          value={row.amount}
+          onChange={e => onChange({ ...row, amount: e.target.value })}
+        />
+        {canRemove && (
+          <button type="button" onClick={onRemove}
+            className="p-2 rounded-lg text-red-400 hover:bg-red-50">
+            <XCircle size={16} />
+          </button>
+        )}
+      </div>
+      {row.method === 'CHEQUE' && (
+        <input
+          type="text"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+          placeholder="Cheque number"
+          value={row.chequeNo}
+          onChange={e => onChange({ ...row, chequeNo: e.target.value })}
+        />
+      )}
+    </div>
+  );
+}
+
+function CollectModal({ invoice, onConfirm, onClose }) {
+  const invoiceTotal = parseFloat(invoice.total_amount) || 0;
+  const [rows, setRows] = useState([{ method: 'CASH', amount: String(invoiceTotal), chequeNo: '' }]);
+
+  const totalEntered = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const remaining = invoiceTotal - totalEntered;
+  const valid = rows.every(r => parseFloat(r.amount) > 0 && (r.method !== 'CHEQUE' || r.chequeNo.trim())) && totalEntered > 0;
+
+  const updateRow = (i, val) => setRows(rs => rs.map((r, idx) => idx === i ? val : r));
+  const addRow = () => setRows(rs => [...rs, { method: 'CASH', amount: remaining > 0 ? String(remaining.toFixed(2)) : '', chequeNo: '' }]);
+  const removeRow = i => setRows(rs => rs.filter((_, idx) => idx !== i));
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/50"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/50" onClick={onClose}>
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-5" onClick={e => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-gray-800 mb-1">Collect Payment</h3>
-        <p className="text-sm text-gray-500 mb-4">{invoice.invoice_number} — {invoice.Customer?.name}</p>
+        <h3 className="text-base font-bold text-gray-800 mb-0.5">Collect Payment</h3>
+        <p className="text-sm text-gray-500 mb-3">{invoice.invoice_number} — {invoice.Customer?.name}</p>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
-        <div className="flex gap-2 mb-4">
-          {['CASH', 'CHEQUE', 'BANK_TRANSFER'].map(m => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMethod(m)}
-              className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${method === m ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'}`}
-            >
-              {m === 'BANK_TRANSFER' ? 'Transfer' : m.charAt(0) + m.slice(1).toLowerCase()}
-            </button>
+        <div className="space-y-2 mb-3">
+          {rows.map((row, i) => (
+            <PaymentRow key={i} row={row} onChange={val => updateRow(i, val)} onRemove={() => removeRow(i)} canRemove={rows.length > 1} />
           ))}
         </div>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1">Amount (LKR) *</label>
-        <input
-          type="number"
-          inputMode="decimal"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 mb-3"
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          autoFocus
-        />
-
-        {method === 'CHEQUE' && (
-          <>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cheque Number *</label>
-            <input
-              type="text"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 mb-3"
-              value={chequeNo}
-              onChange={e => setChequeNo(e.target.value)}
-              placeholder="e.g. 001234"
-            />
-          </>
-        )}
-
-        <div className="flex gap-3 mt-2">
-          <button className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600" onClick={onClose}>
-            Back
+        <div className="flex items-center justify-between mb-3 text-xs">
+          <button type="button" onClick={addRow}
+            className="text-primary-600 font-semibold hover:underline">
+            + Add split
           </button>
-          <button
-            disabled={!valid}
-            className="flex-1 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-bold disabled:opacity-40"
-            onClick={() => onConfirm({ amount: parseFloat(amount), method, chequeNo: chequeNo.trim() || null })}
-          >
+          <span className={`font-semibold ${Math.abs(remaining) < 0.01 ? 'text-green-600' : remaining > 0 ? 'text-amber-600' : 'text-red-500'}`}>
+            {Math.abs(remaining) < 0.01 ? 'Fully allocated' : remaining > 0 ? `LKR ${remaining.toFixed(2)} remaining` : `LKR ${Math.abs(remaining).toFixed(2)} over`}
+          </span>
+        </div>
+
+        <div className="flex gap-3">
+          <button className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600" onClick={onClose}>Back</button>
+          <button disabled={!valid} className="flex-1 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-bold disabled:opacity-40"
+            onClick={() => onConfirm(rows.map(r => ({ amount: parseFloat(r.amount), method: r.method, chequeNo: r.chequeNo.trim() || null })))}>
             Record
           </button>
         </div>
@@ -144,11 +162,12 @@ export default function DriverDeliveries() {
   const invoices = sheet?.Invoices ?? [];
 
   async function handleDeliver(inv) {
-    if (delivering || cancelling) return;
+    if (busyId) return;
     setBusyId(inv.id);
     try {
       await deliverInvoice(inv.id).unwrap();
       setLocalStatus(s => ({ ...s, [inv.id]: 'DELIVERED' }));
+      setExpandedId(null);
     } catch (e) {
       alert(e?.data?.message ?? 'Failed to mark as delivered');
     } finally {
@@ -171,20 +190,23 @@ export default function DriverDeliveries() {
     }
   }
 
-  async function handleCollect({ amount, method, chequeNo }) {
+  async function handleCollect(payments) {
     if (!collectTarget) return;
     const inv = collectTarget;
     setBusyId(inv.id);
+    const today = new Date().toISOString().slice(0, 10);
     try {
-      await createReceipt({
-        customer_id:    inv.customer_id,
-        receipt_date:   new Date().toISOString().slice(0, 10),
-        payment_method: method,
-        amount,
-        notes:          `Collected on delivery — ${inv.invoice_number}`,
-        allocations:    [{ invoice_id: inv.id, amount }],
-        ...(method === 'CHEQUE' && chequeNo ? { cheque: { cheque_number: chequeNo, bank_name: '', cheque_date: new Date().toISOString().slice(0, 10), amount } } : {}),
-      }).unwrap();
+      for (const { amount, method, chequeNo } of payments) {
+        await createReceipt({
+          customer_id:    inv.customer_id,
+          receipt_date:   today,
+          payment_method: method,
+          amount,
+          notes:          `Collected on delivery — ${inv.invoice_number}`,
+          allocations:    [{ invoice_id: inv.id, amount }],
+          ...(method === 'CHEQUE' && chequeNo ? { cheque: { cheque_number: chequeNo, bank_name: '', cheque_date: today, amount } } : {}),
+        }).unwrap();
+      }
       setCollectTarget(null);
     } catch (e) {
       alert(e?.data?.message ?? 'Failed to record payment');
@@ -290,9 +312,10 @@ export default function DriverDeliveries() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full active:opacity-70"
+                      className="inline-flex items-center gap-1.5 mt-1 text-sm font-semibold text-white px-3 py-1.5 rounded-xl active:opacity-70"
+                      style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}
                     >
-                      <Navigation size={10} /> Navigate
+                      <Navigation size={13} /> Directions
                     </a>
                   )}
                 </div>
@@ -359,7 +382,7 @@ export default function DriverDeliveries() {
               )}
 
               {/* Action buttons */}
-              {actionable && (
+              {actionable && !done && !cancelled && (
                 <div className="px-4 pb-4 pt-1 space-y-2">
                   <div className="flex gap-2">
                     <button
@@ -390,21 +413,21 @@ export default function DriverDeliveries() {
               )}
 
               {done && (
-                <div className="px-4 pb-3 pt-1 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                <div className="px-4 pb-3 pt-1 flex flex-col gap-2">
+                  <span className="flex items-center justify-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-100 px-2.5 py-1.5 rounded-full w-full">
                     <CheckCircle size={11} />
                     Delivered
                     {inv.delivered_at && (
-                      <span className="font-normal text-green-600">
+                      <span className="font-normal text-amber-600">
                         · {new Date(inv.delivered_at).toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     )}
                   </span>
                   <button
                     onClick={() => setCollectTarget(inv)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold"
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold"
                   >
-                    <Banknote size={13} /> Collect Payment
+                    <Banknote size={14} /> Collect Payment
                   </button>
                 </div>
               )}

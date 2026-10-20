@@ -311,8 +311,8 @@ export default function CustomerList() {
                   </div>
                   </div>
                   {canCreate && (
-                    <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg flex-shrink-0">
-                      <Pencil size={15} />
+                    <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors flex-shrink-0">
+                      <Pencil size={14} /> Edit
                     </button>
                   )}
                 </div>
@@ -411,8 +411,8 @@ export default function CustomerList() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className="mt-2.5 flex items-center gap-2 rounded-xl font-semibold transition-colors active:opacity-70"
-                        style={{ padding: '8px 12px', background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)', color: '#fff', fontSize: 13, display: 'flex', width: 'fit-content' }}
+                        className="mt-2.5 flex items-center gap-2 rounded-xl font-semibold transition-colors active:opacity-70 ml-auto"
+                        style={{ padding: '9px 16px', background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)', color: '#fff', fontSize: 14, display: 'flex', width: 'fit-content' }}
                       >
                         <Navigation size={14} strokeWidth={2.5} />
                         Get Directions
@@ -420,7 +420,7 @@ export default function CustomerList() {
                     )}
 
                     <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
+<div className="flex items-center justify-between gap-2">
                         <span className="text-xs text-gray-500">
                           Limit: <span className="font-semibold text-gray-700">{fmtCurrency(creditLimit)}</span>
                           {c.credit_days > 0 && <span className="text-gray-400"> · {c.credit_days}d</span>}

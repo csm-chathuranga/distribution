@@ -9,7 +9,9 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
 import LoadingSheetPrint from '../../components/print/LoadingSheetPrint';
-import { printComponent } from '../../utils/print';
+import InvoicePrint from '../../components/print/InvoicePrint';
+import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
+import { printComponent, printPOS } from '../../utils/print';
 import { fmtCurrency, fmtDate, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -65,6 +67,8 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
 
   const totalSoldValue = rows.reduce((s, r) => s + r.value, 0);
   const totalUnaccounted = rows.reduce((s, r) => s + r.unaccounted, 0);
+  const totalCollected = invoices.reduce((s, i) => s + parseFloat(i.paid_amount || 0), 0);
+  const totalOutstanding = invoices.reduce((s, i) => s + parseFloat(i.balance_due || 0), 0);
   const cashFloat = parseFloat(cash) || 0;
   const variance = cashFloat - totalSoldValue;
 
@@ -163,6 +167,19 @@ function DayEndCloseModal({ sheet, onClose, onConfirm, isLoading }) {
             </tfoot>
           </table>
         </div>
+
+        {totalCollected > 0 && (
+          <div className="border border-emerald-200 bg-emerald-50 rounded-xl p-3 grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Today's Collections</p>
+              <p className="text-base font-bold text-emerald-700">{fmtCurrency(totalCollected)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Outstanding</p>
+              <p className={`text-base font-bold ${totalOutstanding > 0 ? 'text-red-600' : 'text-gray-400'}`}>{fmtCurrency(totalOutstanding)}</p>
+            </div>
+          </div>
+        )}
 
         <div className="border-t pt-4">
           <div className="flex items-center gap-4">
@@ -322,6 +339,32 @@ export default function LoadingSheetDetail() {
   const sheetExpenses = expenseData?.data || [];
 
   const handlePrint = () => printComponent(<LoadingSheetPrint sheet={sheet} company={company} />);
+  const handlePrintInvoices = () => {
+    const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
+    if (!sheetInvoices.length) return;
+    printComponent(
+      <div>
+        {sheetInvoices.map((inv, idx) => (
+          <div key={inv.id} style={idx < sheetInvoices.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+            <InvoicePrint invoice={inv} company={company} />
+          </div>
+        ))}
+      </div>
+    );
+  };
+  const handlePOSPrintInvoices = () => {
+    const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
+    if (!sheetInvoices.length) return;
+    printPOS(
+      <div>
+        {sheetInvoices.map((inv, idx) => (
+          <div key={inv.id} style={idx < sheetInvoices.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+            <InvoicePrintPOS invoice={inv} company={company} />
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   if (isLoading) return <div className="text-center py-20 text-gray-400">Loading...</div>;
   if (!sheet)    return <div className="text-center py-20 text-gray-500">Sheet not found</div>;
@@ -420,6 +463,14 @@ export default function LoadingSheetDetail() {
           <button onClick={handlePrint}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
             <Printer size={15} /> Print
+          </button>
+          <button onClick={handlePrintInvoices}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+            <Printer size={15} /> Print Invoices
+          </button>
+          <button onClick={handlePOSPrintInvoices}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+            <Printer size={15} /> POS Print
           </button>
         </div>
       </div>
@@ -538,7 +589,7 @@ export default function LoadingSheetDetail() {
               <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-t border-green-100">
                 <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Total Invoiced</span>
                 <span className="font-bold text-green-700 font-mono text-sm">
-                  {fmtCurrency(invoices.filter(i => i.status === 'POSTED').reduce((s, i) => s + parseFloat(i.total_amount), 0))}
+                  {fmtCurrency(invoices.filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status)).reduce((s, i) => s + parseFloat(i.total_amount), 0))}
                 </span>
               </div>
             </div>

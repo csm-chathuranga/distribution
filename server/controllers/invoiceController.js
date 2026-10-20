@@ -1,9 +1,9 @@
-const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, User, SalesOrder, OrderReturn, sequelize } = require('../models');
+const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, User, SalesOrder, OrderReturn, Route, sequelize } = require('../models');
 const notify = require('../notify');
 const { Op } = require('sequelize');
 
 const include = [
-  { model: Customer, attributes: ['id', 'name', 'code', 'customer_type'] },
+  { model: Customer, attributes: ['id', 'name', 'code', 'customer_type'], include: [{ model: Route, attributes: ['id', 'name'] }] },
   { model: InvoiceLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
   { model: LoadingSheet, as: 'VanSheet', attributes: ['id', 'sheet_number'] },
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
@@ -181,6 +181,33 @@ async function performPost(invoice, userId, t) {
     }
   }
 
+  // Return damaged/rejected stock to warehouse for DEDUCT returns (non-van only)
+  // Van returns are reconciled at day-end close via LoadingSheet
+  if (!invoice.loading_sheet_id && invoice.order_id) {
+    const rets = await OrderReturn.findAll({
+      where: { order_id: invoice.order_id, action: 'DEDUCT' },
+      transaction: t,
+    });
+    for (const ret of rets) {
+      const retQty = parseFloat(ret.quantity || 0);
+      if (retQty <= 0) continue;
+      const retStock = await Stock.findOne({
+        where: { warehouse_id: invoice.warehouse_id, product_id: ret.product_id },
+        transaction: t, lock: true,
+      });
+      if (!retStock) continue;
+      const newQty = parseFloat(retStock.quantity) + retQty;
+      await retStock.update({ quantity: newQty }, { transaction: t });
+      await StockMovement.create({
+        warehouse_id: invoice.warehouse_id, product_id: ret.product_id,
+        movement_type: 'IN', source_type: 'INVOICE', source_id: invoice.id,
+        quantity: retQty, balance_after: newQty,
+        unit_cost: parseFloat(ret.unit_price || 0),
+        created_by: userId,
+      }, { transaction: t });
+    }
+  }
+
   await invoice.update(
     { status: 'POSTED', journal_id: journal?.id ?? null, posted_by: userId, posted_at: now },
     { transaction: t }
@@ -258,6 +285,26 @@ exports.create = async (req, res, next) => {
     for (const fi of free_items) {
       await FreeItemAllocation.increment('used_quantity', { by: parseFloat(fi.quantity), where: { id: fi.allocation_id }, transaction: t });
       await FreeItemUsage.create({ allocation_id: fi.allocation_id, customer_id: invoiceData.customer_id, invoice_id: invoice.id, quantity: fi.quantity, notes: 'Via invoice', given_by: req.user.id }, { transaction: t });
+    }
+
+    // Deduct free_quantity on regular lines from the rep's allocation (if one exists)
+    for (const line of fresh.Lines) {
+      const freeQty = parseFloat(line.free_quantity || 0);
+      if (freeQty <= 0) continue;
+      const alloc = await FreeItemAllocation.findOne({
+        where: { sales_rep_id: invoice.sales_rep_id, product_id: line.product_id },
+        transaction: t, lock: true,
+      });
+      if (!alloc) continue;
+      await alloc.increment('used_quantity', { by: freeQty, transaction: t });
+      await FreeItemUsage.create({
+        allocation_id: alloc.id,
+        customer_id:   invoiceData.customer_id,
+        invoice_id:    invoice.id,
+        quantity:      freeQty,
+        notes:         'Free qty on invoice line',
+        given_by:      req.user.id,
+      }, { transaction: t });
     }
 
     await t.commit();

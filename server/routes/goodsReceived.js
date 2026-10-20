@@ -1,11 +1,14 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { GoodsReceived, GoodsReceivedLine, Supplier, Product, Stock, StockMovement, JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
+const { GoodsReceived, GoodsReceivedLine, Supplier, Product, User, Stock, StockMovement, JournalEntry, JournalLine, Account, AccountingPeriod, FreeItemAllocation, sequelize } = require('../models');
 
 router.get('/', authorize('purchase.view'), async (req, res, next) => {
   try {
     const { count, rows } = await GoodsReceived.findAndCountAll({
-      include: [{ model: Supplier, attributes: ['id', 'name'] }],
+      include: [
+        { model: Supplier, attributes: ['id', 'name'] },
+        { model: User, as: 'FreeRep', foreignKey: 'free_sales_rep_id', attributes: ['id', 'name'] },
+      ],
       order: [['grn_date', 'DESC']],
       limit: 20,
     });
@@ -16,7 +19,11 @@ router.get('/', authorize('purchase.view'), async (req, res, next) => {
 router.get('/:id', authorize('purchase.view'), async (req, res, next) => {
   try {
     const grn = await GoodsReceived.findByPk(req.params.id, {
-      include: [{ model: Supplier }, { model: GoodsReceivedLine, as: 'Lines', include: [{ model: Product }] }],
+      include: [
+        { model: Supplier },
+        { model: User, as: 'FreeRep', foreignKey: 'free_sales_rep_id', attributes: ['id', 'name'] },
+        { model: GoodsReceivedLine, as: 'Lines', include: [{ model: Product }] },
+      ],
     });
     if (!grn) return res.status(404).json({ message: 'Not found' });
     res.json(grn);
@@ -36,6 +43,7 @@ router.post('/', authorize('purchase.receive'), async (req, res, next) => {
     const mappedLines = (lines || []).map(l => ({
       product_id: l.product_id,
       quantity: l.quantity_received ?? l.quantity,
+      free_issue_qty: parseFloat(l.free_issue_qty || 0),
       unit_cost: l.unit_cost,
       discount_rate: l.discount_rate ?? 0,
       vat_rate: l.vat_rate ?? 0,
@@ -83,6 +91,25 @@ router.post('/:id/post', authorize('purchase.approve'), async (req, res, next) =
         quantity: line.quantity, balance_after: newQty, unit_cost: line.unit_cost,
         created_by: req.user.id,
       }, { transaction: t });
+    }
+
+    // Topup free allocations if a sales rep is assigned
+    if (grn.free_sales_rep_id) {
+      for (const line of grn.Lines) {
+        const freeQty = parseFloat(line.free_issue_qty || 0);
+        if (freeQty <= 0) continue;
+        const [alloc] = await FreeItemAllocation.findOrCreate({
+          where: { sales_rep_id: grn.free_sales_rep_id, product_id: line.product_id },
+          defaults: {
+            company_id: grn.company_id, branch_id: grn.branch_id,
+            warehouse_id: grn.warehouse_id,
+            allocated_quantity: 0, used_quantity: 0,
+            notes: `GRN ${grn.grn_number}`, created_by: req.user.id,
+          },
+          transaction: t,
+        });
+        await alloc.increment('allocated_quantity', { by: freeQty, transaction: t });
+      }
     }
 
     await grn.update({ status: 'POSTED', posted_by: req.user.id, posted_at: new Date() }, { transaction: t });

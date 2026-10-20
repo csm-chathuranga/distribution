@@ -19,6 +19,7 @@ module.exports = (sequelize) => {
     total_amount: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0.00 },
     journal_id: DataTypes.INTEGER,
     notes: DataTypes.TEXT,
+    free_sales_rep_id: { type: DataTypes.INTEGER, allowNull: true },
     posted_by: DataTypes.INTEGER,
     posted_at: DataTypes.DATE,
     created_by: { type: DataTypes.INTEGER, allowNull: false },

@@ -48,6 +48,7 @@ export default function GRNDetail() {
   const isDraft = grn.status === 'DRAFT';
   const lines   = grn.Lines || [];
   const total   = lines.reduce((s, l) => s + parseFloat(l.line_total || 0), 0);
+  const hasFreeIssue = grn.free_sales_rep_id && lines.some(l => parseFloat(l.free_issue_qty || 0) > 0);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -102,6 +103,12 @@ export default function GRNDetail() {
               <p className="font-medium text-gray-900">{grn.invoice_number}</p>
             </div>
           )}
+          {grn.FreeRep && (
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Free Issue Rep</p>
+              <p className="font-medium text-amber-700">{grn.FreeRep.name}</p>
+            </div>
+          )}
           {grn.notes && (
             <div className="col-span-2 md:col-span-3">
               <p className="text-xs text-gray-500 mb-0.5">Notes</p>
@@ -119,6 +126,7 @@ export default function GRNDetail() {
             <tr className="border-b text-left">
               <th className="py-2 font-medium text-gray-600">Product</th>
               <th className="py-2 font-medium text-gray-600 text-right w-28">Qty</th>
+              {hasFreeIssue && <th className="py-2 font-medium text-amber-600 text-right w-28">Free Issue</th>}
               <th className="py-2 font-medium text-gray-600 text-right w-36">Unit Cost</th>
               <th className="py-2 font-medium text-gray-600 text-right w-36">Amount</th>
             </tr>
@@ -131,6 +139,13 @@ export default function GRNDetail() {
                   <p className="text-xs text-gray-400">{line.Product?.sku}</p>
                 </td>
                 <td className="py-2.5 text-right font-mono">{parseFloat(line.quantity)}</td>
+                {hasFreeIssue && (
+                  <td className="py-2.5 text-right font-mono">
+                    {parseFloat(line.free_issue_qty || 0) > 0
+                      ? <span className="text-amber-600 font-semibold">{parseFloat(line.free_issue_qty)}</span>
+                      : <span className="text-gray-300">—</span>}
+                  </td>
+                )}
                 <td className="py-2.5 text-right font-mono">{fmtCurrency(line.unit_cost)}</td>
                 <td className="py-2.5 text-right font-mono font-semibold">{fmtCurrency(line.line_total)}</td>
               </tr>
@@ -138,7 +153,7 @@ export default function GRNDetail() {
           </tbody>
           <tfoot>
             <tr className="border-t-2">
-              <td colSpan={3} className="py-3 text-right font-semibold">Total:</td>
+              <td colSpan={hasFreeIssue ? 4 : 3} className="py-3 text-right font-semibold">Total:</td>
               <td className="py-3 text-right font-bold text-lg font-mono">{fmtCurrency(total)}</td>
             </tr>
           </tfoot>

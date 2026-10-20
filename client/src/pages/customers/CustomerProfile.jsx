@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Phone, Mail, MapPin, User, Building2,
   FileText, CreditCard, ShoppingCart, TrendingUp, AlertCircle, CheckCircle, Clock,
-  Pencil,
+  Pencil, Wallet,
 } from 'lucide-react';
 import { useGetCustomerProfileQuery } from '../../api/customersApi';
 import { usePermission } from '../../hooks/usePermission';
@@ -114,9 +114,9 @@ export default function CustomerProfile() {
         </div>
         <button
           onClick={() => navigate('/customers', { state: { editId: c.id } })}
-          className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors"
         >
-          <Pencil size={16} />
+          <Pencil size={14} /> Edit
         </button>
       </div>
 
@@ -136,6 +136,13 @@ export default function CustomerProfile() {
             style={{ background: 'linear-gradient(135deg,#7c3aed,#8b5cf6)' }}
           >
             <ShoppingCart size={16} /> New Order
+          </button>
+          <button
+            onClick={() => navigate(`/receipts/new?customer_id=${c.id}`)}
+            className="col-span-2 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity active:opacity-80"
+            style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}
+          >
+            <Wallet size={16} /> Collect Payment
           </button>
         </div>
       )}
