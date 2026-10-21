@@ -8,7 +8,7 @@ import Table from '../../components/ui/Table';
 import Pagination from '../../components/ui/Pagination';
 import ReceiptPrint from '../../components/print/ReceiptPrint';
 import { printComponent } from '../../utils/print';
-import { fmtCurrency, fmtDate } from '../../utils/format';
+import { fmtCurrency, fmtDate, fmtDateTime } from '../../utils/format';
 
 const METHOD_BADGE = {
   CASH: 'bg-green-100 text-green-800',
@@ -53,7 +53,7 @@ export default function ReceiptList() {
   const columns = [
     { key: 'receipt_number', header: 'Receipt #', cell: r => <span className="font-mono font-medium text-primary-700">{r.receipt_number}</span> },
     { key: 'customer', header: 'Customer', cell: r => r.Customer?.name },
-    { key: 'receipt_date', header: 'Date', cell: r => fmtDate(r.receipt_date) },
+    { key: 'receipt_date', header: 'Date', cell: r => fmtDateTime(r.receipt_date) },
     { key: 'payment_method', header: 'Method', cell: r => <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${METHOD_BADGE[r.payment_method] || ''}`}>{r.payment_method?.replace('_', ' ')}</span> },
     { key: 'amount', header: 'Amount', cell: r => <span className="font-semibold text-green-700">{fmtCurrency(r.amount)}</span>, className: 'text-right' },
     { key: 'collected_by', header: 'Collected By', cell: r => r.CreatedBy?.name || '-' },

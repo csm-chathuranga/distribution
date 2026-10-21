@@ -90,24 +90,39 @@ router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) =>
     if (!ret) return res.status(404).json({ message: 'Return note not found' });
     if (ret.status !== 'DRAFT') return res.status(400).json({ message: `Return already ${ret.status.toLowerCase()}` });
 
-    // 1. Restock warehouse
+    // 1. Restock warehouse — damaged/expired go to separate counters, others back to sellable
+    const DAMAGED_REASONS = ['DAMAGED', 'EXPIRED'];
     for (const line of ret.Lines) {
+      const isDamaged = line.reason === 'DAMAGED';
+      const isExpired = line.reason === 'EXPIRED';
       const stock = await Stock.findOne({
         where: { warehouse_id: ret.warehouse_id, product_id: line.product_id },
         transaction: t, lock: true,
       });
       if (stock) {
-        const newQty = parseFloat(stock.quantity) + parseFloat(line.quantity);
-        await stock.update({ quantity: newQty }, { transaction: t });
+        const qty = parseFloat(line.quantity);
+        let updateFields = {};
+        let newQty;
+        if (isDamaged) {
+          newQty = parseFloat(stock.damaged_quantity) + qty;
+          updateFields = { damaged_quantity: newQty };
+        } else if (isExpired) {
+          newQty = parseFloat(stock.expired_quantity) + qty;
+          updateFields = { expired_quantity: newQty };
+        } else {
+          newQty = parseFloat(stock.quantity) + qty;
+          updateFields = { quantity: newQty };
+        }
+        await stock.update(updateFields, { transaction: t });
         await StockMovement.create({
-          warehouse_id: ret.warehouse_id,
-          product_id:   line.product_id,
+          warehouse_id:  ret.warehouse_id,
+          product_id:    line.product_id,
           movement_type: 'IN',
-          source_type:  'CUSTOMER_RETURN',
-          source_id:    ret.id,
-          quantity:     line.quantity,
+          source_type:   'CUSTOMER_RETURN',
+          source_id:     ret.id,
+          quantity:      line.quantity,
           balance_after: newQty,
-          created_by:   req.user.id,
+          created_by:    req.user.id,
         }, { transaction: t });
       }
     }

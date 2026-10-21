@@ -196,7 +196,7 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
 // Convert confirmed order → draft invoice
 router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) => {
   try {
-    const { Invoice, InvoiceLine, SalesOrderLine, User } = require('../models');
+    const { Invoice, InvoiceLine, SalesOrderLine, CustomerReturn, CustomerReturnLine, User } = require('../models');
     const { Op } = require('sequelize');
 
     const order = await SalesOrder.findByPk(req.params.id, {
@@ -226,6 +226,23 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
       ? new Date(today.getTime() + customer.credit_days * 86400000).toISOString().slice(0,10)
       : null;
 
+    // Calculate return deductions (DEDUCT action only)
+    const returns = order.Returns || [];
+    const returnDeduction = returns
+      .filter(r => r.action === 'DEDUCT')
+      .reduce((s, r) => s + parseFloat(r.quantity) * parseFloat(r.unit_price), 0);
+
+    // Generate return number helper
+    async function generateReturnNumber(t) {
+      const dp2 = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+      const like2 = `RN-${dp2}-%`;
+      const last2 = await CustomerReturn.findOne({ where: { return_number: { [Op.like]: like2 } }, order: [['id', 'DESC']], transaction: t });
+      const seq2  = last2 ? parseInt(last2.return_number.split('-').pop()) + 1 : 1;
+      return `RN-${dp2}-${String(seq2).padStart(3, '0')}`;
+    }
+
+    const invoiceTotal = Math.max(0, parseFloat(order.total_amount) - returnDeduction);
+
     const t = await db.transaction();
     try {
       const invoice = await Invoice.create({
@@ -240,9 +257,9 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
         due_date:       dueDate,
         invoice_type:   'TAX_INVOICE',
         status:         'POSTED',
-        subtotal:       order.total_amount,
-        total_amount:   order.total_amount,
-        balance_due:    order.total_amount,
+        subtotal:       invoiceTotal,
+        total_amount:   invoiceTotal,
+        balance_due:    invoiceTotal,
         notes:          order.notes,
         created_by:     req.user.id,
       }, { transaction: t });
@@ -261,6 +278,65 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
         line_total:    l.line_total,
       }));
       if (lines.length) await InvoiceLine.bulkCreate(lines, { transaction: t });
+
+      // Create CustomerReturn records for each requested return + restock warehouse
+      for (const r of returns) {
+        const retNumber = await generateReturnNumber(t);
+        const cr = await CustomerReturn.create({
+          return_number: retNumber,
+          company_id:    order.company_id,
+          branch_id:     order.branch_id,
+          warehouse_id:  order.warehouse_id,
+          customer_id:   order.customer_id,
+          sales_rep_id:  order.sales_rep_id,
+          invoice_id:    invoice.id,
+          return_date:   today.toISOString().slice(0,10),
+          status:        'CONFIRMED',
+          notes:         `Auto-created from order ${order.order_number}. Action: ${r.action}`,
+          created_by:    req.user.id,
+          confirmed_by:  req.user.id,
+          confirmed_at:  new Date(),
+        }, { transaction: t });
+        await CustomerReturnLine.create({
+          return_id:  cr.id,
+          product_id: r.product_id,
+          quantity:   r.quantity,
+          unit_price: r.unit_price,
+          reason:     r.reason,
+        }, { transaction: t });
+
+        // Restock warehouse — damaged/expired go to separate counters, others back to sellable
+        const stock = await Stock.findOne({
+          where: { warehouse_id: order.warehouse_id, product_id: r.product_id },
+          transaction: t, lock: true,
+        });
+        if (stock) {
+          const qty = parseFloat(r.quantity);
+          let updateFields = {};
+          let newQty;
+          if (r.reason === 'DAMAGED') {
+            newQty = parseFloat(stock.damaged_quantity) + qty;
+            updateFields = { damaged_quantity: newQty };
+          } else if (r.reason === 'EXPIRED') {
+            newQty = parseFloat(stock.expired_quantity) + qty;
+            updateFields = { expired_quantity: newQty };
+          } else {
+            newQty = parseFloat(stock.quantity) + qty;
+            updateFields = { quantity: newQty };
+          }
+          await stock.update(updateFields, { transaction: t });
+          await StockMovement.create({
+            warehouse_id:  order.warehouse_id,
+            product_id:    r.product_id,
+            movement_type: 'IN',
+            source_type:   'CUSTOMER_RETURN',
+            source_id:     cr.id,
+            quantity:      r.quantity,
+            balance_after: newQty,
+            created_by:    req.user.id,
+          }, { transaction: t });
+        }
+      }
 
       // Release reservations and deduct actual stock for each billed line
       for (const l of order.Lines) {
@@ -283,6 +359,8 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
       }
 
       await order.update({ status: 'INVOICED' }, { transaction: t });
+      // Increment customer outstanding_balance for the invoiced amount
+      await Customer.increment('outstanding_balance', { by: invoiceTotal, where: { id: order.customer_id }, transaction: t });
       await t.commit();
       res.status(201).json({ invoice_id: invoice.id, invoice_number: invoiceNumber });
     } catch (e) { await t.rollback(); throw e; }

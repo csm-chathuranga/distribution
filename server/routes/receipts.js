@@ -36,6 +36,35 @@ const generateReceiptNumber = async () => {
 };
 
 router.get('/', authorize.any('finance.receipts', 'sales.view_own'), crud.list);
+// GET /api/receipts/my — receipts created by the logged-in user, optionally filtered by date
+router.get('/my', authorize.any('finance.receipts', 'sales.create', 'sales.view_own'), async (req, res, next) => {
+  try {
+    const { date_from, date_to } = req.query;
+    const where = { created_by: req.user.id };
+    if (date_from || date_to) {
+      where.receipt_date = {};
+      if (date_from) where.receipt_date[Op.gte] = date_from;
+      if (date_to)   where.receipt_date[Op.lte] = date_to;
+    } else {
+      // Default: today
+      const today = new Date().toISOString().slice(0, 10);
+      where.receipt_date = { [Op.gte]: today, [Op.lte]: today };
+    }
+    const receipts = await Receipt.findAll({
+      where,
+      include: [{ model: Customer, attributes: ['id', 'name'] }],
+      order: [['receipt_date', 'DESC'], ['id', 'DESC']],
+    });
+    const totals = { CASH: 0, CHEQUE: 0, BANK_TRANSFER: 0, total: 0 };
+    for (const r of receipts) {
+      const amt = parseFloat(r.amount) || 0;
+      totals[r.payment_method] = (totals[r.payment_method] || 0) + amt;
+      totals.total += amt;
+    }
+    res.json({ receipts, totals });
+  } catch (err) { next(err); }
+});
+
 router.get('/:id', authorize.any('finance.receipts', 'sales.view_own'), async (req, res, next) => {
   try {
     const r = await Receipt.findByPk(req.params.id, {

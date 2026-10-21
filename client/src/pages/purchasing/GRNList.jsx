@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, CheckCircle, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, CheckCircle, Trash2, Filter, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetGRNsQuery, usePostGRNMutation, useDeleteGRNMutation } from '../../api/purchasingApi';
+import { useGetWarehousesQuery } from '../../api/warehousesApi';
+import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { usePermission } from '../../hooks/usePermission';
 import Table from '../../components/ui/Table';
 import Pagination from '../../components/ui/Pagination';
@@ -10,17 +12,44 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { fmtCurrency, fmtDate } from '../../utils/format';
 
+const STATUS_OPTIONS = ['DRAFT', 'POSTED', 'CANCELLED'];
+
 export default function GRNList() {
   const navigate = useNavigate();
   const canCreate  = usePermission('purchase.create');
   const canApprove = usePermission('purchase.approve');
+
   const [page, setPage] = useState(1);
   const [postingGRN, setPostingGRN] = useState(null);
   const [deletingGRN, setDeletingGRN] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
-  const { data, isLoading } = useGetGRNsQuery({ page, limit: 20 });
+  const [filters, setFilters] = useState({
+    warehouse_id: '',
+    free_sales_rep_id: '',
+    status: '',
+    date_from: '',
+    date_to: '',
+  });
+
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  const queryParams = { page, limit: 20, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) };
+  const { data, isLoading } = useGetGRNsQuery(queryParams);
+  const { data: warehousesData } = useGetWarehousesQuery({ limit: 100 });
+  const { data: usersData } = useGetUsersForSelectQuery();
+
   const [postGRN,   { isLoading: posting  }] = usePostGRNMutation();
   const [deleteGRN, { isLoading: deleting }] = useDeleteGRNMutation();
+
+  const setFilter = (key, val) => {
+    setFilters(f => ({ ...f, [key]: val }));
+    setPage(1);
+  };
+  const clearFilters = () => {
+    setFilters({ warehouse_id: '', free_sales_rep_id: '', status: '', date_from: '', date_to: '' });
+    setPage(1);
+  };
 
   const handlePost = async () => {
     try {
@@ -50,9 +79,15 @@ export default function GRNList() {
         </span>
       ),
     },
-    { key: 'supplier', header: 'Supplier', cell: r => r.Supplier?.name },
-    { key: 'grn_date', header: 'Date', cell: r => fmtDate(r.grn_date) },
-    { key: 'free_rep', header: 'Free Issue Rep', cell: r => r.FreeRep ? <span className="text-amber-700 font-medium">{r.FreeRep.name}</span> : <span className="text-gray-300">—</span> },
+    { key: 'supplier',  header: 'Supplier',       cell: r => r.Supplier?.name },
+    { key: 'warehouse', header: 'Warehouse',       cell: r => r.Warehouse?.name || <span className="text-gray-300">—</span> },
+    { key: 'grn_date',  header: 'Date',            cell: r => fmtDate(r.grn_date) },
+    {
+      key: 'free_rep', header: 'Free Issue Rep',
+      cell: r => r.FreeRep
+        ? <span className="text-amber-700 font-medium">{r.FreeRep.name}</span>
+        : <span className="text-gray-300">—</span>,
+    },
     { key: 'total_amount', header: 'Total', cell: r => fmtCurrency(r.total_amount), className: 'text-right font-medium' },
     { key: 'status', header: 'Status', cell: r => <StatusBadge status={r.status} /> },
     {
@@ -84,12 +119,116 @@ export default function GRNList() {
 
   return (
     <div className="card">
+      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-lg font-semibold">Goods Received Notes</h2>
-        {canCreate && (
-          <Link to="/grn/new" className="btn-primary flex items-center gap-2"><Plus size={16} /> New GRN</Link>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              showFilters || activeFilterCount > 0
+                ? 'bg-primary-50 text-primary-700 border-primary-200'
+                : 'text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Filter size={14} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="ml-1 bg-primary-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {canCreate && (
+            <button onClick={() => navigate('/grn/new')} className="btn-primary flex items-center gap-2">
+              <Plus size={16} /> New GRN
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Filter Bar */}
+      {showFilters && (
+        <div className="p-4 border-b bg-gray-50 space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Warehouse */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Warehouse</label>
+              <select
+                value={filters.warehouse_id}
+                onChange={e => setFilter('warehouse_id', e.target.value)}
+                className="input text-sm w-full"
+              >
+                <option value="">All Warehouses</option>
+                {warehousesData?.data?.map(w => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sales Rep */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Free Issue Rep</label>
+              <select
+                value={filters.free_sales_rep_id}
+                onChange={e => setFilter('free_sales_rep_id', e.target.value)}
+                className="input text-sm w-full"
+              >
+                <option value="">All Reps</option>
+                {(usersData || []).map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={e => setFilter('status', e.target.value)}
+                className="input text-sm w-full"
+              >
+                <option value="">All Statuses</option>
+                {STATUS_OPTIONS.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date From */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Date From</label>
+              <input
+                type="date"
+                value={filters.date_from}
+                onChange={e => setFilter('date_from', e.target.value)}
+                className="input text-sm w-full"
+              />
+            </div>
+
+            {/* Date To */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Date To</label>
+              <input
+                type="date"
+                value={filters.date_to}
+                onChange={e => setFilter('date_to', e.target.value)}
+                className="input text-sm w-full"
+              />
+            </div>
+          </div>
+
+          {activeFilterCount > 0 && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700"
+            >
+              <X size={12} /> Clear all filters
+            </button>
+          )}
+        </div>
+      )}
 
       <Table
         columns={columns}

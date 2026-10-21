@@ -92,6 +92,7 @@ import SalesReturns from './pages/vanSales/SalesReturns';
 import DriverDeliveries from './pages/vanSales/DriverDeliveries';
 import DriverPayments from './pages/vanSales/DriverPayments';
 import DriverStock from './pages/vanSales/DriverStock';
+import MyCollection from './pages/vanSales/MyCollection';
 import SalesRepMap from './pages/tracking/SalesRepMap';
 import LocationTracker from './components/LocationTracker';
 import OfflineBanner from './components/OfflineBanner';
@@ -202,6 +203,7 @@ export default function App() {
           <Route path="driver/deliveries" element={<ProtectedRoute permission={['sales.view_own','sales.create']}><DriverDeliveries /></ProtectedRoute>} />
           <Route path="driver/payments" element={<ProtectedRoute permission={['sales.view_own','sales.create']}><DriverPayments /></ProtectedRoute>} />
           <Route path="driver/stock" element={<ProtectedRoute permission={['sales.view_own','sales.create']}><DriverStock /></ProtectedRoute>} />
+          <Route path="driver/collections" element={<ProtectedRoute permission={['sales.view_own','sales.create']}><MyCollection /></ProtectedRoute>} />
           <Route path="tracking" element={<ProtectedRoute permission="sales.approve"><SalesRepMap /></ProtectedRoute>} />
 
           {/* Finance */}

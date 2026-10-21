@@ -258,45 +258,50 @@ export default function FreeItems() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Gift size={20} className="text-purple-600" /> Free Item Allocations
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {canApprove ? 'Manage promotional item quotas per sales rep' : 'Your free item quota — tap Distribute to give items to customers'}
-            </p>
-          </div>
-          {canApprove && repOptions.length > 0 && (
-            <select
-              value={filterRepId}
-              onChange={e => setFilterRepId(e.target.value)}
-              className="input text-sm py-1.5 pr-8"
-            >
-              <option value="">All Reps</option>
-              {repOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          )}
-          {canApprove && (
-            <button onClick={() => setShowNew(true)}
-              className="flex items-center gap-1.5 btn btn-primary text-sm whitespace-nowrap">
-              <Plus size={16} /> New Allocation
-            </button>
-          )}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Title */}
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Gift size={20} className="text-purple-600" /> Free Item Allocations
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {canApprove ? 'Manage promotional item quotas per sales rep' : 'Your free item quota — tap Distribute to give items to customers'}
+          </p>
         </div>
-        {/* Search row */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+
+        {/* Controls — stack on mobile, row on desktop */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Search */}
+          <div className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
               value={searchQ}
               onChange={e => setSearchQ(e.target.value)}
               placeholder="Search product…"
-              className="input text-sm py-1.5 pl-8 w-full"
+              className="input text-sm py-1.5 pl-8 w-full sm:w-48"
             />
           </div>
+
+          {/* Rep filter */}
+          {canApprove && repOptions.length > 0 && (
+            <select
+              value={filterRepId}
+              onChange={e => setFilterRepId(e.target.value)}
+              className="input text-sm py-1.5 sm:w-40"
+            >
+              <option value="">All Reps</option>
+              {repOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          )}
+
+          {/* New button */}
+          {canApprove && (
+            <button onClick={() => setShowNew(true)}
+              className="flex items-center justify-center gap-1.5 btn btn-primary text-sm whitespace-nowrap">
+              <Plus size={16} /> New Allocation
+            </button>
+          )}
         </div>
       </div>
 

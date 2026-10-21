@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, SalesOrder, sequelize } = require('../models');
+const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, SalesOrder, OrderReturn, sequelize } = require('../models');
 
 const notify = require('../notify');
 const { Op } = require('sequelize');
@@ -17,7 +17,8 @@ const include = [
       { model: Customer, attributes: ['id', 'name', 'address'] },
       { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'free_quantity', 'unit_price', 'line_total'],
         include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
-      { model: SalesOrder, as: 'Order', attributes: ['id', 'latitude', 'longitude'] },
+      { model: SalesOrder, as: 'Order', attributes: ['id', 'latitude', 'longitude'],
+        include: [{ model: OrderReturn, as: 'Returns', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] }] },
     ],
   },
 ];
@@ -25,16 +26,22 @@ const include = [
 // GET /api/loading-sheets
 router.get('/', async (req, res, next) => {
   try {
-    const { status, from, to, page = 1, limit = 20 } = req.query;
+    const { status, from, to, route_id, sales_rep_id, page = 1, limit = 20 } = req.query;
     const where = {};
-    if (status) where.status = status;
+    if (status)       where.status       = status;
+    if (route_id)     where.route_id     = route_id;
+    if (sales_rep_id) where.sales_rep_id = sales_rep_id;
     if (from || to) {
       where.sheet_date = {};
       if (from) where.sheet_date[Op.gte] = from;
       if (to) where.sheet_date[Op.lte] = to;
     }
     const { count, rows } = await LoadingSheet.findAndCountAll({
-      where, include: [{ model: User, as: 'SalesRep', attributes: ['id', 'name'] }, { model: Route, attributes: ['id', 'name'] }],
+      where, include: [
+        { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+        { model: Route, attributes: ['id', 'name'] },
+        { model: Vehicle, attributes: ['id', 'registration_number'] },
+      ],
       limit: parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
       order: [['sheet_date', 'DESC']],

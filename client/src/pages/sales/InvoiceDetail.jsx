@@ -12,7 +12,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import InvoicePrint from '../../components/print/InvoicePrint';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
 import { printComponent, printPOS } from '../../utils/print';
-import { fmtCurrency, fmtDate, today } from '../../utils/format';
+import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 
 function CollectPaymentModal({ invoice, onClose }) {
   const balance = parseFloat(invoice.balance_due || 0);
@@ -261,7 +261,7 @@ export default function InvoiceDetail() {
               )}
               {invoice.delivered_at && (
                 <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Truck size={11} /> Delivered · {fmtDate(invoice.delivered_at)}
+                  <Truck size={11} /> Delivered · {fmtDateTime(invoice.delivered_at)}
                 </span>
               )}
             </div>

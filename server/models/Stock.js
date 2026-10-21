@@ -7,6 +7,8 @@ module.exports = (sequelize) => {
     product_id: { type: DataTypes.INTEGER, allowNull: false },
     quantity: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0.0000 },
     reserved_quantity: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0.0000 },
+    damaged_quantity: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0.0000 },
+    expired_quantity: { type: DataTypes.DECIMAL(12, 4), defaultValue: 0.0000 },
   }, {
     tableName: 'stock',
     updatedAt: true, createdAt: false,

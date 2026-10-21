@@ -18,15 +18,15 @@ function StockRow({ item }) {
         <div className="flex items-center gap-3 flex-shrink-0 text-right">
           <div>
             <p className="text-xs text-gray-400">Loaded</p>
-            <p className="text-sm font-medium text-gray-700">{fmtNumber(item.loaded)}</p>
+            <p className="text-sm font-medium text-gray-700">{fmtNumber(item.loaded, 0)}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400">Sold</p>
-            <p className="text-sm font-medium text-blue-600">{fmtNumber(item.sold)}</p>
+            <p className="text-sm font-medium text-blue-600">{fmtNumber(item.sold, 0)}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400">Remaining</p>
-            <p className="text-sm font-bold" style={{ color }}>{fmtNumber(item.remaining)}</p>
+            <p className="text-sm font-bold" style={{ color }}>{fmtNumber(item.remaining, 0)}</p>
           </div>
         </div>
       </div>
@@ -64,9 +64,9 @@ export default function DriverStock() {
       {!isLoading && lines.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Total Loaded', value: fmtNumber(totalLoaded), color: 'text-gray-700', bg: 'bg-gray-50' },
-            { label: 'Total Sold',   value: fmtNumber(totalLoaded - totalRemaining), color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Remaining',    value: fmtNumber(totalRemaining), color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Total Loaded', value: fmtNumber(totalLoaded, 0), color: 'text-gray-700', bg: 'bg-gray-50' },
+            { label: 'Total Sold',   value: fmtNumber(totalLoaded - totalRemaining, 0), color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Remaining',    value: fmtNumber(totalRemaining, 0), color: 'text-emerald-600', bg: 'bg-emerald-50' },
           ].map(s => (
             <div key={s.label} className={`card p-3 text-center ${s.bg}`}>
               <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>

@@ -123,7 +123,7 @@ export default function JournalList() {
     { key: 'entry_date', header: 'Date', cell: r => fmtDate(r.entry_date) },
     { key: 'description', header: 'Description', cell: r => <span className="text-sm">{r.description}</span> },
     { key: 'source_type', header: 'Source', cell: r => <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${SOURCE_COLORS[r.source_type] || 'bg-gray-100 text-gray-700'}`}>{r.source_type}</span> },
-    { key: 'total_debit', header: 'Debit', cell: r => fmtCurrency(r.Lines?.reduce((s, l) => s + parseFloat(l.debit_amount || 0), 0)), className: 'text-right' },
+    { key: 'total_debit', header: 'Debit', cell: r => fmtCurrency(r.total_debit), className: 'text-right' },
     {
       key: 'actions', header: '', className: 'text-right',
       cell: r => <button onClick={() => setViewEntry(r)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={14} /></button>,
@@ -143,7 +143,7 @@ export default function JournalList() {
             <thead><tr className="border-b"><th className="text-left p-2 text-gray-600">Account</th><th className="text-right p-2 text-gray-600">Debit</th><th className="text-right p-2 text-gray-600">Credit</th></tr></thead>
             <tbody className="divide-y">
               {viewEntry.Lines?.map((l, i) => (
-                <tr key={i}><td className="p-2">{l.Account?.code} — {l.Account?.name}</td><td className="p-2 text-right">{parseFloat(l.debit_amount) > 0 ? fmtCurrency(l.debit_amount) : ''}</td><td className="p-2 text-right">{parseFloat(l.credit_amount) > 0 ? fmtCurrency(l.credit_amount) : ''}</td></tr>
+                <tr key={i}><td className="p-2">{l.Account?.code} — {l.Account?.name}</td><td className="p-2 text-right">{parseFloat(l.debit) > 0 ? fmtCurrency(l.debit) : ''}</td><td className="p-2 text-right">{parseFloat(l.credit) > 0 ? fmtCurrency(l.credit) : ''}</td></tr>
               ))}
             </tbody>
           </table>

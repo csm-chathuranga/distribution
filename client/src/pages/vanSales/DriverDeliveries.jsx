@@ -226,8 +226,8 @@ export default function DriverDeliveries() {
   }
 
   const total     = invoices.length;
-  const delivered = invoices.filter(i => i.status === 'DELIVERED').length;
-  const pending   = invoices.filter(i => ['POSTED', 'PARTIAL', 'OVERDUE'].includes(i.status)).length;
+  const delivered = invoices.filter(i => i.status === 'DELIVERED' || i.delivered_at).length;
+  const pending   = invoices.filter(i => ['POSTED', 'PARTIAL', 'OVERDUE'].includes(i.status) && !i.delivered_at).length;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -273,9 +273,9 @@ export default function DriverDeliveries() {
 
         {invoices.map(inv => {
           const status   = localStatus[inv.id] ?? inv.status;
-          const done      = status === 'DELIVERED';
+          const done      = status === 'DELIVERED' || !!inv.delivered_at;
           const cancelled = status === 'CANCELLED';
-          const actionable = ['POSTED', 'PARTIAL', 'OVERDUE'].includes(status);
+          const actionable = ['POSTED', 'PARTIAL', 'OVERDUE'].includes(status) && !inv.delivered_at;
           const busy = busyId === inv.id;
           const expanded = expandedId === inv.id;
 
@@ -341,6 +341,22 @@ export default function DriverDeliveries() {
                         <div key={l.id} className="flex items-center justify-between text-sm">
                           <span className="font-medium text-amber-900 truncate">{l.Product?.name}</span>
                           <span className="font-bold text-amber-700 ml-2 flex-shrink-0">× {parseFloat(l.free_quantity)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Returns collection banner */}
+                  {inv.Order?.Returns?.length > 0 && (
+                    <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2.5">
+                      <p className="text-[10px] font-bold text-red-700 uppercase tracking-wide mb-1.5">📦 Collect Returns from Customer</p>
+                      {inv.Order.Returns.map(r => (
+                        <div key={r.id} className="flex items-center justify-between text-sm py-0.5">
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-red-900 truncate">{r.Product?.name}</span>
+                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700">{r.reason}</span>
+                          </div>
+                          <span className="font-bold text-red-700 ml-2 flex-shrink-0">× {parseFloat(r.quantity)}</span>
                         </div>
                       ))}
                     </div>

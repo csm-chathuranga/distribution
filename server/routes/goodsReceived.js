@@ -1,16 +1,31 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { GoodsReceived, GoodsReceivedLine, Supplier, Product, User, Stock, StockMovement, JournalEntry, JournalLine, Account, AccountingPeriod, FreeItemAllocation, sequelize } = require('../models');
+const { GoodsReceived, GoodsReceivedLine, Supplier, Product, User, Warehouse, Stock, StockMovement, JournalEntry, JournalLine, Account, AccountingPeriod, FreeItemAllocation, sequelize } = require('../models');
+const { Op } = require('sequelize');
 
 router.get('/', authorize('purchase.view'), async (req, res, next) => {
   try {
+    const { warehouse_id, free_sales_rep_id, status, date_from, date_to, page = 1, limit = 20 } = req.query;
+    const where = {};
+    if (warehouse_id)      where.warehouse_id      = warehouse_id;
+    if (free_sales_rep_id) where.free_sales_rep_id = free_sales_rep_id;
+    if (status)            where.status            = status;
+    if (date_from || date_to) {
+      where.grn_date = {};
+      if (date_from) where.grn_date[Op.gte] = date_from;
+      if (date_to)   where.grn_date[Op.lte] = date_to;
+    }
+    const offset = (Number(page) - 1) * Number(limit);
     const { count, rows } = await GoodsReceived.findAndCountAll({
+      where,
       include: [
-        { model: Supplier, attributes: ['id', 'name'] },
+        { model: Supplier,  attributes: ['id', 'name'] },
+        { model: Warehouse, attributes: ['id', 'name'] },
         { model: User, as: 'FreeRep', foreignKey: 'free_sales_rep_id', attributes: ['id', 'name'] },
       ],
       order: [['grn_date', 'DESC']],
-      limit: 20,
+      limit: Number(limit),
+      offset,
     });
     res.json({ data: rows, total: count });
   } catch (err) { next(err); }

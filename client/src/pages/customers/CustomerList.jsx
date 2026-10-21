@@ -329,15 +329,18 @@ export default function CustomerList() {
                     </span>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <div className="text-xs text-gray-500">
-                    Credit limit: <span className="font-semibold text-gray-700">{fmtCurrency(c.credit_limit)}</span>
-                    {c.credit_days > 0 && <span className="ml-2">· {c.credit_days} days</span>}
-                  </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
                   {parseFloat(c.outstanding_balance || 0) > 0 && (
-                    <span className="text-xs font-semibold text-red-600">
-                      Due: {fmtCurrency(c.outstanding_balance)}
-                    </span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-red-500 font-medium">Outstanding</span>
+                      <span className="font-bold text-red-600">{fmtCurrency(c.outstanding_balance)}</span>
+                    </div>
+                  )}
+                  {parseFloat(c.total_collected || 0) > 0 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-green-600 font-medium">Collected</span>
+                      <span className="font-bold text-green-700">{fmtCurrency(c.total_collected)}</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -421,10 +424,6 @@ export default function CustomerList() {
 
                     <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
 <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-gray-500">
-                          Limit: <span className="font-semibold text-gray-700">{fmtCurrency(creditLimit)}</span>
-                          {c.credit_days > 0 && <span className="text-gray-400"> · {c.credit_days}d</span>}
-                        </span>
                         {outstanding > 0 ? (
                           <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full flex-shrink-0">
                             Due {fmtCurrency(outstanding)}
@@ -435,6 +434,14 @@ export default function CustomerList() {
                           </span>
                         )}
                       </div>
+                      {parseFloat(c.total_collected || 0) > 0 && (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-green-600 font-medium">Collected</span>
+                          <span className="text-xs font-bold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full flex-shrink-0">
+                            {fmtCurrency(c.total_collected)}
+                          </span>
+                        </div>
+                      )}
                       {creditLimit > 0 && (
                         <div>
                           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

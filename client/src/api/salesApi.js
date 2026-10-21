@@ -18,6 +18,7 @@ export const salesApi = baseApi.injectEndpoints({
     getReceipts: b.query({ query: params => ({ url: '/receipts', params }), providesTags: ['Receipt'] }),
     getReceipt: b.query({ query: id => `/receipts/${id}`, providesTags: (r,e,id) => [{ type: 'Receipt', id }] }),
     createReceipt: b.mutation({ query: body => ({ url: '/receipts', method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice', 'Journal'] }),
+    getMyCollections: b.query({ query: params => ({ url: '/receipts/my', params }), providesTags: ['Receipt'] }),
     getCustomerAdvance: b.query({ query: customerId => `/receipts/advance/${customerId}`, providesTags: ['Receipt'] }),
     allocateReceipt: b.mutation({ query: ({ id, ...body }) => ({ url: `/receipts/${id}/allocate`, method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice'] }),
 
@@ -70,7 +71,7 @@ export const salesApi = baseApi.injectEndpoints({
 export const {
   useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
   useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation, useDeliverInvoiceMutation,
-  useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
+  useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetMyCollectionsQuery, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
   useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation,
   useGetPaymentsQuery, useCreatePaymentMutation,
   useGetExpensesQuery, useCreateExpenseMutation,

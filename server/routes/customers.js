@@ -85,7 +85,36 @@ router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), as
   } catch (err) { next(err); }
 });
 
-router.get('/', authorize.any('sales.view_own', 'sales.view_all'), crud.list);
+router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
+  try {
+    const { search, page = 1, limit = 50, route_id } = req.query;
+    const where = {};
+    if (route_id) where.route_id = route_id;
+    if (search) {
+      where[Op.or] = ['name', 'code', 'phone'].map(f => ({ [f]: { [Op.like]: `%${search}%` } }));
+    }
+    const { count, rows } = await Customer.findAndCountAll({
+      where,
+      include: [
+        { model: Route, attributes: ['id', 'name'] },
+        { model: Branch, attributes: ['id', 'name'] },
+        { model: Account, attributes: ['id', 'code', 'name'] },
+      ],
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`(SELECT COALESCE(SUM(amount),0) FROM receipts WHERE receipts.customer_id = Customer.id AND receipts.status != 'CANCELLED')`),
+            'total_collected',
+          ],
+        ],
+      },
+      order: [['name', 'ASC']],
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+    });
+    res.json({ data: rows, total: count });
+  } catch (err) { next(err); }
+});
 router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), crud.get);
 router.post('/', authorize('sales.create'), async (req, res, next) => {
   try {

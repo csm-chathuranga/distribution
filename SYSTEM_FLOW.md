@@ -269,6 +269,23 @@ Each free item is injected as a zero-price line (`unit_price: 0, vat_rate: 0, co
 
 ---
 
+### 15. My Collections (Driver Self-View)
+**Flow:** Driver/sales rep sees a date-filtered list of receipts they personally collected, with totals by payment method (cash / cheque / transfer). Accessible via the "My Coll." bottom-nav tab.
+
+| Layer | File |
+|-------|------|
+| API endpoint | `server/routes/receipts.js` — `GET /my` (filters by `created_by = req.user.id`, defaults to today) |
+| RTK hook | `client/src/api/salesApi.js` — `useGetMyCollectionsQuery` |
+| UI page | `client/src/pages/vanSales/MyCollection.jsx` |
+| Route | `client/src/App.jsx` — `/driver/collections` |
+| Nav | `client/src/components/BottomNav.jsx` — `DRIVER_TABS` "My Coll." tab (replaces "Payments") |
+
+**Response shape:** `{ receipts: [...], totals: { CASH, CHEQUE, BANK_TRANSFER, total } }`
+
+**Outstanding customers link:** MyCollection page has an amber button to navigate to `/driver/payments` (DriverPayments) for seeing who still owes.
+
+---
+
 ### 14. Free Issue via GRN (Bulk Topup)
 **Flow:** When receiving goods, warehouse manager can link a sales rep for free issue allocation. Each GRN line can have a `free_issue_qty`. On GRN post, the system auto-topups (creates or increments) `FreeItemAllocation` records for the linked rep.
 
@@ -314,6 +331,7 @@ alloc.increment('allocated_quantity', { by: freeQty, transaction: t })
 | 015 | `015_free_item_allocations.js` | Creates `free_item_allocations` (manager assigns promo quota per product/rep/warehouse) and `free_item_usages` (tracks each zero-price invoice line) tables |
 | 019 | `019_add_location_to_customers.js` | Adds `last_latitude DECIMAL(10,7)` and `last_longitude DECIMAL(10,7)` to `customers` table |
 | 020 | `020_grn_free_issue.js` | Adds `free_sales_rep_id INT NULL` to `goods_received`; `free_issue_qty DECIMAL(12,4) DEFAULT 0` to `goods_received_lines` |
+| 021 | `021_damaged_expired_stock.js` | Adds `damaged_quantity DECIMAL(12,4)` and `expired_quantity DECIMAL(12,4)` to `stock` table for separate tracking of unsellable inventory |
 
 ---
 
@@ -353,4 +371,4 @@ alloc.increment('allocated_quantity', { by: freeQty, transaction: t })
 
 ---
 
-*Last updated: 2026-10-21*
+*Last updated: 2026-10-22*

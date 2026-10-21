@@ -206,7 +206,86 @@ export default function SalesOrderDetail() {
           <span className="font-semibold text-gray-600 text-sm">Order Total</span>
           <span className="font-extrabold text-gray-900 font-mono text-base">{fmtCurrency(total)}</span>
         </div>
+        {(() => {
+          const deduction = (order.Returns || [])
+            .filter(r => r.action === 'DEDUCT')
+            .reduce((s, r) => s + parseFloat(r.quantity) * parseFloat(r.unit_price), 0);
+          if (deduction <= 0) return null;
+          return (
+            <>
+              <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 text-sm text-amber-700">
+                <span>Return Deductions</span>
+                <span className="font-mono">− {fmtCurrency(deduction)}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-t border-green-100">
+                <span className="font-semibold text-green-800 text-sm">Invoice Total</span>
+                <span className="font-extrabold text-green-900 font-mono text-base">{fmtCurrency(Math.max(0, total - deduction))}</span>
+              </div>
+            </>
+          );
+        })()}
       </div>
+
+      {/* Requested Returns */}
+      {order.Returns && order.Returns.length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 bg-amber-50">
+            <h2 className="font-semibold text-amber-800 text-sm uppercase tracking-wide">
+              Requested Returns <span className="ml-1 text-amber-500 font-normal normal-case">({order.Returns.length})</span>
+            </h2>
+          </div>
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Unit Price</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Reason</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {order.Returns.map(r => (
+                  <tr key={r.id} className="hover:bg-amber-50/30">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900">{r.Product?.name || '—'}</p>
+                      <p className="text-xs font-mono text-gray-400">{r.Product?.sku}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-700">{parseFloat(r.quantity)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-700">{fmtCurrency(r.unit_price)}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">{r.reason}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.action === 'REPLACE' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-700'}`}>{r.action}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Mobile */}
+          <div className="sm:hidden divide-y divide-gray-50">
+            {order.Returns.map(r => (
+              <div key={r.id} className="p-4 flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm">{r.Product?.name || '—'}</p>
+                  <p className="text-xs font-mono text-gray-400">{r.Product?.sku}</p>
+                  <div className="flex gap-1.5 mt-1">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">{r.reason}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.action === 'REPLACE' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-700'}`}>{r.action}</span>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="font-bold text-gray-900 font-mono text-sm">{parseFloat(r.quantity)} units</p>
+                  <p className="text-xs text-gray-400">{fmtCurrency(r.unit_price)} each</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Confirm button — admin/manager only, DRAFT orders */}
       {/* DRAFT → Confirm (admin/manager) */}

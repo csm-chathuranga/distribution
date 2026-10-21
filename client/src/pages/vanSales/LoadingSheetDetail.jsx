@@ -12,7 +12,7 @@ import LoadingSheetPrint from '../../components/print/LoadingSheetPrint';
 import InvoicePrint from '../../components/print/InvoicePrint';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
 import { printComponent, printPOS } from '../../utils/print';
-import { fmtCurrency, fmtDate, today } from '../../utils/format';
+import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
 const fmtQty = v => { const n = parseFloat(v) || 0; return n % 1 === 0 ? String(n) : n.toFixed(2); };
@@ -410,7 +410,12 @@ export default function LoadingSheetDetail() {
     : sheet.vehicle_number || '';
 
   const invoiceStatusColor = s => ({
-    POSTED: 'text-green-700 bg-green-50', DRAFT: 'text-amber-700 bg-amber-50', PAID: 'text-blue-700 bg-blue-50',
+    POSTED:    'text-green-700 bg-green-50',
+    DRAFT:     'text-amber-700 bg-amber-50',
+    PAID:      'text-blue-700 bg-blue-50',
+    DELIVERED: 'text-violet-700 bg-violet-50',
+    PARTIAL:   'text-orange-700 bg-orange-50',
+    CANCELLED: 'text-red-700 bg-red-50',
   }[s] || 'text-gray-600 bg-gray-50');
 
   return (
@@ -562,6 +567,11 @@ export default function LoadingSheetDetail() {
                     </div>
                     <p className="text-xs text-gray-600 mt-0.5 truncate">{inv.Customer?.name}</p>
                     <p className="text-xs text-gray-400">{fmtDate(inv.invoice_date)}</p>
+                    {inv.delivered_at && (
+                      <p className="text-xs text-violet-600 font-medium mt-0.5">
+                        Delivered · {fmtDateTime(inv.delivered_at)}
+                      </p>
+                    )}
                   </div>
                   {/* Right: amount + actions */}
                   <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>

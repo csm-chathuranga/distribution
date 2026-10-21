@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Navigation, Truck, RotateCcw, ChevronRight, Calendar, MapPin, Car } from 'lucide-react';
+import { Plus, Navigation, Truck, RotateCcw, ChevronRight, Calendar, MapPin, Car, Filter, X } from 'lucide-react';
 import { useGetLoadingSheetsQuery, useLoadLoadingSheetMutation } from '../../api/salesApi';
+import { useGetRoutesQuery } from '../../api/customersApi';
+import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import Table from '../../components/ui/Table';
 import StatusBadge from '../../components/ui/StatusBadge';
 import EmptyState from '../../components/ui/EmptyState';
@@ -15,14 +17,26 @@ const STATUS_STYLE = {
   CLOSED: { bar: '#10b981', bg: '#f0fdf4' },
 };
 
+const STATUS_OPTIONS = ['DRAFT', 'LOADED', 'CLOSED'];
+
 export default function LoadingSheetList() {
   const navigate = useNavigate();
   const canCreate = usePermission('sales.create');
   const canLoadVan = usePermission('sales.approve');
   const [loadTarget, setLoadTarget] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ route_id: '', sales_rep_id: '', status: '', from: '', to: '' });
 
-  const { data, isLoading } = useGetLoadingSheetsQuery({});
+  const activeCount = Object.values(filters).filter(Boolean).length;
+  const queryParams = { ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) };
+
+  const { data, isLoading } = useGetLoadingSheetsQuery(queryParams);
+  const { data: routesData } = useGetRoutesQuery({ limit: 100 });
+  const { data: usersData } = useGetUsersForSelectQuery();
   const [loadSheet, { isLoading: loading }] = useLoadLoadingSheetMutation();
+
+  const setFilter = (key, val) => setFilters(f => ({ ...f, [key]: val }));
+  const clearFilters = () => setFilters({ route_id: '', sales_rep_id: '', status: '', from: '', to: '' });
 
   const rows = data?.data || [];
 
@@ -36,7 +50,7 @@ export default function LoadingSheetList() {
     { header: 'Date',         key: 'sheet_date',         cell: r => fmtDate(r.sheet_date) },
     { header: 'Sales Rep',    key: 'sales_rep',          cell: r => r.SalesRep?.name || '—' },
     { header: 'Route',        key: 'route',              cell: r => r.Route?.name || '—' },
-    { header: 'Vehicle',      key: 'vehicle_number',     cell: r => r.vehicle_number || '—' },
+    { header: 'Vehicle',      key: 'vehicle_number',     cell: r => r.vehicle_number || r.Vehicle?.registration_number || '—' },
     { header: 'Loaded Value', key: 'total_loaded_value', cell: r => fmtCurrency(r.total_loaded_value) },
     { header: 'Status',       key: 'status',             cell: r => <StatusBadge status={r.status} /> },
     {
@@ -63,12 +77,76 @@ export default function LoadingSheetList() {
           <h1 className="text-xl font-bold text-gray-900">Loading Sheets</h1>
           <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Van loading and day-end reconciliation</p>
         </div>
-        {canCreate && (
-          <button onClick={() => navigate('/loading-sheets/new')} className="btn btn-primary flex-shrink-0">
-            <Plus size={16} /> <span className="hidden sm:inline">New Loading Sheet</span><span className="sm:hidden">New</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              showFilters || activeCount > 0
+                ? 'bg-primary-50 text-primary-700 border-primary-200'
+                : 'text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Filter size={14} />
+            <span className="hidden sm:inline">Filters</span>
+            {activeCount > 0 && (
+              <span className="bg-primary-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {activeCount}
+              </span>
+            )}
           </button>
-        )}
+          {canCreate && (
+            <button onClick={() => navigate('/loading-sheets/new')} className="btn btn-primary flex-shrink-0">
+              <Plus size={16} /> <span className="hidden sm:inline">New Loading Sheet</span><span className="sm:hidden">New</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Filter bar */}
+      {showFilters && (
+        <div className="card p-4 space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Date From</label>
+              <input type="date" value={filters.from} onChange={e => setFilter('from', e.target.value)} className="input text-sm w-full" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Date To</label>
+              <input type="date" value={filters.to} onChange={e => setFilter('to', e.target.value)} className="input text-sm w-full" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Route</label>
+              <select value={filters.route_id} onChange={e => setFilter('route_id', e.target.value)} className="input text-sm w-full">
+                <option value="">All Routes</option>
+                {(routesData?.data || routesData || []).map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Sales Rep</label>
+              <select value={filters.sales_rep_id} onChange={e => setFilter('sales_rep_id', e.target.value)} className="input text-sm w-full">
+                <option value="">All Reps</option>
+                {(usersData || []).map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <select value={filters.status} onChange={e => setFilter('status', e.target.value)} className="input text-sm w-full">
+                <option value="">All Statuses</option>
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          {activeCount > 0 && (
+            <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700">
+              <X size={12} /> Clear all filters
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Desktop table ── */}
       <div className="hidden md:block card">

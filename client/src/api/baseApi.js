@@ -31,7 +31,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     if (isQueuable) {
       try {
         await enqueueRequest({
-          id:        crypto.randomUUID(),
+          id:        (crypto.randomUUID ?? (() => `${Date.now()}-${Math.random().toString(36).slice(2)}`))(),
           url,
           method,
           body:      typeof args === 'string' ? undefined : args.body,
