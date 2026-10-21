@@ -269,6 +269,38 @@ Each free item is injected as a zero-price line (`unit_price: 0, vat_rate: 0, co
 
 ---
 
+### 16. Electron Desktop App + Silent POS Print
+**Flow:** Electron wraps the web app in a desktop window. Print buttons that previously opened a browser popup now print silently to the configured POS thermal printer — no dialog.
+
+| Layer | File |
+|-------|------|
+| Electron main | `electron/main.js` — BrowserWindow, IPC handlers: `pos-print`, `get-printers`, `get-print-settings`, `save-print-settings`; spawns Express server in production |
+| Electron preload | `electron/preload.js` — exposes `window.electronAPI` via contextBridge |
+| Electron build | `electron/package.json` — electron-builder config, bundles `server/` + `client/dist/` |
+| Print utility | `client/src/utils/print.js` — `printPOS()` reads `window.electronAPI?.isElectron`; if true, sends HTML to main via IPC instead of opening popup |
+| Settings modal | `client/src/components/PrintSettingsModal.jsx` — printer picker, paper width (76/80mm), copies |
+| Header trigger | `client/src/components/Header.jsx` — Printer icon button (Electron only) + native menu `File → Printer Settings` |
+
+**Settings persisted to:** `%APPDATA%/lankadist-desktop/print-settings.json` (auto-created).
+
+**Dev startup:**
+```bash
+# 3 terminals
+node server/index.js           # API on :5000
+cd client && npm run dev       # Vite on :5173
+cd electron && npm run dev     # Electron loads localhost:5173
+```
+
+**Production build:**
+```bash
+cd client && npm run build
+cd electron && npm install && npm run dist   # outputs electron/build/*.exe
+```
+
+**Excluded from git:** `electron/` is in `.gitignore`.
+
+---
+
 ### 15. My Collections (Driver Self-View)
 **Flow:** Driver/sales rep sees a date-filtered list of receipts they personally collected, with totals by payment method (cash / cheque / transfer). Accessible via the "My Coll." bottom-nav tab.
 

@@ -1,10 +1,11 @@
-import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck, Truck, X, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck, Truck, X, RefreshCw, ArrowLeft, Printer } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import Breadcrumb from './ui/Breadcrumb';
 import GettingStartedGuide from './GettingStartedGuide';
+import PrintSettingsModal from './PrintSettingsModal';
 import { useNotifications } from '../contexts/NotificationContext';
 
 const PAGE_TITLES = {
@@ -23,6 +24,7 @@ export default function Header({ minimal = false }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [printSettingsOpen, setPrintSettingsOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
 
   const handleRefresh = useCallback(() => {
@@ -42,6 +44,13 @@ export default function Header({ minimal = false }) {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Listen for native menu "Printer Settings" command (Electron only)
+  useEffect(() => {
+    if (!window.electronAPI?.onOpenPrintSettings) return;
+    const unsub = window.electronAPI.onOpenPrintSettings(() => setPrintSettingsOpen(true));
+    return unsub;
   }, []);
 
   const handleLogout = () => {
@@ -198,6 +207,17 @@ export default function Header({ minimal = false }) {
       <Breadcrumb />
 
       <div className="flex items-center gap-3">
+        {/* Printer Settings — only in Electron desktop app */}
+        {window.electronAPI?.isElectron && (
+          <button
+            onClick={() => setPrintSettingsOpen(true)}
+            className="relative p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            title="Printer Settings"
+          >
+            <Printer size={18} />
+          </button>
+        )}
+
         {/* Getting started guide */}
         <button
           onClick={() => setGuideOpen(true)}
@@ -309,6 +329,7 @@ export default function Header({ minimal = false }) {
     </header>
 
     <GettingStartedGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
+    <PrintSettingsModal open={printSettingsOpen} onClose={() => setPrintSettingsOpen(false)} />
     </>
   );
 }

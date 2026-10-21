@@ -30,3 +30,6 @@ Thumbs.db
 # Claude internal
 .claude/
 server/serviceAccountKey.json
+
+# Electron desktop app (local wrapper — not for git)
+electron/

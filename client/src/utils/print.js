@@ -28,29 +28,47 @@ export function printComponent(element) {
   setTimeout(() => { win.print(); }, 400);
 }
 
-export function printPOS(element) {
+export async function printPOS(element) {
   const html = renderToStaticMarkup(element);
-  const win = window.open('', '_blank', 'width=320,height=800');
-  if (!win) {
-    alert('Pop-up blocked. Please allow pop-ups for this site.');
-    return;
+
+  // Resolve paper width from saved Electron settings (or default 80mm)
+  let widthMm = 80;
+  if (window.electronAPI?.isElectron) {
+    try {
+      const s = await window.electronAPI.getPrintSettings();
+      widthMm = s?.paperWidthMm || 80;
+    } catch {}
   }
-  win.document.write(`<!DOCTYPE html>
+
+  const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>POS Print</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff; width: 80mm; }
+    body { background: #fff; width: ${widthMm}mm; }
     @media print {
-      @page { size: 80mm auto; margin: 0mm 2mm; }
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 80mm; }
+      @page { size: ${widthMm}mm auto; margin: 0mm 2mm; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; width: ${widthMm}mm; }
     }
   </style>
 </head>
 <body>${html}</body>
-</html>`);
+</html>`;
+
+  // Electron: silent print — no dialog
+  if (window.electronAPI?.isElectron) {
+    return window.electronAPI.posPrint(fullHtml);
+  }
+
+  // Browser fallback: popup + native print dialog
+  const win = window.open('', '_blank', 'width=320,height=800');
+  if (!win) {
+    alert('Pop-up blocked. Please allow pop-ups for this site.');
+    return;
+  }
+  win.document.write(fullHtml);
   win.document.close();
   win.focus();
   setTimeout(() => { win.print(); }, 400);
