@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Printer, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Printer, CheckCircle, AlertCircle, Loader2, Globe, RotateCcw } from 'lucide-react';
 
 const WIDTH_OPTIONS = [
   { label: '76 mm', value: 76 },
@@ -8,9 +8,10 @@ const WIDTH_OPTIONS = [
 
 export default function PrintSettingsModal({ open, onClose }) {
   const [printers,  setPrinters]  = useState([]);
-  const [settings,  setSettings]  = useState({ printerName: '', paperWidthMm: 80, copies: 1 });
+  const [settings,  setSettings]  = useState({ printerName: '', paperWidthMm: 80, copies: 1, appUrl: 'http://localhost:5173' });
   const [loading,   setLoading]   = useState(false);
   const [saving,    setSaving]    = useState(false);
+  const [reloading, setReloading] = useState(false);
   const [status,    setStatus]    = useState(null); // 'ok' | 'err' | null
 
   useEffect(() => {
@@ -21,9 +22,19 @@ export default function PrintSettingsModal({ open, onClose }) {
       window.electronAPI.getPrintSettings(),
     ]).then(([p, s]) => {
       setPrinters(p || []);
-      setSettings(s || { printerName: '', paperWidthMm: 80, copies: 1 });
+      setSettings(s || { printerName: '', paperWidthMm: 80, copies: 1, appUrl: 'http://localhost:5173' });
     }).finally(() => setLoading(false));
   }, [open]);
+
+  async function handleReload() {
+    setReloading(true);
+    try {
+      await window.electronAPI.reloadApp(settings);
+      // Window reloads — modal closes automatically as the page refreshes
+    } catch {
+      setReloading(false);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -84,6 +95,34 @@ export default function PrintSettingsModal({ open, onClose }) {
             </div>
           ) : (
             <>
+              {/* App URL */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Globe size={14} className="text-slate-400" /> App URL
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={settings.appUrl || ''}
+                    onChange={e => setSettings(s => ({ ...s, appUrl: e.target.value }))}
+                    placeholder="http://localhost:5173"
+                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 font-mono"
+                  />
+                  <button
+                    onClick={handleReload}
+                    disabled={reloading || !settings.appUrl}
+                    title="Save & reload app to this URL"
+                    className="px-3 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1.5 text-sm font-semibold whitespace-nowrap"
+                  >
+                    {reloading ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+                    Reload
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Change to point to a different server or port. Clicking Reload applies immediately.</p>
+              </div>
+
+              <div className="border-t border-slate-100" />
+
               {/* Printer select */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">

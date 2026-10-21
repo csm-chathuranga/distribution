@@ -11,7 +11,7 @@ import Modal from '../../components/ui/Modal';
 import LoadingSheetPrint from '../../components/print/LoadingSheetPrint';
 import InvoicePrint from '../../components/print/InvoicePrint';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
-import { printComponent, printPOS } from '../../utils/print';
+import { printComponent, printPOS, printPOSAll } from '../../utils/print';
 import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -352,17 +352,11 @@ export default function LoadingSheetDetail() {
       </div>
     );
   };
-  const handlePOSPrintInvoices = () => {
+  const handlePOSPrintInvoices = async () => {
     const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
     if (!sheetInvoices.length) return;
-    printPOS(
-      <div>
-        {sheetInvoices.map((inv, idx) => (
-          <div key={inv.id} style={idx < sheetInvoices.length - 1 ? { pageBreakAfter: 'always' } : {}}>
-            <InvoicePrintPOS invoice={inv} company={company} />
-          </div>
-        ))}
-      </div>
+    await printPOSAll(
+      sheetInvoices.map(inv => <InvoicePrintPOS key={inv.id} invoice={inv} company={company} />)
     );
   };
 
