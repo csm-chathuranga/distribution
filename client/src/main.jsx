@@ -9,7 +9,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { baseApi } from './api/baseApi';
 import './index.css';
 
-registerSW({ immediate: true });
+try { registerSW(); } catch {}
 
 // When the app resumes from background (screen unlock / switch back),
 // invalidate all cached data so every active query refetches immediately.

@@ -32,7 +32,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
   const typeLabel =
     invoice.invoice_type === 'CREDIT_NOTE' ? 'CREDIT NOTE'
     : invoice.invoice_type === 'PROFORMA'  ? 'PROFORMA INVOICE'
-    : 'TAX INVOICE';
+    : 'INVOICE';
 
   const root = {
     fontFamily: mono,
@@ -77,8 +77,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
       <Divider />
 
       {/* Document type + number */}
-      <div style={{ ...center, ...bold, fontSize: '19px' }}>{typeLabel}</div>
-      <div style={{ ...center, fontSize: '17px' }}>{invoice.invoice_number}</div>
+      <div style={{ ...center, ...bold, fontSize: '19px' }}>{typeLabel} {invoice.invoice_number}</div>
 
       <Divider dashed />
 
