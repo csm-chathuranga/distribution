@@ -12,21 +12,27 @@ const crud = require('../controllers/crudFactory')(Route, {
 
 router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
   try {
-    const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('sales.approve');
-    if (!canViewAll) {
-      // Sales rep — only their assigned routes
-      const routes = await Route.findAll({
-        where: { sales_rep_id: req.user.id },
-        include: [
-          { model: Branch, attributes: ['id', 'name'] },
-          { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
-          { model: User, as: 'Driver',   attributes: ['id', 'name'] },
-        ],
-        order: [['name', 'ASC']],
-      });
-      return res.json({ data: routes, total: routes.length, page: 1, limit: routes.length });
-    }
-    return crud.list(req, res, next);
+    const isAdmin    = ['super_admin', 'admin'].includes(req.user.Role?.name);
+    const canViewAll = isAdmin || req.permissions?.has('sales.view_all') || req.permissions?.has('sales.approve');
+    const { search, sales_rep_id, page = 1, limit = 200 } = req.query;
+    const where = {};
+    if (!canViewAll) where.sales_rep_id = req.user.id;
+    else if (sales_rep_id) where.sales_rep_id = sales_rep_id;
+    if (search) where.name = { [require('sequelize').Op.like]: `%${search}%` };
+
+    const routes = await Route.findAll({
+      where,
+      include: [
+        { model: Branch, attributes: ['id', 'name'] },
+        { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+        { model: User, as: 'Driver',   attributes: ['id', 'name'] },
+        { model: Customer, attributes: ['id'] },
+      ],
+      order: [['name', 'ASC']],
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+    });
+    return res.json({ data: routes, total: routes.length, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
 router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), crud.get);

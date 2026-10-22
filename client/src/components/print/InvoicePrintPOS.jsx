@@ -54,10 +54,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
     <div style={root}>
 
       {/* Principal brand */}
-      <div style={{ ...center, marginBottom: '4px' }}>
-        <img src="/max_beve.jpeg" alt="Max Beverages" style={{ height: '60px', objectFit: 'contain' }} />
-      </div>
-      <div style={{ ...center, ...bold, fontSize: '20px' }}>MAX BEVERAGES (PVT) LTD</div>
+      <div style={{ ...center, fontWeight: '900', fontSize: '24px' }}>MAX BEVERAGES (PVT) LTD</div>
       <div style={{ ...center, fontSize: '15px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
       <div style={{ ...center, fontSize: '15px' }}>Korathota, Kaduwela.</div>
       <div style={{ ...center, fontSize: '15px' }}>Tel: +94 112 054 943 | +94 770 139 200</div>
@@ -152,7 +149,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
             <div key={r.id || i} style={{ marginBottom: '3px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ flex: 1 }}>{r.Product?.name || `Product #${r.product_id}`}</span>
-                <span style={{ width: '42px', textAlign: 'right' }}>{r.quantity}</span>
+                <span style={{ width: '42px', textAlign: 'right' }}>{parseInt(r.quantity)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#555' }}>
                 <span>{REASON_LABEL[r.reason] || r.reason} · {r.action === 'REPLACE' ? 'Replaced' : 'Deducted'}</span>

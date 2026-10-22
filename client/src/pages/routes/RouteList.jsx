@@ -84,12 +84,19 @@ function RouteForm({ onClose, editing }) {
 }
 
 export default function RouteList() {
-  const canCreate = usePermission('sales.create');
-  const [formKey, setFormKey] = useState(0);
-  const [search, setSearch] = useState('');
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const { data, isLoading } = useGetRoutesQuery({ search });
+  const canCreate  = usePermission('sales.create');
+  const canViewAll = usePermission('sales.view_all');
+  const [formKey,    setFormKey]    = useState(0);
+  const [search,     setSearch]     = useState('');
+  const [repFilter,  setRepFilter]  = useState('');
+  const [formOpen,   setFormOpen]   = useState(false);
+  const [editing,    setEditing]    = useState(null);
+  const { data: salesReps = [] }    = useGetUsersForSelectQuery('sales_rep');
+  const skipQuery = canViewAll && !repFilter && !search;
+  const { data, isLoading } = useGetRoutesQuery(
+    { search, ...(repFilter ? { sales_rep_id: repFilter } : {}) },
+    { skip: skipQuery }
+  );
 
   const openEdit = (r) => { setEditing(r); setFormKey(k => k + 1); setFormOpen(true); };
   const openNew  = () => { setEditing(null); setFormKey(k => k + 1); setFormOpen(true); };
@@ -109,9 +116,22 @@ export default function RouteList() {
     )},
   ];
 
+  const repOptions = [{ value: '', label: 'All Reps' }, ...salesReps.map(u => ({ value: u.id, label: u.name }))];
+
   return (
     <div className="card">
-      <PageHeader title="Sales Routes" onNew={openNew} canCreate={canCreate} search={search} onSearch={setSearch} />
+      <PageHeader title="Sales Routes" onNew={openNew} canCreate={canCreate} search={search} onSearch={setSearch}>
+        {canViewAll && (
+          <select
+            className="input text-sm w-44"
+            value={repFilter}
+            onChange={e => setRepFilter(e.target.value)}
+          >
+            <option value="">— Select Rep —</option>
+            {salesReps.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+        )}
+      </PageHeader>
       <Table columns={columns} data={data?.data} loading={isLoading} />
       {formOpen && <RouteForm key={formKey} onClose={closeForm} editing={editing} />}
     </div>

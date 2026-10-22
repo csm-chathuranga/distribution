@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Pencil, Plus, Search, Phone, User, MapPin, Navigation } from 'lucide-react';
+import { Pencil, Plus, Search, Phone, User, MapPin, Navigation, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
@@ -185,8 +185,20 @@ export default function CustomerList() {
   const [page,       setPage]       = useState(1);
   const [search,     setSearch]     = useState('');
   const [routeFilter,setRouteFilter]= useState('');
-  const [formOpen,   setFormOpen]   = useState(false);
-  const [editing,    setEditing]    = useState(null);
+  const [formOpen,      setFormOpen]      = useState(false);
+  const [editing,       setEditing]       = useState(null);
+  const [routeSearch,   setRouteSearch]   = useState('');
+  const [routeDropOpen, setRouteDropOpen] = useState(false);
+  const routeDropRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (routeDropRef.current && !routeDropRef.current.contains(e.target))
+        setRouteDropOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const { data: routesData } = useGetRoutesQuery({ limit: 200 });
   const routeOptions = routesData?.data || [];
@@ -225,15 +237,51 @@ export default function CustomerList() {
             style={{ height: 52, borderRadius: 16, fontSize: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           />
         </div>
-        <select
-          value={routeFilter}
-          onChange={e => { setRouteFilter(e.target.value); setPage(1); }}
-          className="bg-white border border-gray-200 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all flex-shrink-0"
-          style={{ height: 52, borderRadius: 16, fontSize: 16, paddingLeft: 14, paddingRight: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minWidth: 130 }}
-        >
-          {canViewAll && <option value="">All Routes</option>}
-          {routeOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-        </select>
+        <div ref={routeDropRef} className="relative flex-shrink-0" style={{ minWidth: 160 }}>
+          <button
+            type="button"
+            onClick={() => { setRouteDropOpen(d => !d); setRouteSearch(''); }}
+            className="bg-white border border-gray-200 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all w-full flex items-center justify-between gap-2"
+            style={{ height: 52, borderRadius: 16, fontSize: 15, paddingLeft: 14, paddingRight: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          >
+            <span className="truncate">
+              {routeFilter ? (routeOptions.find(r => String(r.id) === String(routeFilter))?.name || 'Route') : 'All Routes'}
+            </span>
+            <ChevronDown size={15} className="text-gray-400 flex-shrink-0" />
+          </button>
+          {routeDropOpen && (
+            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-64">
+              <div className="p-2 border-b border-gray-100">
+                <input
+                  autoFocus
+                  value={routeSearch}
+                  onChange={e => setRouteSearch(e.target.value)}
+                  placeholder="Search routes…"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                />
+              </div>
+              <div className="max-h-60 overflow-y-auto py-1">
+                {canViewAll && (
+                  <button type="button"
+                    onClick={() => { setRouteFilter(''); setPage(1); setRouteDropOpen(false); }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${!routeFilter ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
+                  >All Routes</button>
+                )}
+                {routeOptions
+                  .filter(r => r.name.toLowerCase().includes(routeSearch.toLowerCase()))
+                  .map(r => (
+                    <button key={r.id} type="button"
+                      onClick={() => { setRouteFilter(r.id); setPage(1); setRouteDropOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${String(routeFilter) === String(r.id) ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
+                    >{r.name}</button>
+                  ))}
+                {routeOptions.filter(r => r.name.toLowerCase().includes(routeSearch.toLowerCase())).length === 0 && (
+                  <p className="px-4 py-3 text-sm text-gray-400">No routes found</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Card list */}

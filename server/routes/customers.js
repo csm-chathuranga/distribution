@@ -93,10 +93,17 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
     if (search) {
       where[Op.or] = ['name', 'code', 'phone'].map(f => ({ [f]: { [Op.like]: `%${search}%` } }));
     }
+
+    const isAdmin = ['super_admin', 'admin'].includes(req.user.Role?.name);
+    const canViewAll = isAdmin || req.permissions?.has('sales.view_all');
+    const routeInclude = canViewAll
+      ? { model: Route, attributes: ['id', 'name'] }
+      : { model: Route, attributes: ['id', 'name'], where: { sales_rep_id: req.user.id }, required: true };
+
     const { count, rows } = await Customer.findAndCountAll({
       where,
       include: [
-        { model: Route, attributes: ['id', 'name'] },
+        routeInclude,
         { model: Branch, attributes: ['id', 'name'] },
         { model: Account, attributes: ['id', 'code', 'name'] },
       ],

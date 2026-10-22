@@ -170,7 +170,12 @@ export default function SalesOrderCreate() {
   const overLimit          = creditLimit > 0 && outstanding >= creditLimit;
   const nearLimit          = creditLimit > 0 && !overLimit && outstanding >= creditLimit * 0.8;
 
-  const customerOpts  = customers?.data?.map(c => ({ value: c.id, label: c.name })) || [];
+  const repRouteIds   = useMemo(() => new Set((routes?.data || []).map(r => r.id)), [routes?.data]);
+  const customerOpts  = useMemo(() => {
+    const list = customers?.data || [];
+    const filtered = canManageUsers ? list : list.filter(c => repRouteIds.has(c.route_id));
+    return filtered.map(c => ({ value: c.id, label: c.name }));
+  }, [customers?.data, canManageUsers, repRouteIds]);
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
   const routeOpts     = [{ value: '', label: '— No route —' }, ...(routes?.data?.map(r => ({ value: r.id, label: r.name })) || [])];
   const userOpts      = [{ value: '', label: '— No rep —' }, ...(users?.data?.map(u => ({ value: u.id, label: u.name })) || [])];

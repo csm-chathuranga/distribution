@@ -17,7 +17,7 @@ export const salesApi = baseApi.injectEndpoints({
 
     getReceipts: b.query({ query: params => ({ url: '/receipts', params }), providesTags: ['Receipt'] }),
     getReceipt: b.query({ query: id => `/receipts/${id}`, providesTags: (r,e,id) => [{ type: 'Receipt', id }] }),
-    createReceipt: b.mutation({ query: body => ({ url: '/receipts', method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice', 'Journal'] }),
+    createReceipt: b.mutation({ query: body => ({ url: '/receipts', method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice', 'Journal', 'Customer'] }),
     getMyCollections: b.query({ query: params => ({ url: '/receipts/my', params }), providesTags: ['Receipt'] }),
     getCustomerAdvance: b.query({ query: customerId => `/receipts/advance/${customerId}`, providesTags: ['Receipt'] }),
     allocateReceipt: b.mutation({ query: ({ id, ...body }) => ({ url: `/receipts/${id}/allocate`, method: 'POST', body }), invalidatesTags: ['Receipt', 'Invoice'] }),

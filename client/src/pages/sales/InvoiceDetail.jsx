@@ -9,9 +9,8 @@ import { useGetCompanyQuery } from '../../api/reportsApi';
 import { usePermission } from '../../hooks/usePermission';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import InvoicePrint from '../../components/print/InvoicePrint';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
-import { printComponent, printPOS } from '../../utils/print';
+import { printPOS } from '../../utils/print';
 import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 
 function CollectPaymentModal({ invoice, onClose }) {
@@ -569,6 +568,8 @@ export default function InvoiceDetail() {
       {showPayment && (
         <CollectPaymentModal invoice={invoice} onClose={() => setShowPayment(false)} />
       )}
+
+
     </div>
   );
 }

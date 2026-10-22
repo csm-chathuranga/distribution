@@ -9,6 +9,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
 import LoadingSheetPrint from '../../components/print/LoadingSheetPrint';
+import LoadingSheetPrintPOS from '../../components/print/LoadingSheetPrintPOS';
 import InvoicePrint from '../../components/print/InvoicePrint';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
 import { printComponent, printPOS, printPOSAll } from '../../utils/print';
@@ -338,7 +339,7 @@ export default function LoadingSheetDetail() {
   };
   const sheetExpenses = expenseData?.data || [];
 
-  const handlePrint = () => printComponent(<LoadingSheetPrint sheet={sheet} company={company} />);
+  const handlePrint = () => printPOS(<LoadingSheetPrintPOS sheet={sheet} company={company} />);
   const handlePrintInvoices = () => {
     const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
     if (!sheetInvoices.length) return;
