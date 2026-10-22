@@ -125,9 +125,9 @@ export default function InvoicePrintPOS({ invoice, company }) {
             </div>
 
             {(parseFloat(line.discount_rate || 0) > 0 || freeQty > 0) && (
-              <div style={{ fontSize: '17px', color: '#c00' }}>
-                {parseFloat(line.discount_rate || 0) > 0 && `Disc ${line.discount_rate}%`}
-                {freeQty > 0 && ` +${freeQty} free`}
+              <div style={{ fontSize: '17px' }}>
+                {parseFloat(line.discount_rate || 0) > 0 && <span style={{ color: '#c00' }}>{`Disc ${line.discount_rate}%`}</span>}
+                {freeQty > 0 && <span style={{ fontSize: '18px', fontWeight: '800', color: '#000' }}>{` +${freeQty} free`}</span>}
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
