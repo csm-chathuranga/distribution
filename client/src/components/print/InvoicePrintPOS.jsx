@@ -54,25 +54,17 @@ export default function InvoicePrintPOS({ invoice, company }) {
     <div style={root}>
 
       {/* Principal brand */}
-      <div style={{ ...center, fontWeight: '900', fontSize: '24px' }}>MAX BEVERAGES (PVT) LTD</div>
+      <div style={{ ...center, fontWeight: '900', fontSize: '24px' }}>MAX BEVERAGES</div>
       <div style={{ ...center, fontSize: '15px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
       <div style={{ ...center, fontSize: '15px' }}>Korathota, Kaduwela.</div>
-      <div style={{ ...center, fontSize: '15px' }}>Tel: +94 112 054 943 | +94 770 139 200</div>
+      <div style={{ ...center, fontSize: '15px' }}>Tel: +94 112 054 943</div>
+      <div style={{ ...center, fontSize: '15px' }}>+94 770 139 200</div>
 
       <Divider dashed />
 
-      {/* Distributor */}
       <div style={{ ...center, ...bold, fontSize: '18px' }}>
-        {company?.name || 'Rathnayaka Distribution (Pvt) Ltd'}
+        {company?.name || 'Rathnayaka Distribution'}
       </div>
-      {company?.phone && <div style={{ ...center, fontSize: '15px' }}>Tel: {company.phone}</div>}
-      {(company?.vat_number || company?.tin_number) && (
-        <div style={{ ...center, fontSize: '14px' }}>
-          {company?.vat_number && `VAT: ${company.vat_number}`}
-          {company?.vat_number && company?.tin_number && '  '}
-          {company?.tin_number && `TIN: ${company.tin_number}`}
-        </div>
-      )}
 
       <Divider />
 
@@ -83,23 +75,23 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
       {/* Customer */}
       <div style={row}>
-        <span style={{ color: '#333' }}>Customer:</span>
-        <span style={bold}>{invoice.Customer?.name || '—'}</span>
+        <span style={{ fontSize: '18px', fontWeight: '800' }}>Customer:</span>
+        <span style={{ fontSize: '18px', fontWeight: '800' }}>{invoice.Customer?.name || '—'}</span>
       </div>
       {invoice.Customer?.code && (
         <div style={row}>
-          <span style={{ color: '#333' }}>Code:</span>
-          <span>{invoice.Customer.code}</span>
+          <span style={{ fontSize: '18px', fontWeight: '800' }}>Code:</span>
+          <span style={{ fontSize: '18px', fontWeight: '800' }}>{invoice.Customer.code}</span>
         </div>
       )}
       <div style={row}>
-        <span style={{ color: '#333' }}>Date:</span>
-        <span>{fmtDate(invoice.invoice_date)}</span>
+        <span style={{ fontSize: '18px', fontWeight: '800' }}>Date:</span>
+        <span style={{ fontSize: '18px', fontWeight: '800' }}>{fmtDate(invoice.invoice_date)}</span>
       </div>
       {invoice.due_date && (
         <div style={row}>
-          <span style={{ color: '#333' }}>Due:</span>
-          <span>{fmtDate(invoice.due_date)}</span>
+          <span style={{ fontSize: '18px', fontWeight: '800' }}>Due:</span>
+          <span style={{ fontSize: '18px', fontWeight: '800' }}>{fmtDate(invoice.due_date)}</span>
         </div>
       )}
 
