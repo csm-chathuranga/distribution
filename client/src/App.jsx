@@ -37,6 +37,7 @@ import StockAdjustmentList from './pages/inventory/StockAdjustmentList';
 import StockAdjustmentCreate from './pages/inventory/StockAdjustmentCreate';
 import StockTransferList from './pages/inventory/StockTransferList';
 import StockTransferCreate from './pages/inventory/StockTransferCreate';
+import StockTransferDetail from './pages/inventory/StockTransferDetail';
 import PriceListList from './pages/pricing/PriceListList';
 import PriceListCreate from './pages/pricing/PriceListCreate';
 
@@ -152,6 +153,7 @@ export default function App() {
           <Route path="stock-adjustments/new" element={<ProtectedRoute permission="inventory.create"><StockAdjustmentCreate /></ProtectedRoute>} />
           <Route path="stock-transfers" element={<ProtectedRoute permission="inventory.view"><StockTransferList /></ProtectedRoute>} />
           <Route path="stock-transfers/new" element={<ProtectedRoute permission="inventory.view"><StockTransferCreate /></ProtectedRoute>} />
+          <Route path="stock-transfers/:id" element={<ProtectedRoute permission="inventory.view"><StockTransferDetail /></ProtectedRoute>} />
           <Route path="price-lists" element={<ProtectedRoute permission="inventory.view"><PriceListList /></ProtectedRoute>} />
           <Route path="price-lists/new" element={<ProtectedRoute permission="inventory.create"><PriceListCreate /></ProtectedRoute>} />
 

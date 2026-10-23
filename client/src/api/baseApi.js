@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCredentials, logout } from '../store/authSlice';
-import { enqueueRequest, getQueueCount } from '../utils/offlineQueue';
+import { enqueueRequest } from '../utils/offlineQueue';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Mutations queued when offline — driver can create these without internet
-const QUEUEABLE_PATHS = ['/invoices', '/customer-returns', '/sales-orders'];
+const QUEUEABLE_PATHS = ['/invoices', '/customer-returns'];
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: API_BASE,
@@ -35,6 +35,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
           url,
           method,
           body:      typeof args === 'string' ? undefined : args.body,
+          ownerId:   api.getState().auth.user?.id,
           timestamp: Date.now(),
         });
       } catch { /* IndexedDB unavailable — fall through to network attempt */ }

@@ -10,6 +10,7 @@ module.exports = (sequelize) => {
     sales_rep_id: DataTypes.INTEGER,
     route_id: DataTypes.INTEGER,
     order_number: { type: DataTypes.STRING(50), allowNull: false, unique: true },
+    client_request_id: { type: DataTypes.STRING(64), allowNull: true, unique: true },
     order_date: { type: DataTypes.DATEONLY, allowNull: false },
     delivery_date: DataTypes.DATEONLY,
     status: {

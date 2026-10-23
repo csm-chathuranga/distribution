@@ -2,7 +2,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const inElectron = () => !!window.electronAPI?.isElectron;
 
-function buildA4Html(bodyHtml) {
+function buildA4Html(bodyHtml, orientation = 'portrait') {
+  const pageOrientation = orientation === 'landscape' ? 'landscape' : 'portrait';
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -12,7 +13,7 @@ function buildA4Html(bodyHtml) {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #fff; }
     @media print {
-      @page { size: A4; margin: 8mm 10mm; }
+      @page { size: A4 ${pageOrientation}; margin: 8mm; }
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
@@ -41,13 +42,14 @@ function buildPosHtml(bodyHtml, widthMm = 80) {
 }
 
 // A4 print — silent in Electron via printReceiptHtml, popup in browser
-export async function printComponent(element) {
+export async function printComponent(element, options = {}) {
+  const orientation = options.orientation === 'landscape' ? 'landscape' : 'portrait';
   const bodyHtml = renderToStaticMarkup(element);
-  const fullHtml = buildA4Html(bodyHtml);
+  const fullHtml = buildA4Html(bodyHtml, orientation);
 
   if (inElectron()) {
     try {
-      await window.electronAPI.printReceiptHtml(bodyHtml, { paperSize: 'A4' });
+      await window.electronAPI.printReceiptHtml(bodyHtml, { paperSize: 'A4', orientation });
     } catch (e) {
       console.error('[printComponent] Electron printReceiptHtml failed:', e);
     }

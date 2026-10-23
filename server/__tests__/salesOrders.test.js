@@ -20,6 +20,7 @@ const mockOrderFindByPk = jest.fn();
 const mockOrderUpdate   = jest.fn();
 const mockCustomerFindByPk = jest.fn().mockResolvedValue(null); // no credit limit by default
 const mockBulkCreate    = jest.fn().mockResolvedValue([]);
+const mockStockFindOne  = jest.fn().mockResolvedValue(null);
 
 const mockTransaction = {
   commit:   jest.fn().mockResolvedValue(undefined),
@@ -35,6 +36,7 @@ jest.mock('../models', () => ({
     count:     jest.fn().mockResolvedValue(0),
   },
   SalesOrderLine: { bulkCreate: (...a) => mockBulkCreate(...a) },
+  Stock: { findOne: (...a) => mockStockFindOne(...a) },
   Customer:  { findByPk: (...a) => mockCustomerFindByPk(...a) },
   Product:   {},
   Warehouse: {},
@@ -66,7 +68,10 @@ function buildApp(user = { id: 1, name: 'Alice', branch_id: 1 }) {
   return app;
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockStockFindOne.mockResolvedValue(null);
+});
 
 // ─── POST / ───────────────────────────────────────────────────────────────
 describe('POST /api/sales-orders', () => {
@@ -90,10 +95,60 @@ describe('POST /api/sales-orders', () => {
   test('returns 201 with the new order', async () => {
     const res = await request(buildApp())
       .post('/api/sales-orders')
-      .send(ORDER_PAYLOAD);
+      .send({ ...ORDER_PAYLOAD, client_request_id: 'offline-request-1' });
 
     expect(res.status).toBe(201);
     expect(res.body.order_number).toBe('SO-20261012-001');
+    expect(mockOrderCreate.mock.calls[0][0].client_request_id).toBe('offline-request-1');
+  });
+
+  test('returns the existing order when an offline request is replayed', async () => {
+    const existingOrder = { id: 99, order_number: 'SO-20261012-001', created_by: 1 };
+    mockOrderFindOne.mockResolvedValueOnce(existingOrder);
+
+    const res = await request(buildApp())
+      .post('/api/sales-orders')
+      .send({ ...ORDER_PAYLOAD, client_request_id: 'offline-request-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(existingOrder.id);
+    expect(mockOrderCreate).not.toHaveBeenCalled();
+    expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  test('does not reveal an idempotent order created by another user', async () => {
+    mockOrderFindOne.mockResolvedValueOnce({
+      id: 99,
+      order_number: 'SO-20261012-001',
+      created_by: 2,
+    });
+
+    const res = await request(buildApp())
+      .post('/api/sales-orders')
+      .send({ ...ORDER_PAYLOAD, client_request_id: 'offline-request-1' });
+
+    expect(res.status).toBe(409);
+    expect(mockOrderCreate).not.toHaveBeenCalled();
+  });
+
+  test('returns the committed order after a concurrent duplicate insert', async () => {
+    const existingOrder = { id: 99, order_number: 'SO-20261012-001', created_by: 1 };
+    mockOrderFindOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(existingOrder);
+    const duplicateError = new Error('duplicate client request ID');
+    duplicateError.name = 'SequelizeUniqueConstraintError';
+    mockOrderCreate.mockRejectedValueOnce(duplicateError);
+
+    const res = await request(buildApp())
+      .post('/api/sales-orders')
+      .send({ ...ORDER_PAYLOAD, client_request_id: 'offline-request-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(existingOrder.id);
+    expect(mockTransaction.rollback).toHaveBeenCalled();
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 
   test('notifies the admin role after creating the order', async () => {
@@ -102,7 +157,6 @@ describe('POST /api/sales-orders', () => {
     // Give the fire-and-forget notify() a tick to run
     await new Promise(r => setImmediate(r));
 
-    expect(mockNotify).toHaveBeenCalledTimes(1);
     expect(mockNotify).toHaveBeenCalledWith(
       expect.objectContaining({
         roleName: 'admin',

@@ -82,6 +82,24 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
     data.created_by = req.user.id;
     data.branch_id  = data.branch_id  || req.user.branch_id;
     data.company_id = data.company_id || req.user.Branch?.company_id;
+    const customer = await Customer.findByPk(data.customer_id, {
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!customer) {
+      await t.rollback();
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    const amountCents = Math.round(Number(data.amount) * 100);
+    const outstandingCents = Math.round(Number(customer.outstanding_balance || 0) * 100);
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      await t.rollback();
+      return res.status(400).json({ message: 'Receipt amount must be greater than zero' });
+    }
+    if (amountCents > outstandingCents) {
+      await t.rollback();
+      return res.status(400).json({ message: 'Receipt amount cannot exceed the customer outstanding balance' });
+    }
     // Fall back to linked invoice's company/branch when user record lacks them
     if ((!data.company_id || !data.branch_id) && allocations?.length) {
       const refInv = await Invoice.findByPk(allocations[0].invoice_id, { attributes: ['company_id', 'branch_id'] });

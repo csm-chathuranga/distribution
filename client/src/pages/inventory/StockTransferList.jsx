@@ -40,7 +40,7 @@ export default function StockTransferList() {
   };
 
   const columns = [
-    { key: 'transfer_number', header: 'Reference', cell: r => <span className="font-mono font-medium text-primary-700">{r.transfer_number}</span> },
+    { key: 'transfer_number', header: 'Reference', cell: r => <Link to={`/stock-transfers/${r.id}`} className="font-mono font-medium text-primary-700 hover:underline">{r.transfer_number}</Link> },
     { key: 'from', header: 'From', cell: r => r.FromWarehouse?.name },
     { key: 'to', header: 'To', cell: r => r.ToWarehouse?.name },
     { key: 'transfer_date', header: 'Date', cell: r => fmtDate(r.transfer_date) },

@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useCreateReceiptMutation } from '../../api/salesApi';
 import { useGetCustomersQuery } from '../../api/customersApi';
@@ -35,18 +35,25 @@ export default function ReceiptCreate() {
   const { data: customers } = useGetCustomersQuery({ limit: 500 });
   const prefilledCustomerId = searchParams.get('customer_id');
   const backUrl = prefilledCustomerId ? `/customers/${prefilledCustomerId}` : '/receipts';
-  const [selectedCustomer, setSelectedCustomer] = useState(prefilledCustomerId || null);
+  const prefillApplied = useRef(false);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: { receipt_date: today(), payment_method: 'CASH', customer_id: prefilledCustomerId ? Number(prefilledCustomerId) : undefined },
   });
+  useEffect(() => {
+    if (!prefillApplied.current && prefilledCustomerId && customers?.data?.some(c => String(c.id) === prefilledCustomerId)) {
+      setValue('customer_id', Number(prefilledCustomerId));
+      prefillApplied.current = true;
+    }
+  }, [customers, prefilledCustomerId, setValue]);
   const paymentMethod = watch('payment_method');
 
   const watchedCustomerId = watch('customer_id');
   const watchedAmount     = watch('amount');
   const selectedCust = customers?.data?.find(c => String(c.id) === String(watchedCustomerId));
   const outstanding  = parseFloat(selectedCust?.outstanding_balance || 0);
+  const amountField = register('amount');
 
   const customerOpts = customers?.data?.map(c => ({
     value: c.id,
@@ -54,6 +61,11 @@ export default function ReceiptCreate() {
   })) || [];
 
   const onSubmit = async (data) => {
+    if (Number(data.amount) > outstanding) {
+      toast.error('Amount cannot exceed the outstanding balance');
+      return;
+    }
+
     try {
       await createReceipt({ ...data, company_id: 1, branch_id: 1 }).unwrap();
       toast.success('Receipt created');
@@ -77,7 +89,7 @@ export default function ReceiptCreate() {
           <h2 className="font-semibold text-gray-700 border-b pb-2">Payment Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField label="Customer" required options={customerOpts} error={errors.customer_id?.message}
-              {...register('customer_id', { onChange: e => setSelectedCustomer(e.target.value) })} />
+              {...register('customer_id')} />
             <SelectField label="Payment Method" required options={PAYMENT_METHODS} error={errors.payment_method?.message} {...register('payment_method')} />
           </div>
 
@@ -107,7 +119,22 @@ export default function ReceiptCreate() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField label="Receipt Date" required type="date" error={errors.receipt_date?.message} {...register('receipt_date')} />
-            <TextField label="Collect Amount (LKR)" required type="number" step="0.01" error={errors.amount?.message} {...register('amount')} />
+            <TextField
+              label="Collect Amount (LKR)"
+              required
+              type="number"
+              step="0.01"
+              min="0.01"
+              max={outstanding}
+              error={errors.amount?.message}
+              {...amountField}
+              onChange={e => {
+                if (e.target.value && Number(e.target.value) > outstanding) {
+                  e.target.value = String(outstanding);
+                }
+                amountField.onChange(e);
+              }}
+            />
           </div>
           <TextField label="Reference" placeholder="Bank ref / voucher number" error={errors.reference?.message} {...register('reference')} />
           {paymentMethod === 'CHEQUE' && (

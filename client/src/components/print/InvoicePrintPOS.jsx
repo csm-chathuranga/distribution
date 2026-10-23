@@ -1,7 +1,7 @@
 import { fmtDate } from '../../utils/format';
 
 const W = '76mm';
-const mono = 'Courier New, monospace';
+const receiptFont = '"Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", sans-serif';
 
 function fmtAmt(val) {
   return parseFloat(val || 0).toFixed(2);
@@ -35,9 +35,9 @@ export default function InvoicePrintPOS({ invoice, company }) {
     : 'INVOICE';
 
   const root = {
-    fontFamily: mono,
+    fontFamily: receiptFont,
     fontSize: '18px',
-    fontWeight: '800',
+    fontWeight: '500',
     color: '#000',
     background: '#fff',
     width: W,
@@ -47,14 +47,14 @@ export default function InvoicePrintPOS({ invoice, company }) {
   };
 
   const center = { textAlign: 'center' };
-  const bold   = { fontWeight: '800' };
+  const bold   = { fontWeight: '700' };
   const row    = { display: 'flex', justifyContent: 'space-between' };
 
   return (
     <div style={root}>
 
       {/* Principal brand */}
-      <div style={{ ...center, fontWeight: '900', fontSize: '24px' }}>MAX BEVERAGES</div>
+      <div style={{ ...center, fontWeight: '700', fontSize: '24px' }}>MAX BEVERAGES</div>
       <div style={{ ...center, fontSize: '15px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
       <div style={{ ...center, fontSize: '15px' }}>Korathota, Kaduwela.</div>
       <div style={{ ...center, fontSize: '15px' }}>Tel: +94 112 054 943</div>
@@ -75,23 +75,23 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
       {/* Customer */}
       <div style={row}>
-        <span style={{ fontSize: '18px', fontWeight: '800' }}>Customer:</span>
-        <span style={{ fontSize: '18px', fontWeight: '800' }}>{invoice.Customer?.name || '—'}</span>
+        <span style={{ fontSize: '18px', fontWeight: '700' }}>Customer:</span>
+        <span style={{ fontSize: '18px', fontWeight: '700' }}>{invoice.Customer?.name || '—'}</span>
       </div>
       {invoice.Customer?.code && (
         <div style={row}>
-          <span style={{ fontSize: '18px', fontWeight: '800' }}>Code:</span>
-          <span style={{ fontSize: '18px', fontWeight: '800' }}>{invoice.Customer.code}</span>
+          <span style={{ fontSize: '18px', fontWeight: '700' }}>Code:</span>
+          <span style={{ fontSize: '18px', fontWeight: '700' }}>{invoice.Customer.code}</span>
         </div>
       )}
       <div style={row}>
-        <span style={{ fontSize: '18px', fontWeight: '800' }}>Date:</span>
-        <span style={{ fontSize: '18px', fontWeight: '800' }}>{fmtDate(invoice.invoice_date)}</span>
+        <span style={{ fontSize: '18px', fontWeight: '700' }}>Date:</span>
+        <span style={{ fontSize: '18px', fontWeight: '700' }}>{fmtDate(invoice.invoice_date)}</span>
       </div>
       {invoice.due_date && (
         <div style={row}>
-          <span style={{ fontSize: '18px', fontWeight: '800' }}>Due:</span>
-          <span style={{ fontSize: '18px', fontWeight: '800' }}>{fmtDate(invoice.due_date)}</span>
+          <span style={{ fontSize: '18px', fontWeight: '700' }}>Due:</span>
+          <span style={{ fontSize: '18px', fontWeight: '700' }}>{fmtDate(invoice.due_date)}</span>
         </div>
       )}
 
@@ -119,7 +119,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
             {(parseFloat(line.discount_rate || 0) > 0 || freeQty > 0) && (
               <div style={{ fontSize: '17px' }}>
                 {parseFloat(line.discount_rate || 0) > 0 && <span style={{ color: '#c00' }}>{`Disc ${line.discount_rate}%`}</span>}
-                {freeQty > 0 && <span style={{ fontSize: '18px', fontWeight: '800', color: '#000' }}>{` +${freeQty} free`}</span>}
+                {freeQty > 0 && <span style={{ fontSize: '18px', fontWeight: '700', color: '#000' }}>{` +${freeQty} free`}</span>}
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -216,7 +216,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '17px' }}>
         <div style={{ textAlign: 'center', width: '45%' }}>
           <div style={{ minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: '2px' }}>
-            {invoice.SalesRep?.name && <span style={{ fontWeight: '800' }}>{invoice.SalesRep.name}</span>}
+            {invoice.SalesRep?.name && <span style={{ fontWeight: '700' }}>{invoice.SalesRep.name}</span>}
           </div>
           <div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Prepared By</div>
         </div>

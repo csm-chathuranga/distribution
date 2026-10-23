@@ -44,7 +44,7 @@ export default function SalesOrderCreate() {
   const assignedWarehouse = useSelector(selectAssignedWarehouse);
   const canManageUsers    = usePermission('settings.users');
   const [create, { isLoading }] = useCreateSalesOrderMutation();
-  const { isOnline, refreshCount } = useOfflineSync();
+  const { isOnline, refreshQueue } = useOfflineSync();
 
   const { data: customers }  = useGetCustomersQuery({ limit: 500 });
   const { data: warehouses } = useGetWarehousesQuery({});
@@ -53,7 +53,7 @@ export default function SalesOrderCreate() {
   const { data: productsRaw } = useGetProductsQuery({ limit: 500, is_active: true });
   const products = productsRaw?.data || [];
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm({
     resolver: yupResolver(headerSchema),
     defaultValues: {
       order_date:   today(),
@@ -77,6 +77,10 @@ export default function SalesOrderCreate() {
     { warehouse_id: selectedWarehouseId },
     { skip: !selectedWarehouseId }
   );
+  const offlineReferencesReady = Boolean(
+    customers?.data && productsRaw?.data && warehouses?.data &&
+    (!selectedWarehouseId || stockRaw?.data)
+  );
   // Map product_id → available qty for quick lookup
   const stockMap = useMemo(() => {
     const m = {};
@@ -85,7 +89,8 @@ export default function SalesOrderCreate() {
   }, [stockRaw]);
 
   // Free item quota — fetch current user's allocations and map product_id → remaining
-  const { data: freeAllocs = [] } = useGetFreeAllocationsQuery();
+  const { data: freeAllocsData } = useGetFreeAllocationsQuery();
+  const freeAllocs = freeAllocsData || [];
   const allocMap = useMemo(() => {
     const m = {};
     freeAllocs.forEach(a => {
@@ -208,13 +213,56 @@ export default function SalesOrderCreate() {
     }, 0);
   const netTotal = Math.max(0, orderTotal - returnDeduction);
 
+  const saveOfflineOrder = async (payload, headerData) => {
+    await enqueueRequest({
+      id: payload.client_request_id,
+      url: '/sales-orders',
+      method: 'POST',
+      body: payload,
+      ownerId: currentUser?.id,
+      timestamp: Date.now(),
+      display: {
+        customerName: selectedCustomer?.name || `Customer ${headerData.customer_id}`,
+        warehouseName: warehouses?.data?.find(w => String(w.id) === String(headerData.warehouse_id))?.name || '',
+        itemCount: lines.length,
+        totalAmount: netTotal,
+        orderDate: headerData.order_date,
+        salesRepId: headerData.sales_rep_id || currentUser?.id,
+      },
+    });
+    await refreshQueue();
+  };
+
   const onSubmit = async (headerData) => {
     if (lines.length === 0) {
       toast.error('Add at least one item with a quantity');
       return;
     }
+    if (!headerData.customer_id || !headerData.warehouse_id) {
+      toast.error('Select a customer and warehouse before saving the order');
+      return;
+    }
+    if (!products.length || lines.some(line => !products.some(product => product.id === line.product.id))) {
+      toast.error('Order products are unavailable. Refresh the product catalogue while online and try again.');
+      return;
+    }
+    const freeLines = lines.filter(line => line.free > 0);
+    if (!navigator.onLine && freeLines.length > 0 && !freeAllocsData) {
+      toast.error('Free-item quota data is not cached on this device. Reconnect before adding free quantities.');
+      return;
+    }
+    const overQuotaLine = freeLines.find(line =>
+      allocMap[line.product.id] !== undefined && line.free > allocMap[line.product.id]
+    );
+    if (overQuotaLine) {
+      toast.error(`Free-item quantity exceeds the remaining quota for ${overQuotaLine.product.name}`);
+      return;
+    }
+    const requestId = globalThis.crypto?.randomUUID?.()
+      || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
     const payload = {
       ...headerData,
+      client_request_id: requestId,
       subtotal_amount: subtotal,
       discount_amount: discountAmt,
       return_deduction: returnDeduction,
@@ -242,20 +290,55 @@ export default function SalesOrderCreate() {
     };
 
     if (!navigator.onLine) {
+      if (!offlineReferencesReady) {
+        toast.error('This device is missing cached order data. Connect to the internet, reopen the order form, then try offline again.');
+        return;
+      }
       try {
-        await enqueueRequest({ id: `order-${Date.now()}-${Math.random().toString(36).slice(2)}`, url: '/sales-orders', method: 'POST', body: payload });
-        await refreshCount();
-        toast.success('Order saved — will sync when back online', { duration: 4000 });
+        await saveOfflineOrder(payload, headerData);
+        toast.success('Order saved on this device — it will sync when connected', { duration: 4000 });
         navigate('/sales-orders');
-      } catch { toast.error('Failed to save offline'); }
+      } catch (error) {
+        toast.error(`Could not save this order on the device: ${error.message || 'offline storage is unavailable'}`);
+      }
       return;
     }
 
     try {
-      await create(payload).unwrap();
+      const result = await create(payload).unwrap();
+      if (result?.__queued) {
+        toast.success('Order saved on this device — it will sync when connected');
+        navigate('/sales-orders');
+        return;
+      }
       toast.success('Sales order created');
       navigate('/sales-orders');
-    } catch (e) { toast.error(e.data?.message || 'Failed'); }
+    } catch (e) {
+      const status = e?.status;
+      const retryable = ['FETCH_ERROR', 'TIMEOUT_ERROR', 'PARSING_ERROR'].includes(status)
+        || (typeof status === 'number' && (status === 408 || status === 429 || status >= 500))
+        || !navigator.onLine;
+      if (retryable) {
+        if (!offlineReferencesReady) {
+          toast.error('Connection lost and this device is missing cached order data. Keep this page open and reconnect before retrying.');
+          return;
+        }
+        if (freeLines.length > 0 && !freeAllocsData) {
+          toast.error('Connection lost and free-item quota data is not cached. Reconnect before retrying this order.');
+          return;
+        }
+        try {
+          await saveOfflineOrder(payload, headerData);
+          toast.success('Connection interrupted — order saved on this device and will retry safely');
+          navigate('/sales-orders');
+          return;
+        } catch (storageError) {
+          toast.error(`Connection failed and the order could not be saved locally: ${storageError.message || 'offline storage is unavailable'}`);
+          return;
+        }
+      }
+      toast.error(e.data?.message || 'Failed to create sales order');
+    }
   };
 
   return (
@@ -263,7 +346,9 @@ export default function SalesOrderCreate() {
       {!isOnline && (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium">
           <WifiOff size={15} className="text-red-400 flex-shrink-0" />
-          Offline — order will sync when connected
+          {offlineReferencesReady
+            ? 'Offline — this order will be saved on this device and synced when connected'
+            : 'Offline — cached customer, product, warehouse, or stock data is missing. Reconnect before creating an order.'}
         </div>
       )}
 
@@ -665,10 +750,10 @@ export default function SalesOrderCreate() {
         <button
           type="button"
           onClick={handleSubmit(onSubmit)}
-          disabled={isLoading || lines.length === 0}
+          disabled={isLoading || isSubmitting || lines.length === 0}
           className="w-full py-4 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-base transition-colors disabled:opacity-40"
         >
-          {isLoading
+          {isLoading || isSubmitting
             ? 'Creating…'
             : lines.length === 0
             ? 'Enter quantities to continue'

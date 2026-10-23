@@ -13,6 +13,7 @@ const STATUS_MAP = {
   // Delivery
   PENDING: 'badge-yellow',
   DISPATCHED: 'badge-blue',
+  RECEIVED: 'badge-green',
   DELIVERED: 'badge-green',
   RETURNED: 'badge-amber',
   // Loading Sheet

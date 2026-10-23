@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ClipboardList, ChevronRight, CheckCircle, TrendingUp, BadgeCheck, Clock, Filter, X } from 'lucide-react';
+import { Plus, Search, ClipboardList, ChevronRight, CheckCircle, TrendingUp, BadgeCheck, Clock, Filter, X, CloudUpload, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux';
 import { useGetSalesOrdersQuery, useConfirmSalesOrderMutation } from '../../api/salesApi';
 import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { usePermission } from '../../hooks/usePermission';
+import { useOfflineSync } from '../../hooks/useOfflineSync';
+import { selectCurrentUser } from '../../store/authSlice';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import { fmtCurrency, fmtDate } from '../../utils/format';
+import { fmtCurrency, fmtDate, fmtTime } from '../../utils/format';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -16,6 +19,14 @@ export default function SalesOrderList() {
   const canCreate   = usePermission('sales.create');
   const canApprove  = usePermission('sales.approve');
   const canViewAll  = usePermission('sales.view_all');
+  const currentUser = useSelector(selectCurrentUser);
+  const {
+    queueItems,
+    isSyncing,
+    retryQueueItem,
+    discardQueueItem,
+    claimQueueItem,
+  } = useOfflineSync();
   const [page,             setPage]             = useState(1);
   const [search,           setSearch]           = useState('');
   const [confirmingOrder,  setConfirmingOrder]  = useState(null);
@@ -23,11 +34,10 @@ export default function SalesOrderList() {
   const [dateFrom,         setDateFrom]         = useState('');
   const [dateTo,           setDateTo]           = useState('');
   const [salesRepId,       setSalesRepId]       = useState('');
+  const [discardingItem,   setDiscardingItem]   = useState(null);
 
   const { data: repsData } = useGetUsersForSelectQuery('sales_rep', { skip: !canViewAll });
   const salesReps = repsData || [];
-
-  const activeFilterCount = [dateFrom, dateTo, salesRepId].filter(Boolean).length;
 
   const queryParams = { search, page, limit: 20 };
   if (dateFrom)    queryParams.date_from    = dateFrom;
@@ -39,6 +49,16 @@ export default function SalesOrderList() {
   const [confirmOrder, { isLoading: confirming }] = useConfirmSalesOrderMutation();
   const orders = data?.data || [];
   const total  = data?.total || 0;
+  const pendingOrders = page === 1 ? queueItems.filter(item => {
+    if (item.url !== '/sales-orders' || item.method !== 'POST') return false;
+    if (item.ownerId && String(item.ownerId) !== String(currentUser?.id)) return false;
+    const details = item.display || {};
+    if (search && !String(details.customerName || '').toLowerCase().includes(search.toLowerCase())) return false;
+    if (dateFrom && details.orderDate && details.orderDate < dateFrom) return false;
+    if (dateTo && details.orderDate && details.orderDate > dateTo) return false;
+    if (salesRepId && String(details.salesRepId || '') !== String(salesRepId)) return false;
+    return true;
+  }) : [];
 
   const todaySummary = useMemo(() => {
     const list = todayData?.data || [];
@@ -99,9 +119,9 @@ export default function SalesOrderList() {
         </div>
       </div>
 
-      {/* Search + filter toggle */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      {/* Search and filters */}
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             value={search}
@@ -110,70 +130,61 @@ export default function SalesOrderList() {
             className="input pl-9 w-full text-sm py-2"
           />
         </div>
+        {canViewAll && salesReps.length > 0 && (
+          <select
+            value={salesRepId}
+            onChange={e => { setSalesRepId(e.target.value); setPage(1); }}
+            className="input w-28 flex-shrink-0 text-sm py-2"
+            aria-label="Filter by sales rep"
+          >
+            <option value="">All reps</option>
+            {salesReps.map(r => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        )}
         <button
           onClick={() => setShowFilters(v => !v)}
-          className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters || activeFilterCount > 0 ? 'bg-primary-50 border-primary-300 text-primary-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          className={`relative flex flex-shrink-0 items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters || dateFrom || dateTo ? 'bg-primary-50 border-primary-300 text-primary-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
         >
           <Filter size={14} />
           Filter
-          {activeFilterCount > 0 && (
+          {(dateFrom || dateTo) && (
             <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {activeFilterCount}
+              {[dateFrom, dateTo].filter(Boolean).length}
             </span>
           )}
         </button>
       </div>
 
-      {/* Filter panel */}
+      {/* Optional date filters */}
       {showFilters && (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Filters</span>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={() => { setDateFrom(''); setDateTo(''); setSalesRepId(''); setPage(1); }}
-                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium"
-              >
-                <X size={11} /> Clear all
-              </button>
-            )}
+        <div className="flex items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <label className="block text-xs text-gray-500 mb-1">From</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); setPage(1); }}
+              className="input w-full text-sm py-1.5"
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">From</label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={e => { setDateFrom(e.target.value); setPage(1); }}
-                className="input w-full text-sm py-1.5"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">To</label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={e => { setDateTo(e.target.value); setPage(1); }}
-                className="input w-full text-sm py-1.5"
-              />
-            </div>
+          <div className="min-w-0 flex-1">
+            <label className="block text-xs text-gray-500 mb-1">To</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => { setDateTo(e.target.value); setPage(1); }}
+              className="input w-full text-sm py-1.5"
+            />
           </div>
-
-          {canViewAll && salesReps.length > 0 && (
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Sales Rep</label>
-              <select
-                value={salesRepId}
-                onChange={e => { setSalesRepId(e.target.value); setPage(1); }}
-                className="input w-full text-sm py-1.5"
-              >
-                <option value="">All reps</option>
-                {salesReps.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-            </div>
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(''); setDateTo(''); setPage(1); }}
+              className="flex flex-shrink-0 items-center gap-1 px-2 py-2 text-xs text-red-500 hover:text-red-700 font-medium"
+            >
+              <X size={11} /> Clear
+            </button>
           )}
         </div>
       )}
@@ -191,7 +202,7 @@ export default function SalesOrderList() {
             </div>
           ))}
         </div>
-      ) : orders.length === 0 ? (
+      ) : orders.length === 0 && pendingOrders.length === 0 ? (
         <div className="card p-10 text-center">
           <ClipboardList size={32} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-500 font-medium">No sales orders yet</p>
@@ -203,6 +214,72 @@ export default function SalesOrderList() {
         </div>
       ) : (
         <div className="space-y-2">
+          {pendingOrders.map(item => {
+            const failed = item.status === 'failed';
+            const details = item.display || {};
+            return (
+              <div key={item.id} className={`card overflow-hidden border-l-4 ${failed ? 'border-l-red-500' : 'border-l-amber-400'}`}>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 leading-snug">
+                        {details.customerName || 'Offline order'}
+                      </p>
+                      <p className={`inline-flex items-center gap-1 mt-1 rounded-full px-2 py-0.5 text-xs font-semibold ${failed ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {failed ? <AlertCircle size={12} /> : <CloudUpload size={12} className={item.status === 'syncing' ? 'animate-pulse' : ''} />}
+                          {failed ? 'Sync failed' : item.status === 'syncing' ? 'Syncing' : 'Waiting to sync'}
+                      </p>
+                    </div>
+                    <span className="font-bold text-gray-900 font-mono flex-shrink-0">
+                      {fmtCurrency(details.totalAmount || 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                    <span>
+                      {details.orderDate ? fmtDate(details.orderDate) : 'Date unavailable'}
+                      {details.warehouseName && <span className="ml-2 text-gray-400">· {details.warehouseName}</span>}
+                    </span>
+                    <span>{details.itemCount || 0} item{details.itemCount === 1 ? '' : 's'}</span>
+                  </div>
+                  {item.lastError && (
+                    <p className={`mt-2 rounded-lg px-3 py-2 text-xs ${failed ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800'}`}>{item.lastError}</p>
+                  )}
+                  {!item.ownerId && (
+                    <p className="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                      This saved order has no account recorded. Assign it only if you created it.
+                    </p>
+                  )}
+                  <div className="flex gap-2 mt-3">
+                    {!item.ownerId && (
+                      <button
+                        onClick={() => claimQueueItem(item.id).catch(error => toast.error(error.message || 'Could not assign saved order'))}
+                        disabled={isSyncing || !currentUser?.id}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        Assign to this account
+                      </button>
+                    )}
+                    {failed && (
+                      <button
+                        onClick={() => retryQueueItem(item.id).catch(error => toast.error(error.message || 'Could not retry order'))}
+                        disabled={isSyncing}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} /> Retry sync
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setDiscardingItem(item)}
+                      disabled={isSyncing}
+                      className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <Trash2 size={13} /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
           {orders.map(so => (
             <div key={so.id} className="card overflow-hidden">
               <div className="p-4 cursor-pointer" onClick={() => navigate(`/sales-orders/${so.id}`)}>
@@ -222,6 +299,9 @@ export default function SalesOrderList() {
                 <div className="flex items-center justify-between mt-3">
                   <div className="text-xs text-gray-500">
                     {fmtDate(so.order_date)}
+                    <span className="ml-1.5 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
+                      {fmtTime(so.createdAt)}
+                    </span>
                     {so.Warehouse?.name && <span className="ml-2 text-gray-400">· {so.Warehouse.name}</span>}
                   </div>
                   <span className="font-bold text-gray-900 font-mono">{fmtCurrency(so.total_amount)}</span>
@@ -262,6 +342,22 @@ export default function SalesOrderList() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirmingOrder(null)}
         loading={confirming}
+      />
+      <ConfirmDialog
+        open={!!discardingItem}
+        title="Remove saved order"
+        message="This permanently removes the unsynced order from this device. This cannot be undone."
+        confirmLabel="Remove order"
+        onConfirm={async () => {
+          try {
+            await discardQueueItem(discardingItem.id);
+            setDiscardingItem(null);
+            toast.success('Saved order removed');
+          } catch (error) {
+            toast.error(error.message || 'Could not remove saved order');
+          }
+        }}
+        onCancel={() => setDiscardingItem(null)}
       />
     </div>
   );

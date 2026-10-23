@@ -339,7 +339,7 @@ export default function LoadingSheetDetail() {
   };
   const sheetExpenses = expenseData?.data || [];
 
-  const handlePrint = () => printPOS(<LoadingSheetPrintPOS sheet={sheet} company={company} />);
+  const handlePrint = () => printComponent(<LoadingSheetPrint sheet={sheet} company={company} />, { orientation: 'landscape' });
   const handlePrintInvoices = () => {
     const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
     if (!sheetInvoices.length) return;

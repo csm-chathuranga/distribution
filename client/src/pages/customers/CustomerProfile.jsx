@@ -124,13 +124,6 @@ export default function CustomerProfile() {
       {canCreate && (
         <div className="grid grid-cols-2 gap-3">
           <button
-            onClick={() => navigate(`/invoices/new?customer_id=${c.id}`)}
-            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity active:opacity-80"
-            style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}
-          >
-            <FileText size={16} /> New Invoice
-          </button>
-          <button
             onClick={() => navigate(`/sales-orders/new?customer_id=${c.id}`)}
             className="flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity active:opacity-80"
             style={{ background: 'linear-gradient(135deg,#7c3aed,#8b5cf6)' }}
@@ -139,8 +132,13 @@ export default function CustomerProfile() {
           </button>
           <button
             onClick={() => navigate(`/receipts/new?customer_id=${c.id}`)}
-            className="col-span-2 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity active:opacity-80"
-            style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}
+            disabled={outstanding <= 0}
+            className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-md transition-opacity ${
+              outstanding > 0
+                ? 'active:opacity-80'
+                : 'cursor-not-allowed opacity-50'
+            }`}
+            style={{ background: outstanding > 0 ? 'linear-gradient(135deg,#059669,#10b981)' : '#9ca3af' }}
           >
             <Wallet size={16} /> Collect Payment
           </button>
@@ -148,10 +146,10 @@ export default function CustomerProfile() {
       )}
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard icon={TrendingUp}   label="Total Invoiced"   value={fmtCurrency(totalInvoiced)} sub={`${s?.total_count || 0} invoices`} color="blue" />
         <StatCard icon={AlertCircle}  label="Outstanding"      value={fmtCurrency(outstanding)}   sub={overdueCount > 0 ? `${overdueCount} overdue` : 'All current'} color={outstanding > 0 ? 'red' : 'green'} danger={outstanding > 0} />
-        <StatCard icon={CheckCircle}  label="Total Collected"  value={fmtCurrency(totalPaid)}     sub={`${s?.paid_count || 0} paid invoices`} color="green" />
+        <StatCard icon={CheckCircle}  label="Total Collected"  value={fmtCurrency(totalPaid)}     sub={`${s?.receipt_count || 0} receipts`} color="green" />
         <StatCard icon={CreditCard}   label="Credit Limit"     value={fmtCurrency(c.credit_limit)} sub={`${c.credit_days} days · ${creditUsedPct}% used`} color="amber" />
       </div>
 

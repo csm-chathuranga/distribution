@@ -75,6 +75,19 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
     data.created_by = req.user.id;
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
+    if (data.client_request_id != null) {
+      if (typeof data.client_request_id !== 'string' || !data.client_request_id.trim() || data.client_request_id.length > 64) {
+        return res.status(400).json({ message: 'Invalid client request ID' });
+      }
+      data.client_request_id = data.client_request_id.trim();
+      const existing = await SalesOrder.findOne({ where: { client_request_id: data.client_request_id } });
+      if (existing) {
+        if (String(existing.created_by) !== String(req.user.id)) {
+          return res.status(409).json({ message: 'Client request ID is already associated with another user' });
+        }
+        return res.status(200).json(existing);
+      }
+    }
     if (!data.order_number) data.order_number = await generateOrderNumber();
     // Auto-confirm — no manual approval step needed
     data.status      = 'CONFIRMED';
@@ -189,7 +202,21 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
       notify({ roleName: 'admin',       type: 'NEW_ORDER', title: 'New Sales Order', body: orderBody, link: `/sales-orders/${order.id}` });
       notify({ roleName: 'manager',     type: 'NEW_ORDER', title: 'New Sales Order', body: orderBody, link: `/sales-orders/${order.id}` });
       notify({ roleName: 'super_admin', type: 'NEW_ORDER', title: 'New Sales Order', body: orderBody, link: `/sales-orders/${order.id}` });
-    } catch (e) { await t.rollback(); throw e; }
+    } catch (e) {
+      await t.rollback();
+      const duplicateRequest = data.client_request_id
+        && (e.name === 'SequelizeUniqueConstraintError' || e.original?.code === 'ER_DUP_ENTRY');
+      if (duplicateRequest) {
+        const existing = await SalesOrder.findOne({ where: { client_request_id: data.client_request_id } });
+        if (existing) {
+          if (String(existing.created_by) !== String(req.user.id)) {
+            return res.status(409).json({ message: 'Client request ID is already associated with another user' });
+          }
+          return res.status(200).json(existing);
+        }
+      }
+      throw e;
+    }
 
   } catch (err) { next(err); }
 });
