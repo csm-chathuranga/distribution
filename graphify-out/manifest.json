@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "client/src/pages/sales/SalesOrderCreate.jsx": {
-    "mtime": 1792783959.1981342,
-    "ast_hash": "e118dde0b41537cad001c128128545c3",
+    "mtime": 1792785115.137325,
+    "ast_hash": "9e524e96bc54d40b7d961bc49dfad976",
     "semantic_hash": ""
   },
   "client/src/pages/sales/SalesOrderList.jsx": {
@@ -570,8 +570,8 @@
     "semantic_hash": "a273152fe5e410dc41ccfa71cc25dbf9"
   },
   "client/vite.config.js": {
-    "mtime": 1792783560.5301898,
-    "ast_hash": "75afc482d69f6ab1a1c62acee001032c",
+    "mtime": 1792785110.1220016,
+    "ast_hash": "598e41f362e7bc9709d330f1c1e976b5",
     "semantic_hash": ""
   },
   "database/migrate_new_modules.sql": {

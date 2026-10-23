@@ -78,7 +78,8 @@ export default function SalesOrderCreate() {
     { skip: !selectedWarehouseId }
   );
   const offlineReferencesReady = Boolean(
-    customers?.data && productsRaw?.data && warehouses?.data &&
+    customers?.data && productsRaw?.data && warehouses?.data && routes?.data &&
+    (!canManageUsers || users?.data) &&
     (!selectedWarehouseId || stockRaw?.data)
   );
   // Map product_id → available qty for quick lookup

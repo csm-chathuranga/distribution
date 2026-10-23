@@ -485,13 +485,13 @@
     "semantic_hash": ""
   },
   "client/src/pages/sales/SalesOrderCreate.jsx": {
-    "mtime": 1792783345.516768,
-    "ast_hash": "1f42fa2d42c2e485cbe24a44f2fe8b02",
+    "mtime": 1792783959.1981342,
+    "ast_hash": "e118dde0b41537cad001c128128545c3",
     "semantic_hash": ""
   },
   "client/src/pages/sales/SalesOrderList.jsx": {
-    "mtime": 1792783122.5986967,
-    "ast_hash": "e824dcfa6c5da33089c473e8a4cb3477",
+    "mtime": 1792783769.9314654,
+    "ast_hash": "54a19f79d462838ffa543ed9091168ef",
     "semantic_hash": ""
   },
   "client/src/pages/settings/BranchList.jsx": {
@@ -1285,8 +1285,8 @@
     "semantic_hash": ""
   },
   "client/src/hooks/useOfflineSync.js": {
-    "mtime": 1792783431.4554975,
-    "ast_hash": "c19d007f990051acf754fb4919188013",
+    "mtime": 1792783783.707564,
+    "ast_hash": "1e795732e4bc91df92b6912ed26c37e3",
     "semantic_hash": ""
   },
   "client/src/pages/customers/RouteDetail.jsx": {
@@ -1370,8 +1370,8 @@
     "semantic_hash": ""
   },
   "server/__tests__/salesOrders.test.js": {
-    "mtime": 1792783322.3362918,
-    "ast_hash": "e0881712517b4da1c8a308403f044e2a",
+    "mtime": 1792783981.6216843,
+    "ast_hash": "a21f9ace9a5531fdad1c2c4d5542a7df",
     "semantic_hash": ""
   },
   "server/migrations/007_add_free_quantity_and_customer_returns.js": {

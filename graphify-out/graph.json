@@ -11769,8 +11769,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "server_models_index_stockmovement",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "stockmovement"
     },
     {
@@ -14475,8 +14475,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_routes_stock",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "stock.js"
     },
     {
@@ -14486,8 +14486,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_routes_stock_router",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "router"
     },
     {
@@ -14497,8 +14497,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "server_routes_stock_op",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "{ op }"
     },
     {
@@ -14508,8 +14508,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_routes_stock_authorize",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "authorize"
     },
     {
@@ -14519,8 +14519,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "server_routes_stock_stock_stockmovement_product_category_unit_warehouse_sequelize",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "{ stock, stockmovement, product, category, unit, warehouse, sequelize }"
     },
     {
@@ -14530,8 +14530,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "server_routes_stock_scoped_roles",
-      "community": 74,
-      "community_name": "stockTransfers.js",
+      "community": 36,
+      "community_name": "stockAdjustments.js",
       "norm_label": "scoped_roles"
     },
     {
@@ -40970,7 +40970,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L365",
+      "source_location": "L366",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40982,7 +40982,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L566",
+      "source_location": "L567",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -41006,7 +41006,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L217",
+      "source_location": "L218",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -55609,5 +55609,5 @@
       "source_file": "client/index.html"
     }
   ],
-  "built_at_commit": "da2bec119239bb8bdc0807dbe03fefe6a84da339"
+  "built_at_commit": "f90ba3aaa63008d2b6218b09ccd77a9a4b16671e"
 }

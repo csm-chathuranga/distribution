@@ -2782,7 +2782,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_app",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "app.jsx"
     },
@@ -2815,8 +2815,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "client_src_app_app",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "app()"
     },
     {
@@ -2827,7 +2827,7 @@
       "_origin": "ast",
       "id": "client_src_api_authapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "authapi.js"
     },
     {
@@ -2838,7 +2838,7 @@
       "_origin": "ast",
       "id": "client_src_api_authapi_authapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "authapi"
     },
     {
@@ -2871,7 +2871,7 @@
       "_origin": "ast",
       "id": "client_src_api_baseapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "baseapi.js"
     },
     {
@@ -2882,7 +2882,7 @@
       "_origin": "ast",
       "id": "client_src_api_baseapi_queueable_paths",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "queueable_paths"
     },
     {
@@ -2893,7 +2893,7 @@
       "_origin": "ast",
       "id": "client_src_api_baseapi_rawbasequery",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "rawbasequery"
     },
     {
@@ -2904,7 +2904,7 @@
       "_origin": "ast",
       "id": "client_src_api_baseapi_basequerywithreauth",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "basequerywithreauth()"
     },
     {
@@ -2915,7 +2915,7 @@
       "_origin": "ast",
       "id": "client_src_api_baseapi_baseapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "baseapi"
     },
     {
@@ -2925,8 +2925,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_customersapi",
-      "community": 26,
-      "community_name": "today",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "customersapi.js"
     },
     {
@@ -2936,8 +2936,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_customersapi_customersapi",
-      "community": 26,
-      "community_name": "today",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "customersapi"
     },
     {
@@ -2948,7 +2948,7 @@
       "_origin": "ast",
       "id": "client_src_api_financeapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "financeapi.js"
     },
     {
@@ -2959,7 +2959,7 @@
       "_origin": "ast",
       "id": "client_src_api_financeapi_financeapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "financeapi"
     },
     {
@@ -2969,7 +2969,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_inventoryapi",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "inventoryapi.js"
     },
@@ -2980,7 +2980,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_inventoryapi_inventoryapi",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "inventoryapi"
     },
@@ -2992,7 +2992,7 @@
       "_origin": "ast",
       "id": "client_src_api_notificationsapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "notificationsapi.js"
     },
     {
@@ -3003,7 +3003,7 @@
       "_origin": "ast",
       "id": "client_src_api_notificationsapi_notificationsapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "notificationsapi"
     },
     {
@@ -3013,8 +3013,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_productsapi",
-      "community": 8,
-      "community_name": "TextField",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "productsapi.js"
     },
     {
@@ -3024,8 +3024,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_productsapi_productsapi",
-      "community": 8,
-      "community_name": "TextField",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "productsapi"
     },
     {
@@ -3035,8 +3035,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_purchasingapi",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 0,
+      "community_name": "format.js",
       "norm_label": "purchasingapi.js"
     },
     {
@@ -3046,8 +3046,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_purchasingapi_purchasingapi",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 0,
+      "community_name": "format.js",
       "norm_label": "purchasingapi"
     },
     {
@@ -3057,8 +3057,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_reportsapi",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 4,
+      "community_name": "Table.jsx",
       "norm_label": "reportsapi.js"
     },
     {
@@ -3068,8 +3068,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_reportsapi_reportsapi",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 4,
+      "community_name": "Table.jsx",
       "norm_label": "reportsapi"
     },
     {
@@ -3079,8 +3079,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_salesapi",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 0,
+      "community_name": "format.js",
       "norm_label": "salesapi.js"
     },
     {
@@ -3090,8 +3090,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_salesapi_salesapi",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "salesapi"
     },
     {
@@ -3101,8 +3101,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_settingsapi",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "settingsapi.js"
     },
     {
@@ -3112,8 +3112,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_settingsapi_settingsapi",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "settingsapi"
     },
     {
@@ -3124,7 +3124,7 @@
       "_origin": "ast",
       "id": "client_src_api_suppliersapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "suppliersapi.js"
     },
     {
@@ -3135,7 +3135,7 @@
       "_origin": "ast",
       "id": "client_src_api_suppliersapi_suppliersapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "suppliersapi"
     },
     {
@@ -3146,7 +3146,7 @@
       "_origin": "ast",
       "id": "client_src_api_vehiclesapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "vehiclesapi.js"
     },
     {
@@ -3157,7 +3157,7 @@
       "_origin": "ast",
       "id": "client_src_api_vehiclesapi_vehiclesapi",
       "community": 14,
-      "community_name": "salesApi.js",
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "vehiclesapi"
     },
     {
@@ -3167,7 +3167,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_warehousesapi",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "warehousesapi.js"
     },
@@ -3178,7 +3178,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_warehousesapi_warehousesapi",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "warehousesapi"
     },
@@ -3442,8 +3442,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_mapmodal",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 181,
+      "community_name": "DeliveryDetail.jsx",
       "norm_label": "mapmodal.jsx"
     },
     {
@@ -3453,8 +3453,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "client_src_components_mapmodal_mapmodal",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 181,
+      "community_name": "DeliveryDetail.jsx",
       "norm_label": "mapmodal()"
     },
     {
@@ -3541,8 +3541,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_sidebar",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 1,
+      "community_name": "selectCurrentUser",
       "norm_label": "sidebar.jsx"
     },
     {
@@ -3552,8 +3552,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_components_sidebar_navgroup",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 1,
+      "community_name": "selectCurrentUser",
       "norm_label": "navgroup()"
     },
     {
@@ -3563,8 +3563,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "client_src_components_sidebar_navitem",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 1,
+      "community_name": "selectCurrentUser",
       "norm_label": "navitem()"
     },
     {
@@ -3574,8 +3574,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "client_src_components_sidebar_sidebar",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 1,
+      "community_name": "selectCurrentUser",
       "norm_label": "sidebar()"
     },
     {
@@ -3585,8 +3585,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_deliverynoteprint",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 181,
+      "community_name": "DeliveryDetail.jsx",
       "norm_label": "deliverynoteprint.jsx"
     },
     {
@@ -3596,8 +3596,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_print_deliverynoteprint_deliverynoteprint",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 181,
+      "community_name": "DeliveryDetail.jsx",
       "norm_label": "deliverynoteprint()"
     },
     {
@@ -3607,8 +3607,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_grnprint",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 183,
+      "community_name": "GRNDetail.jsx",
       "norm_label": "grnprint.jsx"
     },
     {
@@ -3618,8 +3618,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_print_grnprint_grnprint",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 183,
+      "community_name": "GRNDetail.jsx",
       "norm_label": "grnprint()"
     },
     {
@@ -3817,7 +3817,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_purchaseorderprint",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "purchaseorderprint.jsx"
     },
     {
@@ -3828,7 +3828,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_purchaseorderprint_purchaseorderprint",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "purchaseorderprint()"
     },
     {
@@ -3872,7 +3872,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_supplierreturnprint",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierreturnprint.jsx"
     },
     {
@@ -3883,7 +3883,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_supplierreturnprint_supplierreturnprint",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierreturnprint()"
     },
     {
@@ -3992,7 +3992,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_ui_formfield",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "formfield.jsx"
     },
@@ -4003,7 +4003,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_formfield",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "formfield()"
     },
@@ -4015,7 +4015,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_textfield",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "textfield"
     },
     {
@@ -4025,8 +4025,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_textareafield",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "textareafield"
     },
     {
@@ -4037,7 +4037,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_selectfield",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "selectfield"
     },
     {
@@ -4047,7 +4047,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_checkboxfield",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "checkboxfield"
     },
@@ -4058,8 +4058,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_ui_modal",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "modal.jsx"
     },
     {
@@ -4069,8 +4069,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "client_src_components_ui_modal_modal",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "modal()"
     },
     {
@@ -4135,8 +4135,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_ui_searchableselect",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "searchableselect.jsx"
     },
     {
@@ -4146,8 +4146,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_components_ui_searchableselect_searchableselect",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "searchableselect()"
     },
     {
@@ -4322,8 +4322,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_contexts_notificationcontext",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "notificationcontext.jsx"
     },
     {
@@ -4333,8 +4333,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "client_src_contexts_notificationcontext_invalidation_map",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "invalidation_map"
     },
     {
@@ -4344,8 +4344,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "client_src_contexts_notificationcontext_notificationcontext",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "notificationcontext"
     },
     {
@@ -4355,8 +4355,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "client_src_contexts_notificationcontext_notificationprovider",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "notificationprovider()"
     },
     {
@@ -4366,8 +4366,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "client_src_contexts_notificationcontext_registerfcmtoken",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "registerfcmtoken()"
     },
     {
@@ -4377,8 +4377,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "client_src_contexts_notificationcontext_savefcmtoken",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "savefcmtoken()"
     },
     {
@@ -4399,8 +4399,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_firebase",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "firebase.js"
     },
     {
@@ -4410,8 +4410,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_firebase_firebaseconfig",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "firebaseconfig"
     },
     {
@@ -4525,10 +4525,21 @@
       "norm_label": "readresponsebody()"
     },
     {
-      "label": "useOfflineSync()",
+      "label": "fetchWithTimeout()",
       "file_type": "code",
       "source_file": "client/src/hooks/useOfflineSync.js",
       "source_location": "L31",
+      "_origin": "ast",
+      "id": "client_src_hooks_useofflinesync_fetchwithtimeout",
+      "community": 22,
+      "community_name": "useOfflineSync.js",
+      "norm_label": "fetchwithtimeout()"
+    },
+    {
+      "label": "useOfflineSync()",
+      "file_type": "code",
+      "source_file": "client/src/hooks/useOfflineSync.js",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "client_src_hooks_useofflinesync_useofflinesync",
       "community": 22,
@@ -4554,7 +4565,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_usepermission_usepermission",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "usepermission()"
     },
     {
@@ -4564,8 +4575,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_hooks_usepermission_usecanany",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 1,
+      "community_name": "selectCurrentUser",
       "norm_label": "usecanany()"
     },
     {
@@ -4608,8 +4619,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_main",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "main.jsx"
     },
     {
@@ -4663,8 +4674,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "client_src_pages_dashboard_dashboard",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 5,
+      "community_name": "Analytics.jsx",
       "norm_label": "dashboard()"
     },
     {
@@ -4740,8 +4751,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_profile",
-      "community": 1,
-      "community_name": "selectCurrentUser",
+      "community": 38,
+      "community_name": "SalesReturns.jsx",
       "norm_label": "profile.jsx"
     },
     {
@@ -4751,8 +4762,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_profile_changepasswordform",
-      "community": 1,
-      "community_name": "selectCurrentUser",
+      "community": 38,
+      "community_name": "SalesReturns.jsx",
       "norm_label": "changepasswordform()"
     },
     {
@@ -4762,8 +4773,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "client_src_pages_profile_profile",
-      "community": 1,
-      "community_name": "selectCurrentUser",
+      "community": 38,
+      "community_name": "SalesReturns.jsx",
       "norm_label": "profile()"
     },
     {
@@ -4773,8 +4784,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "categorylist.jsx"
     },
     {
@@ -4784,8 +4795,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist_schema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "schema"
     },
     {
@@ -4795,8 +4806,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist_categoryform",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "categoryform()"
     },
     {
@@ -4806,8 +4817,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist_categorylist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "categorylist()"
     },
     {
@@ -4927,8 +4938,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "customerprofile.jsx"
     },
     {
@@ -4938,8 +4949,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_type_colors",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "type_colors"
     },
     {
@@ -4949,8 +4960,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_statcard",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "statcard()"
     },
     {
@@ -4960,8 +4971,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_invoicestatusdot",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "invoicestatusdot()"
     },
     {
@@ -4972,7 +4983,7 @@
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_customerprofile",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "customerprofile()"
     },
     {
@@ -4982,7 +4993,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_customers_routedetail",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "routedetail.jsx"
     },
@@ -4993,7 +5004,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_customers_routedetail_credit_badge",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "credit_badge()"
     },
@@ -5004,7 +5015,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_customers_routedetail_routedetail",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "routedetail()"
     },
@@ -5015,7 +5026,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverycreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "deliverycreate.jsx"
     },
@@ -5026,7 +5037,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverycreate_schema",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "schema"
     },
@@ -5037,7 +5048,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverycreate_deliverycreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "deliverycreate()"
     },
@@ -5048,8 +5059,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverydetail",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 181,
+      "community_name": "DeliveryDetail.jsx",
       "norm_label": "deliverydetail.jsx"
     },
     {
@@ -5060,7 +5071,7 @@
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverydetail_deliverydetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "deliverydetail()"
     },
     {
@@ -5104,7 +5115,7 @@
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverylist_deliverylist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "deliverylist()"
     },
     {
@@ -5158,8 +5169,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "client_src_pages_finance_accountlist_ledgerview",
-      "community": 62,
-      "community_name": "AccountList.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "ledgerview()"
     },
     {
@@ -5268,8 +5279,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_finance_journallist_journalform",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 4,
+      "community_name": "Table.jsx",
       "norm_label": "journalform()"
     },
     {
@@ -5280,7 +5291,7 @@
       "_origin": "ast",
       "id": "client_src_pages_finance_journallist_journallist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "journallist()"
     },
     {
@@ -5291,7 +5302,7 @@
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "openingbalance.jsx"
     },
     {
@@ -5302,7 +5313,7 @@
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance_type_order",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "type_order"
     },
     {
@@ -5313,7 +5324,7 @@
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance_type_labels",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "type_labels"
     },
     {
@@ -5324,7 +5335,7 @@
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance_openingbalance",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "openingbalance()"
     },
     {
@@ -5389,8 +5400,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "client_src_pages_finance_trialbalance_trialbalance",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 5,
+      "community_name": "Analytics.jsx",
       "norm_label": "trialbalance()"
     },
     {
@@ -5400,7 +5411,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_openingstock",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "openingstock.jsx"
     },
@@ -5412,7 +5423,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_openingstock_openingstock",
       "community": 35,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "App.jsx",
       "norm_label": "openingstock()"
     },
     {
@@ -5422,8 +5433,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate",
-      "community": 35,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "stockadjustmentcreate.jsx"
     },
     {
@@ -5433,8 +5444,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_lineschema",
-      "community": 35,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "lineschema"
     },
     {
@@ -5444,8 +5455,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_schema",
-      "community": 35,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -5455,8 +5466,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_reasons",
-      "community": 35,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "reasons"
     },
     {
@@ -5466,8 +5477,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_stockadjustmentcreate",
-      "community": 35,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "stockadjustmentcreate()"
     },
     {
@@ -5499,7 +5510,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentlist_stockadjustmentlist",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "stockadjustmentlist()"
     },
@@ -5543,8 +5554,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "stocktransfercreate.jsx"
     },
     {
@@ -5554,8 +5565,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate_lineschema",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "lineschema"
     },
     {
@@ -5565,8 +5576,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate_schema",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "schema"
     },
     {
@@ -5576,8 +5587,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate_stocktransfercreate",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "stocktransfercreate()"
     },
     {
@@ -5599,7 +5610,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransferdetail_stocktransferdetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "stocktransferdetail()"
     },
     {
@@ -5609,8 +5620,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransferlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "format.js",
       "norm_label": "stocktransferlist.jsx"
     },
     {
@@ -5621,7 +5632,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransferlist_stocktransferlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "stocktransferlist()"
     },
     {
@@ -5631,8 +5642,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_masterdata_vehiclelist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 179,
+      "community_name": "VehicleList.jsx",
       "norm_label": "vehiclelist.jsx"
     },
     {
@@ -5642,8 +5653,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_masterdata_vehiclelist_status_opts",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 179,
+      "community_name": "VehicleList.jsx",
       "norm_label": "status_opts"
     },
     {
@@ -5653,8 +5664,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_masterdata_vehiclelist_schema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 179,
+      "community_name": "VehicleList.jsx",
       "norm_label": "schema"
     },
     {
@@ -5664,8 +5675,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_masterdata_vehiclelist_vehicleform",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 179,
+      "community_name": "VehicleList.jsx",
       "norm_label": "vehicleform()"
     },
     {
@@ -5675,8 +5686,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "client_src_pages_masterdata_vehiclelist_status_badge",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 179,
+      "community_name": "VehicleList.jsx",
       "norm_label": "status_badge"
     },
     {
@@ -5686,8 +5697,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "client_src_pages_masterdata_vehiclelist_vehiclelist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 179,
+      "community_name": "VehicleList.jsx",
       "norm_label": "vehiclelist()"
     },
     {
@@ -5698,7 +5709,7 @@
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "pricelistcreate.jsx"
     },
     {
@@ -5709,7 +5720,7 @@
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_itemschema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "itemschema"
     },
     {
@@ -5720,7 +5731,7 @@
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_schema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -5731,7 +5742,7 @@
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_type_opts",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "type_opts"
     },
     {
@@ -5742,7 +5753,7 @@
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_pricelistcreate",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "pricelistcreate()"
     },
     {
@@ -5774,7 +5785,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistlist_pricelistlist",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "pricelistlist()"
     },
@@ -5786,7 +5797,7 @@
       "_origin": "ast",
       "id": "client_src_pages_products_productform",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "productform.jsx"
     },
     {
@@ -5797,7 +5808,7 @@
       "_origin": "ast",
       "id": "client_src_pages_products_productform_schema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -5808,7 +5819,7 @@
       "_origin": "ast",
       "id": "client_src_pages_products_productform_unit_options",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "unit_options"
     },
     {
@@ -5819,7 +5830,7 @@
       "_origin": "ast",
       "id": "client_src_pages_products_productform_productform",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "productform()"
     },
     {
@@ -5840,7 +5851,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_products_productlist_productlist",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "productlist()"
     },
@@ -5862,7 +5873,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_products_unitlist_unitlist",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "unitlist()"
     },
@@ -5873,8 +5884,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "grncreate.jsx"
     },
     {
@@ -5884,8 +5895,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate_lineschema",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "lineschema"
     },
     {
@@ -5895,8 +5906,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate_schema",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "schema"
     },
     {
@@ -5906,7 +5917,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate_grncreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "grncreate()"
     },
@@ -5917,8 +5928,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grndetail",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 183,
+      "community_name": "GRNDetail.jsx",
       "norm_label": "grndetail.jsx"
     },
     {
@@ -5929,7 +5940,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grndetail_grndetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "grndetail()"
     },
     {
@@ -5962,7 +5973,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grnlist_grnlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "grnlist()"
     },
     {
@@ -5973,7 +5984,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "purchaseordercreate.jsx"
     },
     {
@@ -5984,7 +5995,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate_lineschema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "lineschema"
     },
     {
@@ -5995,7 +6006,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate_schema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -6006,7 +6017,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate_purchaseordercreate",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "purchaseordercreate()"
     },
     {
@@ -6017,7 +6028,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseorderdetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "purchaseorderdetail.jsx"
     },
     {
@@ -6028,7 +6039,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseorderdetail_purchaseorderdetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "purchaseorderdetail()"
     },
     {
@@ -6038,8 +6049,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseorderlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "format.js",
       "norm_label": "purchaseorderlist.jsx"
     },
     {
@@ -6050,7 +6061,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseorderlist_purchaseorderlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "purchaseorderlist()"
     },
     {
@@ -6060,8 +6071,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentcreate",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "supplierpaymentcreate.jsx"
     },
     {
@@ -6071,8 +6082,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentcreate_methods",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "methods"
     },
     {
@@ -6083,7 +6094,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentcreate_supplierpaymentcreate",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierpaymentcreate()"
     },
     {
@@ -6116,7 +6127,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentdetail_supplierpaymentdetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierpaymentdetail()"
     },
     {
@@ -6149,7 +6160,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentlist_supplierpaymentlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierpaymentlist()"
     },
     {
@@ -6159,7 +6170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturncreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "supplierreturncreate.jsx"
     },
@@ -6170,7 +6181,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturncreate_schema",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "schema"
     },
@@ -6181,7 +6192,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturncreate_supplierreturncreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "supplierreturncreate()"
     },
@@ -6192,8 +6203,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturndetail",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "supplierreturndetail.jsx"
     },
     {
@@ -6204,7 +6215,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturndetail_supplierreturndetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierreturndetail()"
     },
     {
@@ -6226,7 +6237,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturnlist_supplierreturnlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierreturnlist()"
     },
     {
@@ -6236,8 +6247,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_agedcreditors",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 5,
+      "community_name": "Analytics.jsx",
       "norm_label": "agedcreditors.jsx"
     },
     {
@@ -6247,8 +6258,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_reports_agedcreditors_agedcreditors",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 5,
+      "community_name": "Analytics.jsx",
       "norm_label": "agedcreditors()"
     },
     {
@@ -6258,7 +6269,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_ageddebtors",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "ageddebtors.jsx"
     },
@@ -6269,7 +6280,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "client_src_pages_reports_ageddebtors_ageddebtors",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "ageddebtors()"
     },
@@ -6402,7 +6413,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_analytics_customerranking",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "customerranking()"
     },
     {
@@ -6446,7 +6457,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_customerstatement_customerstatement",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "customerstatement()"
     },
     {
@@ -6457,7 +6468,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections",
       "community": 53,
-      "community_name": "reportsApi.js",
+      "community_name": "DailyCollections.jsx",
       "norm_label": "dailycollections.jsx"
     },
     {
@@ -6468,7 +6479,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_method_badge",
       "community": 53,
-      "community_name": "reportsApi.js",
+      "community_name": "DailyCollections.jsx",
       "norm_label": "method_badge"
     },
     {
@@ -6479,7 +6490,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_method_icon",
       "community": 53,
-      "community_name": "reportsApi.js",
+      "community_name": "DailyCollections.jsx",
       "norm_label": "method_icon"
     },
     {
@@ -6490,7 +6501,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_statcard",
       "community": 53,
-      "community_name": "reportsApi.js",
+      "community_name": "DailyCollections.jsx",
       "norm_label": "statcard()"
     },
     {
@@ -6501,7 +6512,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_dailycollections",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "dailycollections()"
     },
     {
@@ -6522,8 +6533,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_reports_lowstockreport_lowstockreport",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 35,
+      "community_name": "App.jsx",
       "norm_label": "lowstockreport()"
     },
     {
@@ -6555,8 +6566,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_reports_productprofitability_productprofitability",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 35,
+      "community_name": "App.jsx",
       "norm_label": "productprofitability()"
     },
     {
@@ -6566,8 +6577,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_profitloss",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 182,
+      "community_name": "ProfitLoss.jsx",
       "norm_label": "profitloss.jsx"
     },
     {
@@ -6577,8 +6588,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_pages_reports_profitloss_firstdayofmonth",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 182,
+      "community_name": "ProfitLoss.jsx",
       "norm_label": "firstdayofmonth()"
     },
     {
@@ -6588,8 +6599,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_reports_profitloss_today",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 182,
+      "community_name": "ProfitLoss.jsx",
       "norm_label": "today()"
     },
     {
@@ -6599,8 +6610,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "client_src_pages_reports_profitloss_profitloss",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 182,
+      "community_name": "ProfitLoss.jsx",
       "norm_label": "profitloss()"
     },
     {
@@ -6610,8 +6621,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_reordersuggestions",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 4,
+      "community_name": "Table.jsx",
       "norm_label": "reordersuggestions.jsx"
     },
     {
@@ -6621,8 +6632,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_reports_reordersuggestions_reordersuggestions",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 35,
+      "community_name": "App.jsx",
       "norm_label": "reordersuggestions()"
     },
     {
@@ -6643,7 +6654,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_reports_salesrepkpi_salesrepkpi",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "salesrepkpi()"
     },
@@ -6654,7 +6665,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_salessummary",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "salessummary.jsx"
     },
@@ -6665,7 +6676,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_pages_reports_salessummary_firstdayofmonth",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "firstdayofmonth()"
     },
@@ -6676,7 +6687,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_reports_salessummary_salessummary",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "salessummary()"
     },
@@ -6797,7 +6808,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_reports_vatreport_vatreport",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "vatreport()"
     },
@@ -6809,7 +6820,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "customerreturncreate.jsx"
     },
     {
@@ -6820,7 +6831,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_lineschema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "lineschema"
     },
     {
@@ -6831,7 +6842,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_schema",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -6842,7 +6853,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_blank_line",
       "community": 8,
-      "community_name": "TextField",
+      "community_name": "today",
       "norm_label": "blank_line"
     },
     {
@@ -6852,8 +6863,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_customerreturncreate",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "customerreturncreate()"
     },
     {
@@ -6864,7 +6875,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturndetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "customerreturndetail.jsx"
     },
     {
@@ -6875,7 +6886,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturndetail_status_badge",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "status_badge"
     },
     {
@@ -6886,7 +6897,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturndetail_customerreturndetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "customerreturndetail()"
     },
     {
@@ -6896,8 +6907,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturnlist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "customerreturnlist.jsx"
     },
     {
@@ -6907,8 +6918,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturnlist_status_badge",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "status_badge"
     },
     {
@@ -6918,8 +6929,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturnlist_customerreturnlist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 26,
+      "community_name": "CustomerProfile.jsx",
       "norm_label": "customerreturnlist()"
     },
     {
@@ -6929,8 +6940,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist",
-      "community": 8,
-      "community_name": "TextField",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "routelist.jsx"
     },
     {
@@ -6940,8 +6951,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_tonum",
-      "community": 8,
-      "community_name": "TextField",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "tonum()"
     },
     {
@@ -6951,8 +6962,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_schema",
-      "community": 8,
-      "community_name": "TextField",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "schema"
     },
     {
@@ -6962,8 +6973,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_routeform",
-      "community": 8,
-      "community_name": "TextField",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "routeform()"
     },
     {
@@ -6973,8 +6984,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_routelist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "routelist()"
     },
     {
@@ -6996,7 +7007,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_chequelist_chequelist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "chequelist()"
     },
     {
@@ -7006,8 +7017,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "commissionlist.jsx"
     },
     {
@@ -7017,8 +7028,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_status_badge",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "status_badge"
     },
     {
@@ -7028,8 +7039,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_now",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "now"
     },
     {
@@ -7039,8 +7050,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_thisyear",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "thisyear"
     },
     {
@@ -7051,7 +7062,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_commissionlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "commissionlist()"
     },
     {
@@ -7061,7 +7072,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotecreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "creditnotecreate.jsx"
     },
@@ -7072,7 +7083,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotecreate_schema",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "schema"
     },
@@ -7083,7 +7094,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotecreate_creditnotecreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "creditnotecreate()"
     },
@@ -7106,7 +7117,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotelist_creditnotelist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "creditnotelist()"
     },
     {
@@ -7116,8 +7127,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "expenselist.jsx"
     },
     {
@@ -7127,8 +7138,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_expense_cats",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "expense_cats"
     },
     {
@@ -7138,8 +7149,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_payment_methods",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "payment_methods"
     },
     {
@@ -7149,8 +7160,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_schema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -7160,7 +7171,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_expenseform",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "expenseform()"
     },
@@ -7172,7 +7183,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_expenselist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "expenselist()"
     },
     {
@@ -7182,8 +7193,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "invoicecreate.jsx"
     },
     {
@@ -7193,8 +7204,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_lineschema",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "lineschema"
     },
     {
@@ -7204,8 +7215,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_schema",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "schema"
     },
     {
@@ -7215,8 +7226,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_getlocation",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "getlocation()"
     },
     {
@@ -7226,8 +7237,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_blank_line",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "blank_line"
     },
     {
@@ -7237,8 +7248,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_invoicecreate",
-      "community": 23,
-      "community_name": "InvoiceCreate.jsx",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "invoicecreate()"
     },
     {
@@ -7315,7 +7326,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicelist_invoicelist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "invoicelist()"
     },
     {
@@ -7325,7 +7336,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "receiptcreate.jsx"
     },
@@ -7336,7 +7347,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate_payment_methods",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "payment_methods"
     },
@@ -7347,7 +7358,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate_schema",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "schema"
     },
@@ -7358,7 +7369,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate_receiptcreate",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "receiptcreate()"
     },
@@ -7413,7 +7424,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "salesordercreate.jsx"
     },
@@ -7424,7 +7435,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate_sizes",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "sizes"
     },
@@ -7435,7 +7446,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate_headerschema",
-      "community": 35,
+      "community": 14,
       "community_name": "SalesOrderCreate.jsx",
       "norm_label": "headerschema"
     },
@@ -7446,8 +7457,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate_salesordercreate",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 22,
+      "community_name": "useOfflineSync.js",
       "norm_label": "salesordercreate()"
     },
     {
@@ -7469,7 +7480,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_salesorderdetail_salesorderdetail",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "salesorderdetail()"
     },
     {
@@ -7491,7 +7502,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_salesorderlist_salesorderlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "salesorderlist()"
     },
     {
@@ -7534,7 +7545,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "client_src_pages_settings_branchlist_branchlist",
-      "community": 13,
+      "community": 35,
       "community_name": "App.jsx",
       "norm_label": "branchlist()"
     },
@@ -7545,8 +7556,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_settings_companysettings",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 35,
+      "community_name": "App.jsx",
       "norm_label": "companysettings.jsx"
     },
     {
@@ -7556,8 +7567,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "client_src_pages_settings_companysettings_companysettings",
-      "community": 53,
-      "community_name": "reportsApi.js",
+      "community": 35,
+      "community_name": "App.jsx",
       "norm_label": "companysettings()"
     },
     {
@@ -7590,7 +7601,7 @@
       "_origin": "ast",
       "id": "client_src_pages_settings_periodsmanagement_periodsmanagement",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "periodsmanagement()"
     },
     {
@@ -7600,8 +7611,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_settings_rolelist",
-      "community": 179,
-      "community_name": "RoleList.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "rolelist.jsx"
     },
     {
@@ -7611,8 +7622,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_settings_rolelist_module_labels",
-      "community": 179,
-      "community_name": "RoleList.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "module_labels"
     },
     {
@@ -7622,8 +7633,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_pages_settings_rolelist_permissionmatrix",
-      "community": 179,
-      "community_name": "RoleList.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "permissionmatrix()"
     },
     {
@@ -7633,8 +7644,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "client_src_pages_settings_rolelist_rolelist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "rolelist()"
     },
     {
@@ -7688,8 +7699,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "client_src_pages_settings_userlist_userlist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 4,
+      "community_name": "Table.jsx",
       "norm_label": "userlist()"
     },
     {
@@ -7733,7 +7744,7 @@
       "_origin": "ast",
       "id": "client_src_pages_suppliers_supplierlist_supplierlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "supplierlist()"
     },
     {
@@ -7898,7 +7909,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "driverpayments.jsx"
     },
     {
@@ -7909,7 +7920,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments_methods",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "methods"
     },
     {
@@ -7920,7 +7931,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments_collectmodal",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "collectmodal()"
     },
     {
@@ -7931,7 +7942,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments_driverpayments",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "driverpayments()"
     },
     {
@@ -8040,8 +8051,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetcreate",
-      "community": 26,
-      "community_name": "today",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "loadingsheetcreate.jsx"
     },
     {
@@ -8051,8 +8062,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetcreate_schema",
-      "community": 26,
-      "community_name": "today",
+      "community": 14,
+      "community_name": "SalesOrderCreate.jsx",
       "norm_label": "schema"
     },
     {
@@ -8062,8 +8073,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetcreate_loadingsheetcreate",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 8,
+      "community_name": "today",
       "norm_label": "loadingsheetcreate()"
     },
     {
@@ -8173,7 +8184,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetlist_loadingsheetlist",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "loadingsheetlist()"
     },
     {
@@ -8414,8 +8425,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_warehouses_warehouselist_stockview",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 43,
+      "community_name": "fmtNumber",
       "norm_label": "stockview()"
     },
     {
@@ -8469,8 +8480,8 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "client_src_pages_warehouses_warehouselist_warehouselist",
-      "community": 13,
-      "community_name": "App.jsx",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "warehouselist()"
     },
     {
@@ -8601,8 +8612,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_store_index",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "store/index.js"
     },
     {
@@ -8612,8 +8623,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_store_index_store",
-      "community": 14,
-      "community_name": "salesApi.js",
+      "community": 23,
+      "community_name": "NotificationContext.jsx",
       "norm_label": "store"
     },
     {
@@ -8635,7 +8646,7 @@
       "_origin": "ast",
       "id": "client_src_utils_format_fmtcurrency",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "fmtcurrency()"
     },
     {
@@ -8646,7 +8657,7 @@
       "_origin": "ast",
       "id": "client_src_utils_format_fmtdate",
       "community": 13,
-      "community_name": "App.jsx",
+      "community_name": "fmtCurrency",
       "norm_label": "fmtdate()"
     },
     {
@@ -8689,7 +8700,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_utils_format_today",
-      "community": 26,
+      "community": 8,
       "community_name": "today",
       "norm_label": "today()"
     },
@@ -11758,8 +11769,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "server_models_index_stockmovement",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "stockmovement"
     },
     {
@@ -14464,8 +14475,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_routes_stock",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "stock.js"
     },
     {
@@ -14475,8 +14486,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_routes_stock_router",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "router"
     },
     {
@@ -14486,8 +14497,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "server_routes_stock_op",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "{ op }"
     },
     {
@@ -14497,8 +14508,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_routes_stock_authorize",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "authorize"
     },
     {
@@ -14508,8 +14519,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "server_routes_stock_stock_stockmovement_product_category_unit_warehouse_sequelize",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "{ stock, stockmovement, product, category, unit, warehouse, sequelize }"
     },
     {
@@ -14519,8 +14530,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "server_routes_stock_scoped_roles",
-      "community": 36,
-      "community_name": "stockAdjustments.js",
+      "community": 74,
+      "community_name": "stockTransfers.js",
       "norm_label": "scoped_roles"
     },
     {
@@ -32742,6 +32753,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/hooks/useOfflineSync.js",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_hooks_useofflinesync",
+      "target": "client_src_hooks_useofflinesync_fetchwithtimeout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/hooks/useOfflineSync.js",
       "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
@@ -32764,7 +32786,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L31",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync",
@@ -32896,7 +32918,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L129",
+      "source_location": "L142",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -32908,11 +32930,23 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L103",
+      "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
       "target": "client_src_hooks_useofflinesync_readresponsebody",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/hooks/useOfflineSync.js",
+      "source_location": "L99",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_hooks_useofflinesync_useofflinesync",
+      "target": "client_src_hooks_useofflinesync_fetchwithtimeout",
       "confidence_score": 1.0
     },
     {
@@ -32921,7 +32955,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L39",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -32933,7 +32967,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L38",
+      "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -32945,7 +32979,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L37",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -32957,7 +32991,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L50",
+      "source_location": "L63",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -32969,7 +33003,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L123",
+      "source_location": "L136",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -32981,7 +33015,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/hooks/useOfflineSync.js",
-      "source_location": "L80",
+      "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_hooks_useofflinesync_useofflinesync",
@@ -40936,7 +40970,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L348",
+      "source_location": "L365",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40948,7 +40982,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L549",
+      "source_location": "L566",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40972,7 +41006,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L216",
+      "source_location": "L217",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -41174,7 +41208,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderList.jsx",
-      "source_location": "L302",
+      "source_location": "L303",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesorderlist_salesorderlist",

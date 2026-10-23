@@ -1,7 +1,7 @@
 # Graph Report - Distribution  (2026-10-24)
 
 ## Corpus Check
-- 300 files · ~169,174 words
+- 300 files · ~169,180 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `da2bec11`
+- Built from commit: `f90ba3aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -420,8 +420,8 @@ Cohesion: 0.12
 Nodes (17): CREDIT_BADGE(), RouteDetail(), OpeningStock(), StockAdjustmentList(), PriceListList(), ProductList(), UnitList(), AgedDebtors() (+9 more)
 
 ### Community 36 - "stockAdjustments.js"
-Cohesion: 0.28
-Nodes (8): StockAdjustment, StockAdjustmentLine, authorize, nextAdjNumber(), { Op }, pad(), router, { StockAdjustment, StockAdjustmentLine, Warehouse, Product, Stock, StockMovement, sequelize }
+Cohesion: 0.14
+Nodes (14): StockAdjustment, StockAdjustmentLine, StockMovement, authorize, { Op }, router, SCOPED_ROLES, { Stock, StockMovement, Product, Category, Unit, Warehouse, sequelize } (+6 more)
 
 ### Community 37 - ".constructor"
 Cohesion: 0.18
@@ -488,8 +488,8 @@ Cohesion: 0.22
 Nodes (8): ACCOUNT_TYPES, AccountList(), AccountNode(), countDescendants(), schema, TYPE_BG, TYPE_LABELS, TYPE_ORDER
 
 ### Community 74 - "stockTransfers.js"
-Cohesion: 0.14
-Nodes (14): StockMovement, StockTransfer, StockTransferLine, authorize, { Op }, router, SCOPED_ROLES, { Stock, StockMovement, Product, Category, Unit, Warehouse, sequelize } (+6 more)
+Cohesion: 0.28
+Nodes (8): StockTransfer, StockTransferLine, authorize, nextTrfNumber(), { Op }, pad(), router, { StockTransfer, StockTransferLine, Warehouse, Product, Stock, StockMovement, sequelize }
 
 ### Community 76 - "Login.jsx"
 Cohesion: 0.32

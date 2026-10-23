@@ -56,11 +56,11 @@ export default defineConfig(({ mode }) => {
           runtimeCaching: [
             // Driver critical data — long cache, served from cache when offline
             {
-              urlPattern: /\/api\/(products|customers|routes|loading-sheets|warehouses|stock|free-allocations)/,
+              urlPattern: /\/api\/(products|customers|routes|loading-sheets|warehouses|stock|free-allocations|users|categories|price-lists|branches)(\/|$)/,
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'driver-data-cache',
-                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 8 }, // 8 hours
+                expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 8 }, // 8 hours
                 networkTimeoutSeconds: 8,
                 plugins: [accountScopedCacheKey],
               },
