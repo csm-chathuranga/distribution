@@ -570,8 +570,8 @@
     "semantic_hash": "a273152fe5e410dc41ccfa71cc25dbf9"
   },
   "client/vite.config.js": {
-    "mtime": 1792785110.1220016,
-    "ast_hash": "598e41f362e7bc9709d330f1c1e976b5",
+    "mtime": 1792785413.3663623,
+    "ast_hash": "09204ecbd506658ddb851b97c3aeaba4",
     "semantic_hash": ""
   },
   "database/migrate_new_modules.sql": {

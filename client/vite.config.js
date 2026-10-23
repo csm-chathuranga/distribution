@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
           runtimeCaching: [
             // Driver critical data — long cache, served from cache when offline
             {
-              urlPattern: /\/api\/(products|customers|routes|loading-sheets|warehouses|stock|free-allocations|users|categories|price-lists|branches)(\/|$)/,
+              urlPattern: ({ url }) => /^\/api\/(?:products|customers|routes|loading-sheets|warehouses|stock|free-allocations|users\/for-select|categories|price-lists|branches|invoices|receipts\/my|deliveries|vehicles)(?:\/|$)/.test(url.pathname),
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'driver-data-cache',
