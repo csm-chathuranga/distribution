@@ -329,8 +329,8 @@
       "source_location": "L1276",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_registerquotaerrorcallback",
-      "community": 37,
-      "community_name": ".constructor",
+      "community": 27,
+      "community_name": "workbox-290dd570.js",
       "norm_label": "registerquotaerrorcallback()"
     },
     {
@@ -417,8 +417,8 @@
       "source_location": "L1391",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_has",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 37,
+      "community_name": ".constructor",
       "norm_label": "has()"
     },
     {
@@ -802,8 +802,8 @@
       "source_location": "L2256",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_executequotaerrorcallbacks",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 34,
+      "community_name": "StrategyHandler",
       "norm_label": "executequotaerrorcallbacks()"
     },
     {
@@ -813,8 +813,8 @@
       "source_location": "L2285",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_timeout",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 34,
+      "community_name": "StrategyHandler",
       "norm_label": "timeout()"
     },
     {
@@ -868,8 +868,8 @@
       "source_location": "L2477",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_strategyhandler_fetchandcacheput",
-      "community": 34,
-      "community_name": "StrategyHandler",
+      "community": 50,
+      "community_name": "waitUntil",
       "norm_label": ".fetchandcacheput()"
     },
     {
@@ -1056,7 +1056,7 @@
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_networkfirst",
       "community": 50,
-      "community_name": "NetworkFirst",
+      "community_name": "waitUntil",
       "norm_label": "networkfirst"
     },
     {
@@ -1067,7 +1067,7 @@
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_networkfirst_constructor",
       "community": 50,
-      "community_name": "NetworkFirst",
+      "community_name": "waitUntil",
       "norm_label": ".constructor()"
     },
     {
@@ -1078,7 +1078,7 @@
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_networkfirst_handle",
       "community": 50,
-      "community_name": "NetworkFirst",
+      "community_name": "waitUntil",
       "norm_label": "._handle()"
     },
     {
@@ -1089,7 +1089,7 @@
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_networkfirst_gettimeoutpromise",
       "community": 50,
-      "community_name": "NetworkFirst",
+      "community_name": "waitUntil",
       "norm_label": "._gettimeoutpromise()"
     },
     {
@@ -1100,7 +1100,7 @@
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_networkfirst_getnetworkpromise",
       "community": 50,
-      "community_name": "NetworkFirst",
+      "community_name": "waitUntil",
       "norm_label": "._getnetworkpromise()"
     },
     {
@@ -1121,8 +1121,8 @@
       "source_location": "L3273",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_waituntil",
-      "community": 37,
-      "community_name": ".constructor",
+      "community": 50,
+      "community_name": "waitUntil",
       "norm_label": "waituntil()"
     },
     {
@@ -1187,8 +1187,8 @@
       "source_location": "L3406",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_precachecachekeyplugin",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 185,
+      "community_name": "PrecacheCacheKeyPlugin",
       "norm_label": "precachecachekeyplugin"
     },
     {
@@ -1198,8 +1198,8 @@
       "source_location": "L3407",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_precachecachekeyplugin_constructor",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 185,
+      "community_name": "PrecacheCacheKeyPlugin",
       "norm_label": ".constructor()"
     },
     {
@@ -1209,8 +1209,8 @@
       "source_location": "L3410",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_precachecachekeyplugin_cachekeywillbeused",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 185,
+      "community_name": "PrecacheCacheKeyPlugin",
       "norm_label": ".cachekeywillbeused()"
     },
     {
@@ -1220,8 +1220,8 @@
       "source_location": "L3452",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_printcleanupdetails",
-      "community": 37,
-      "community_name": ".constructor",
+      "community": 27,
+      "community_name": "workbox-290dd570.js",
       "norm_label": "printcleanupdetails()"
     },
     {
@@ -1231,8 +1231,8 @@
       "source_location": "L3474",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_nestedgroup",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 50,
+      "community_name": "waitUntil",
       "norm_label": "_nestedgroup()"
     },
     {
@@ -1242,8 +1242,8 @@
       "source_location": "L3491",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_printinstalldetails",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 50,
+      "community_name": "waitUntil",
       "norm_label": "printinstalldetails()"
     },
     {
@@ -1407,8 +1407,8 @@
       "source_location": "L3933",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_precachecontroller_install",
-      "community": 37,
-      "community_name": ".constructor",
+      "community": 50,
+      "community_name": "waitUntil",
       "norm_label": ".install()"
     },
     {
@@ -1495,8 +1495,8 @@
       "source_location": "L4131",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_removeignoredsearchparams",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 39,
+      "community_name": "PrecacheController",
       "norm_label": "removeignoredsearchparams()"
     },
     {
@@ -1506,8 +1506,8 @@
       "source_location": "L4159",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_generateurlvariations",
-      "community": 27,
-      "community_name": "workbox-290dd570.js",
+      "community": 39,
+      "community_name": "PrecacheController",
       "norm_label": "generateurlvariations()"
     },
     {
@@ -1572,8 +1572,8 @@
       "source_location": "L4379",
       "_origin": "ast",
       "id": "client_dev_dist_workbox_290dd570_cleanupoutdatedcaches",
-      "community": 37,
-      "community_name": ".constructor",
+      "community": 50,
+      "community_name": "waitUntil",
       "norm_label": "cleanupoutdatedcaches()"
     },
     {
@@ -2782,7 +2782,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_app",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "app.jsx"
     },
@@ -2793,8 +2793,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_app_authrefresher",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "authrefresher()"
     },
     {
@@ -2804,7 +2804,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_app_homeredirect",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "homeredirect()"
     },
@@ -2815,8 +2815,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "client_src_app_app",
-      "community": 23,
-      "community_name": "NotificationContext.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "app()"
     },
     {
@@ -2826,8 +2826,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_authapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "authapi.js"
     },
     {
@@ -2837,8 +2837,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_authapi_authapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "authapi"
     },
     {
@@ -2870,8 +2870,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_baseapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "baseapi.js"
     },
     {
@@ -2881,8 +2881,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_api_baseapi_queueable_paths",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "queueable_paths"
     },
     {
@@ -2892,8 +2892,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_api_baseapi_rawbasequery",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "rawbasequery"
     },
     {
@@ -2903,8 +2903,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_api_baseapi_basequerywithreauth",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "basequerywithreauth()"
     },
     {
@@ -2914,8 +2914,8 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "client_src_api_baseapi_baseapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "baseapi"
     },
     {
@@ -2925,8 +2925,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_customersapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "customersapi.js"
     },
     {
@@ -2936,8 +2936,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_customersapi_customersapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "customersapi"
     },
     {
@@ -2947,8 +2947,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_financeapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "financeapi.js"
     },
     {
@@ -2958,8 +2958,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_financeapi_financeapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "financeapi"
     },
     {
@@ -2969,8 +2969,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_inventoryapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "inventoryapi.js"
     },
     {
@@ -2980,8 +2980,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_inventoryapi_inventoryapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "inventoryapi"
     },
     {
@@ -2991,8 +2991,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_notificationsapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "notificationsapi.js"
     },
     {
@@ -3002,8 +3002,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_notificationsapi_notificationsapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "notificationsapi"
     },
     {
@@ -3014,7 +3014,7 @@
       "_origin": "ast",
       "id": "client_src_api_productsapi",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "productsapi.js"
     },
     {
@@ -3025,7 +3025,7 @@
       "_origin": "ast",
       "id": "client_src_api_productsapi_productsapi",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "productsapi"
     },
     {
@@ -3036,7 +3036,7 @@
       "_origin": "ast",
       "id": "client_src_api_purchasingapi",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "purchasingapi.js"
     },
     {
@@ -3047,7 +3047,7 @@
       "_origin": "ast",
       "id": "client_src_api_purchasingapi_purchasingapi",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "purchasingapi"
     },
     {
@@ -3058,7 +3058,7 @@
       "_origin": "ast",
       "id": "client_src_api_reportsapi",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "reportsapi.js"
     },
     {
@@ -3069,7 +3069,7 @@
       "_origin": "ast",
       "id": "client_src_api_reportsapi_reportsapi",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "reportsapi"
     },
     {
@@ -3079,8 +3079,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_salesapi",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "salesapi.js"
     },
     {
@@ -3101,8 +3101,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_settingsapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "settingsapi.js"
     },
     {
@@ -3112,8 +3112,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_settingsapi_settingsapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "settingsapi"
     },
     {
@@ -3123,8 +3123,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_suppliersapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "FormField.jsx",
       "norm_label": "suppliersapi.js"
     },
     {
@@ -3134,8 +3134,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_suppliersapi_suppliersapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 8,
+      "community_name": "FormField.jsx",
       "norm_label": "suppliersapi"
     },
     {
@@ -3145,8 +3145,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_api_vehiclesapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "vehiclesapi.js"
     },
     {
@@ -3156,8 +3156,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_api_vehiclesapi_vehiclesapi",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "vehiclesapi"
     },
     {
@@ -3168,7 +3168,7 @@
       "_origin": "ast",
       "id": "client_src_api_warehousesapi",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "warehousesapi.js"
     },
     {
@@ -3179,7 +3179,7 @@
       "_origin": "ast",
       "id": "client_src_api_warehousesapi_warehousesapi",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "warehousesapi"
     },
     {
@@ -3190,7 +3190,7 @@
       "_origin": "ast",
       "id": "client_src_components_bottomnav",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "bottomnav.jsx"
     },
     {
@@ -3201,7 +3201,7 @@
       "_origin": "ast",
       "id": "client_src_components_bottomnav_sales_tabs",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "sales_tabs"
     },
     {
@@ -3212,7 +3212,7 @@
       "_origin": "ast",
       "id": "client_src_components_bottomnav_driver_tabs",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "driver_tabs"
     },
     {
@@ -3223,7 +3223,7 @@
       "_origin": "ast",
       "id": "client_src_components_bottomnav_tab",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "tab()"
     },
     {
@@ -3234,7 +3234,7 @@
       "_origin": "ast",
       "id": "client_src_components_bottomnav_bottomnav",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "bottomnav()"
     },
     {
@@ -3421,7 +3421,7 @@
       "_origin": "ast",
       "id": "client_src_components_locationtracker",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "locationtracker.jsx"
     },
     {
@@ -3432,7 +3432,7 @@
       "_origin": "ast",
       "id": "client_src_components_locationtracker_locationtracker",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "locationtracker()"
     },
     {
@@ -3442,8 +3442,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_mapmodal",
-      "community": 181,
-      "community_name": "DeliveryDetail.jsx",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "mapmodal.jsx"
     },
     {
@@ -3453,8 +3453,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "client_src_components_mapmodal_mapmodal",
-      "community": 181,
-      "community_name": "DeliveryDetail.jsx",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "mapmodal()"
     },
     {
@@ -3519,8 +3519,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_protectedroute",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "protectedroute.jsx"
     },
     {
@@ -3530,8 +3530,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "client_src_components_protectedroute_protectedroute",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "protectedroute()"
     },
     {
@@ -3541,7 +3541,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_sidebar",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "sidebar.jsx"
     },
@@ -3552,7 +3552,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_components_sidebar_navgroup",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "navgroup()"
     },
@@ -3563,7 +3563,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "client_src_components_sidebar_navitem",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "navitem()"
     },
@@ -3574,7 +3574,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "client_src_components_sidebar_sidebar",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "sidebar()"
     },
@@ -3585,8 +3585,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_deliverynoteprint",
-      "community": 181,
-      "community_name": "DeliveryDetail.jsx",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "deliverynoteprint.jsx"
     },
     {
@@ -3596,8 +3596,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_print_deliverynoteprint_deliverynoteprint",
-      "community": 181,
-      "community_name": "DeliveryDetail.jsx",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "deliverynoteprint()"
     },
     {
@@ -3607,8 +3607,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_grnprint",
-      "community": 183,
-      "community_name": "GRNDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "grnprint.jsx"
     },
     {
@@ -3618,8 +3618,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_print_grnprint_grnprint",
-      "community": 183,
-      "community_name": "GRNDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "grnprint()"
     },
     {
@@ -3629,8 +3629,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_invoiceprint",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "invoiceprint.jsx"
     },
     {
@@ -3640,8 +3640,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_print_invoiceprint_invoiceprint",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "invoiceprint()"
     },
     {
@@ -3652,7 +3652,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_invoiceprintpos",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "invoiceprintpos.jsx"
     },
     {
@@ -3663,7 +3663,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_invoiceprintpos_fmtamt",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "fmtamt()"
     },
     {
@@ -3674,7 +3674,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_invoiceprintpos_divider",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "divider()"
     },
     {
@@ -3685,7 +3685,7 @@
       "_origin": "ast",
       "id": "client_src_components_print_invoiceprintpos_invoiceprintpos",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "invoiceprintpos()"
     },
     {
@@ -3761,8 +3761,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_loadingsheetprintpos",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "loadingsheetprintpos.jsx"
     },
     {
@@ -3772,8 +3772,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "client_src_components_print_loadingsheetprintpos_bold",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "bold"
     },
     {
@@ -3783,8 +3783,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_components_print_loadingsheetprintpos_mono",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "mono"
     },
     {
@@ -3794,8 +3794,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_components_print_loadingsheetprintpos_divider",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "divider()"
     },
     {
@@ -3805,8 +3805,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_components_print_loadingsheetprintpos_loadingsheetprintpos",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "loadingsheetprintpos()"
     },
     {
@@ -3838,8 +3838,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_print_receiptprint",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "receiptprint.jsx"
     },
     {
@@ -3849,8 +3849,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_print_receiptprint_method_label",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "method_label"
     },
     {
@@ -3860,8 +3860,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_components_print_receiptprint_receiptprint",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "receiptprint()"
     },
     {
@@ -3938,7 +3938,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_confirmdialog",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "confirmdialog.jsx"
     },
     {
@@ -3949,7 +3949,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_confirmdialog_variants",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "variants"
     },
     {
@@ -3960,7 +3960,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_confirmdialog_confirmdialog",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "confirmdialog()"
     },
     {
@@ -3971,7 +3971,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_emptystate",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "emptystate.jsx"
     },
     {
@@ -3982,7 +3982,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_emptystate_emptystate",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "emptystate()"
     },
     {
@@ -3993,7 +3993,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "formfield.jsx"
     },
     {
@@ -4004,7 +4004,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_formfield",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "formfield()"
     },
     {
@@ -4015,7 +4015,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_textfield",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "textfield"
     },
     {
@@ -4026,7 +4026,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_textareafield",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "textareafield"
     },
     {
@@ -4036,8 +4036,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_selectfield",
-      "community": 8,
-      "community_name": "today",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "selectfield"
     },
     {
@@ -4048,7 +4048,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_formfield_checkboxfield",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "checkboxfield"
     },
     {
@@ -4081,7 +4081,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_pageheader",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "pageheader.jsx"
     },
     {
@@ -4092,7 +4092,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_pageheader_pageheader",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "pageheader()"
     },
     {
@@ -4102,8 +4102,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_ui_pagination",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "pagination.jsx"
     },
     {
@@ -4113,8 +4113,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_components_ui_pagination_getpages",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "getpages()"
     },
     {
@@ -4124,8 +4124,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_components_ui_pagination_pagination",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "pagination()"
     },
     {
@@ -4136,7 +4136,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_searchableselect",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "searchableselect.jsx"
     },
     {
@@ -4147,7 +4147,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_searchableselect_searchableselect",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "searchableselect()"
     },
     {
@@ -4246,7 +4246,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_statusbadge",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "statusbadge.jsx"
     },
     {
@@ -4257,7 +4257,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_statusbadge_status_map",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "status_map"
     },
     {
@@ -4268,7 +4268,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_statusbadge_context_map",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "context_map"
     },
     {
@@ -4279,7 +4279,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_statusbadge_label_map",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "label_map"
     },
     {
@@ -4290,7 +4290,7 @@
       "_origin": "ast",
       "id": "client_src_components_ui_statusbadge_statusbadge",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "statusbadge()"
     },
     {
@@ -4300,8 +4300,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_ui_table",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "table.jsx"
     },
     {
@@ -4311,8 +4311,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_components_ui_table_table",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "table()"
     },
     {
@@ -4422,7 +4422,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_usefirestoresync",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "usefirestoresync.js"
     },
     {
@@ -4433,7 +4433,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_usefirestoresync_type_config",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "type_config"
     },
     {
@@ -4444,7 +4444,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_usefirestoresync_usefirestoresync",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "usefirestoresync()"
     },
     {
@@ -4477,7 +4477,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_uselocationtracking",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "uselocationtracking.js"
     },
     {
@@ -4488,7 +4488,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_uselocationtracking_uselocationtracking",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "uselocationtracking()"
     },
     {
@@ -4554,7 +4554,7 @@
       "_origin": "ast",
       "id": "client_src_hooks_usepermission",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "usepermission.js"
     },
     {
@@ -4575,7 +4575,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_hooks_usepermission_usecanany",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "usecanany()"
     },
@@ -4587,7 +4587,7 @@
       "_origin": "ast",
       "id": "client_src_layouts_mainlayout",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "mainlayout.jsx"
     },
     {
@@ -4598,7 +4598,7 @@
       "_origin": "ast",
       "id": "client_src_layouts_mainlayout_bottom_nav_roles",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "bottom_nav_roles"
     },
     {
@@ -4609,7 +4609,7 @@
       "_origin": "ast",
       "id": "client_src_layouts_mainlayout_mainlayout",
       "community": 1,
-      "community_name": "selectCurrentUser",
+      "community_name": "MainLayout.jsx",
       "norm_label": "mainlayout()"
     },
     {
@@ -4619,8 +4619,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_main",
-      "community": 23,
-      "community_name": "NotificationContext.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "main.jsx"
     },
     {
@@ -4751,8 +4751,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_profile",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "profile.jsx"
     },
     {
@@ -4762,8 +4762,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_profile_changepasswordform",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "changepasswordform()"
     },
     {
@@ -4773,8 +4773,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "client_src_pages_profile_profile",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "profile()"
     },
     {
@@ -4784,8 +4784,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "categorylist.jsx"
     },
     {
@@ -4795,8 +4795,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist_schema",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "schema"
     },
     {
@@ -4806,8 +4806,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist_categoryform",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "categoryform()"
     },
     {
@@ -4817,8 +4817,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "client_src_pages_categories_categorylist_categorylist",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "categorylist()"
     },
     {
@@ -4939,7 +4939,7 @@
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile",
       "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community_name": "customersApi.js",
       "norm_label": "customerprofile.jsx"
     },
     {
@@ -4950,7 +4950,7 @@
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_type_colors",
       "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community_name": "customersApi.js",
       "norm_label": "type_colors"
     },
     {
@@ -4961,7 +4961,7 @@
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_statcard",
       "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community_name": "customersApi.js",
       "norm_label": "statcard()"
     },
     {
@@ -4972,7 +4972,7 @@
       "_origin": "ast",
       "id": "client_src_pages_customers_customerprofile_invoicestatusdot",
       "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community_name": "customersApi.js",
       "norm_label": "invoicestatusdot()"
     },
     {
@@ -4993,8 +4993,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_customers_routedetail",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "routedetail.jsx"
     },
     {
@@ -5004,8 +5004,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_customers_routedetail_credit_badge",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "credit_badge()"
     },
     {
@@ -5015,8 +5015,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_customers_routedetail_routedetail",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "routedetail()"
     },
     {
@@ -5026,8 +5026,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverycreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "deliverycreate.jsx"
     },
     {
@@ -5037,8 +5037,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverycreate_schema",
-      "community": 8,
-      "community_name": "today",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "schema"
     },
     {
@@ -5048,8 +5048,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverycreate_deliverycreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "deliverycreate()"
     },
     {
@@ -5059,8 +5059,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverydetail",
-      "community": 181,
-      "community_name": "DeliveryDetail.jsx",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "deliverydetail.jsx"
     },
     {
@@ -5081,8 +5081,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverylist",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "deliverylist.jsx"
     },
     {
@@ -5092,8 +5092,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverylist_statuses",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "statuses"
     },
     {
@@ -5103,8 +5103,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverylist_status_border",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "status_border"
     },
     {
@@ -5114,8 +5114,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "client_src_pages_delivery_deliverylist_deliverylist",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "deliverylist()"
     },
     {
@@ -5169,8 +5169,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "client_src_pages_finance_accountlist_ledgerview",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 62,
+      "community_name": "AccountList.jsx",
       "norm_label": "ledgerview()"
     },
     {
@@ -5246,8 +5246,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_finance_journallist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "journallist.jsx"
     },
     {
@@ -5257,8 +5257,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_finance_journallist_lineschema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "lineschema"
     },
     {
@@ -5268,8 +5268,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "client_src_pages_finance_journallist_schema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "schema"
     },
     {
@@ -5279,8 +5279,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_finance_journallist_journalform",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "journalform()"
     },
     {
@@ -5301,8 +5301,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 184,
+      "community_name": "OpeningBalance.jsx",
       "norm_label": "openingbalance.jsx"
     },
     {
@@ -5312,8 +5312,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance_type_order",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 184,
+      "community_name": "OpeningBalance.jsx",
       "norm_label": "type_order"
     },
     {
@@ -5323,8 +5323,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance_type_labels",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 184,
+      "community_name": "OpeningBalance.jsx",
       "norm_label": "type_labels"
     },
     {
@@ -5334,8 +5334,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "client_src_pages_finance_openingbalance_openingbalance",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 184,
+      "community_name": "OpeningBalance.jsx",
       "norm_label": "openingbalance()"
     },
     {
@@ -5412,7 +5412,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_openingstock",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "openingstock.jsx"
     },
     {
@@ -5422,8 +5422,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_inventory_openingstock_openingstock",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 14,
+      "community_name": "productsApi.js",
       "norm_label": "openingstock()"
     },
     {
@@ -5433,8 +5433,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 181,
+      "community_name": "StockAdjustmentCreate.jsx",
       "norm_label": "stockadjustmentcreate.jsx"
     },
     {
@@ -5444,8 +5444,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_lineschema",
-      "community": 8,
-      "community_name": "today",
+      "community": 181,
+      "community_name": "StockAdjustmentCreate.jsx",
       "norm_label": "lineschema"
     },
     {
@@ -5455,8 +5455,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_schema",
-      "community": 8,
-      "community_name": "today",
+      "community": 181,
+      "community_name": "StockAdjustmentCreate.jsx",
       "norm_label": "schema"
     },
     {
@@ -5466,8 +5466,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_reasons",
-      "community": 8,
-      "community_name": "today",
+      "community": 181,
+      "community_name": "StockAdjustmentCreate.jsx",
       "norm_label": "reasons"
     },
     {
@@ -5477,8 +5477,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentcreate_stockadjustmentcreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 181,
+      "community_name": "StockAdjustmentCreate.jsx",
       "norm_label": "stockadjustmentcreate()"
     },
     {
@@ -5488,8 +5488,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "stockadjustmentlist.jsx"
     },
     {
@@ -5499,8 +5499,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentlist_reason_labels",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "reason_labels"
     },
     {
@@ -5510,8 +5510,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockadjustmentlist_stockadjustmentlist",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "stockadjustmentlist()"
     },
     {
@@ -5521,8 +5521,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockoverview",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "stockoverview.jsx"
     },
     {
@@ -5532,8 +5532,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockoverview_statcard",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "statcard()"
     },
     {
@@ -5543,8 +5543,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stockoverview_stockoverview",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "stockoverview()"
     },
     {
@@ -5555,7 +5555,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "stocktransfercreate.jsx"
     },
     {
@@ -5566,7 +5566,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate_lineschema",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "lineschema"
     },
     {
@@ -5577,7 +5577,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate_schema",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "schema"
     },
     {
@@ -5587,8 +5587,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransfercreate_stocktransfercreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 14,
+      "community_name": "productsApi.js",
       "norm_label": "stocktransfercreate()"
     },
     {
@@ -5599,7 +5599,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransferdetail",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "stocktransferdetail.jsx"
     },
     {
@@ -5621,7 +5621,7 @@
       "_origin": "ast",
       "id": "client_src_pages_inventory_stocktransferlist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "stocktransferlist.jsx"
     },
     {
@@ -5708,8 +5708,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "pricelistcreate.jsx"
     },
     {
@@ -5719,8 +5719,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_itemschema",
-      "community": 8,
-      "community_name": "today",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "itemschema"
     },
     {
@@ -5730,8 +5730,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_schema",
-      "community": 8,
-      "community_name": "today",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "schema"
     },
     {
@@ -5741,8 +5741,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_type_opts",
-      "community": 8,
-      "community_name": "today",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "type_opts"
     },
     {
@@ -5752,8 +5752,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistcreate_pricelistcreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 53,
+      "community_name": "SelectField",
       "norm_label": "pricelistcreate()"
     },
     {
@@ -5763,8 +5763,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "pricelistlist.jsx"
     },
     {
@@ -5774,8 +5774,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistlist_type_colors",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "type_colors"
     },
     {
@@ -5785,8 +5785,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "client_src_pages_pricing_pricelistlist_pricelistlist",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "pricelistlist()"
     },
     {
@@ -5796,8 +5796,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_products_productform",
-      "community": 8,
-      "community_name": "today",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "productform.jsx"
     },
     {
@@ -5807,8 +5807,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_products_productform_schema",
-      "community": 8,
-      "community_name": "today",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "schema"
     },
     {
@@ -5818,8 +5818,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "client_src_pages_products_productform_unit_options",
-      "community": 8,
-      "community_name": "today",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "unit_options"
     },
     {
@@ -5829,8 +5829,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "client_src_pages_products_productform_productform",
-      "community": 8,
-      "community_name": "today",
+      "community": 9,
+      "community_name": "WarehouseList.jsx",
       "norm_label": "productform()"
     },
     {
@@ -5840,8 +5840,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_products_productlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "productlist.jsx"
     },
     {
@@ -5851,8 +5851,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_products_productlist_productlist",
-      "community": 35,
-      "community_name": "App.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "productlist()"
     },
     {
@@ -5863,7 +5863,7 @@
       "_origin": "ast",
       "id": "client_src_pages_products_unitlist",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "unitlist.jsx"
     },
     {
@@ -5873,7 +5873,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_products_unitlist_unitlist",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "unitlist()"
     },
@@ -5885,7 +5885,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "grncreate.jsx"
     },
     {
@@ -5896,7 +5896,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate_lineschema",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "lineschema"
     },
     {
@@ -5907,7 +5907,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate_schema",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "schema"
     },
     {
@@ -5917,7 +5917,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grncreate_grncreate",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "grncreate()"
     },
@@ -5928,8 +5928,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grndetail",
-      "community": 183,
-      "community_name": "GRNDetail.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "grndetail.jsx"
     },
     {
@@ -5951,7 +5951,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grnlist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "grnlist.jsx"
     },
     {
@@ -5962,7 +5962,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_grnlist_status_options",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "status_options"
     },
     {
@@ -5984,7 +5984,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "purchaseordercreate.jsx"
     },
     {
@@ -5995,7 +5995,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate_lineschema",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "lineschema"
     },
     {
@@ -6006,7 +6006,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate_schema",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "schema"
     },
     {
@@ -6016,7 +6016,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseordercreate_purchaseordercreate",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "purchaseordercreate()"
     },
@@ -6050,7 +6050,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_purchaseorderlist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "purchaseorderlist.jsx"
     },
     {
@@ -6104,8 +6104,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentdetail",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "supplierpaymentdetail.jsx"
     },
     {
@@ -6115,8 +6115,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentdetail_method_colors",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "method_colors"
     },
     {
@@ -6138,7 +6138,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentlist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "supplierpaymentlist.jsx"
     },
     {
@@ -6149,7 +6149,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierpaymentlist_method_colors",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "method_colors"
     },
     {
@@ -6171,7 +6171,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturncreate",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "supplierreturncreate.jsx"
     },
     {
@@ -6182,7 +6182,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturncreate_schema",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "schema"
     },
     {
@@ -6192,7 +6192,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturncreate_supplierreturncreate",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "supplierreturncreate()"
     },
@@ -6203,8 +6203,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturndetail",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "supplierreturndetail.jsx"
     },
     {
@@ -6226,7 +6226,7 @@
       "_origin": "ast",
       "id": "client_src_pages_purchasing_supplierreturnlist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "supplierreturnlist.jsx"
     },
     {
@@ -6269,7 +6269,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_ageddebtors",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "ageddebtors.jsx"
     },
@@ -6280,7 +6280,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "client_src_pages_reports_ageddebtors_ageddebtors",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "ageddebtors()"
     },
@@ -6412,8 +6412,8 @@
       "source_location": "L423",
       "_origin": "ast",
       "id": "client_src_pages_reports_analytics_customerranking",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 5,
+      "community_name": "Analytics.jsx",
       "norm_label": "customerranking()"
     },
     {
@@ -6446,7 +6446,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_customerstatement",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "customerstatement.jsx"
     },
     {
@@ -6456,8 +6456,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_reports_customerstatement_customerstatement",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "customerstatement()"
     },
     {
@@ -6467,8 +6467,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections",
-      "community": 53,
-      "community_name": "DailyCollections.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "dailycollections.jsx"
     },
     {
@@ -6478,8 +6478,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_method_badge",
-      "community": 53,
-      "community_name": "DailyCollections.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "method_badge"
     },
     {
@@ -6489,8 +6489,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_method_icon",
-      "community": 53,
-      "community_name": "DailyCollections.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "method_icon"
     },
     {
@@ -6500,8 +6500,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "client_src_pages_reports_dailycollections_statcard",
-      "community": 53,
-      "community_name": "DailyCollections.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "statcard()"
     },
     {
@@ -6523,7 +6523,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_lowstockreport",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "lowstockreport.jsx"
     },
     {
@@ -6533,7 +6533,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_reports_lowstockreport_lowstockreport",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "lowstockreport()"
     },
@@ -6545,7 +6545,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_productprofitability",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "productprofitability.jsx"
     },
     {
@@ -6556,7 +6556,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_productprofitability_gpbadge",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "gpbadge()"
     },
     {
@@ -6566,7 +6566,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_reports_productprofitability_productprofitability",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "productprofitability()"
     },
@@ -6622,7 +6622,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_reordersuggestions",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "reordersuggestions.jsx"
     },
     {
@@ -6632,7 +6632,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_reports_reordersuggestions_reordersuggestions",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "reordersuggestions()"
     },
@@ -6644,7 +6644,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_salesrepkpi",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "salesrepkpi.jsx"
     },
     {
@@ -6654,7 +6654,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_reports_salesrepkpi_salesrepkpi",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "salesrepkpi()"
     },
@@ -6666,7 +6666,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_salessummary",
       "community": 35,
-      "community_name": "App.jsx",
+      "community_name": "today",
       "norm_label": "salessummary.jsx"
     },
     {
@@ -6677,7 +6677,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_salessummary_firstdayofmonth",
       "community": 35,
-      "community_name": "App.jsx",
+      "community_name": "today",
       "norm_label": "firstdayofmonth()"
     },
     {
@@ -6688,7 +6688,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_salessummary_salessummary",
       "community": 35,
-      "community_name": "App.jsx",
+      "community_name": "today",
       "norm_label": "salessummary()"
     },
     {
@@ -6698,8 +6698,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_stockmovement",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "stockmovement.jsx"
     },
     {
@@ -6709,8 +6709,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_pages_reports_stockmovement_firstdayofmonth",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "firstdayofmonth()"
     },
     {
@@ -6720,8 +6720,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_reports_stockmovement_movement_colors",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "movement_colors"
     },
     {
@@ -6731,8 +6731,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_reports_stockmovement_stockmovement",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "stockmovement()"
     },
     {
@@ -6742,8 +6742,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_reports_vandamageloss",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "vandamageloss.jsx"
     },
     {
@@ -6753,8 +6753,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_pages_reports_vandamageloss_firstdayofmonth",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "firstdayofmonth()"
     },
     {
@@ -6764,8 +6764,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_reports_vandamageloss_source_badge",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "source_badge"
     },
     {
@@ -6775,8 +6775,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "client_src_pages_reports_vandamageloss_reason_label",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "reason_label"
     },
     {
@@ -6786,8 +6786,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "client_src_pages_reports_vandamageloss_vandamageloss",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 35,
+      "community_name": "today",
       "norm_label": "vandamageloss()"
     },
     {
@@ -6798,7 +6798,7 @@
       "_origin": "ast",
       "id": "client_src_pages_reports_vatreport",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "vatreport.jsx"
     },
     {
@@ -6808,7 +6808,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_reports_vatreport_vatreport",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "vatreport()"
     },
@@ -6820,7 +6820,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "customerreturncreate.jsx"
     },
     {
@@ -6831,7 +6831,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_lineschema",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "lineschema"
     },
     {
@@ -6842,7 +6842,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_schema",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "schema"
     },
     {
@@ -6853,7 +6853,7 @@
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_blank_line",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "blank_line"
     },
     {
@@ -6863,8 +6863,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturncreate_customerreturncreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "customerreturncreate()"
     },
     {
@@ -6907,8 +6907,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturnlist",
-      "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "customerreturnlist.jsx"
     },
     {
@@ -6918,8 +6918,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturnlist_status_badge",
-      "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "status_badge"
     },
     {
@@ -6929,8 +6929,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_returns_customerreturnlist_customerreturnlist",
-      "community": 26,
-      "community_name": "CustomerProfile.jsx",
+      "community": 4,
+      "community_name": "App.jsx",
       "norm_label": "customerreturnlist()"
     },
     {
@@ -6940,8 +6940,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 183,
+      "community_name": "RouteList.jsx",
       "norm_label": "routelist.jsx"
     },
     {
@@ -6951,8 +6951,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_tonum",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 183,
+      "community_name": "RouteList.jsx",
       "norm_label": "tonum()"
     },
     {
@@ -6962,8 +6962,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_schema",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 183,
+      "community_name": "RouteList.jsx",
       "norm_label": "schema"
     },
     {
@@ -6973,8 +6973,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_routeform",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 183,
+      "community_name": "RouteList.jsx",
       "norm_label": "routeform()"
     },
     {
@@ -6984,8 +6984,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "client_src_pages_routes_routelist_routelist",
-      "community": 9,
-      "community_name": "WarehouseList.jsx",
+      "community": 183,
+      "community_name": "RouteList.jsx",
       "norm_label": "routelist()"
     },
     {
@@ -6996,7 +6996,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_chequelist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "chequelist.jsx"
     },
     {
@@ -7017,8 +7017,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "commissionlist.jsx"
     },
     {
@@ -7028,8 +7028,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_status_badge",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "status_badge"
     },
     {
@@ -7039,8 +7039,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_now",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "now"
     },
     {
@@ -7050,8 +7050,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "client_src_pages_sales_commissionlist_thisyear",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "thisyear"
     },
     {
@@ -7072,7 +7072,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotecreate",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "creditnotecreate.jsx"
     },
@@ -7083,7 +7083,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotecreate_schema",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "schema"
     },
@@ -7094,7 +7094,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotecreate_creditnotecreate",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "creditnotecreate()"
     },
@@ -7106,7 +7106,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_creditnotelist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "creditnotelist.jsx"
     },
     {
@@ -7127,7 +7127,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "expenselist.jsx"
     },
@@ -7138,7 +7138,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_expense_cats",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "expense_cats"
     },
@@ -7149,7 +7149,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_payment_methods",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "payment_methods"
     },
@@ -7160,7 +7160,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_schema",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "schema"
     },
@@ -7171,7 +7171,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "client_src_pages_sales_expenselist_expenseform",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "expenseform()"
     },
@@ -7194,7 +7194,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "invoicecreate.jsx"
     },
     {
@@ -7205,7 +7205,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_lineschema",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "lineschema"
     },
     {
@@ -7216,7 +7216,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_schema",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "schema"
     },
     {
@@ -7227,7 +7227,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_getlocation",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "getlocation()"
     },
     {
@@ -7238,7 +7238,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_blank_line",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "blank_line"
     },
     {
@@ -7249,7 +7249,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicecreate_invoicecreate",
       "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community_name": "productsApi.js",
       "norm_label": "invoicecreate()"
     },
     {
@@ -7260,7 +7260,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicedetail",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "invoicedetail.jsx"
     },
     {
@@ -7271,7 +7271,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicedetail_collectpaymentmodal",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "collectpaymentmodal()"
     },
     {
@@ -7281,8 +7281,8 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicedetail_invoicedetail",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "invoicedetail()"
     },
     {
@@ -7293,7 +7293,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicelist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "invoicelist.jsx"
     },
     {
@@ -7304,7 +7304,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicelist_statuses",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "statuses"
     },
     {
@@ -7315,7 +7315,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_invoicelist_status_border",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "status_border"
     },
     {
@@ -7337,7 +7337,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "receiptcreate.jsx"
     },
     {
@@ -7348,7 +7348,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate_payment_methods",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "payment_methods"
     },
     {
@@ -7359,7 +7359,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate_schema",
       "community": 8,
-      "community_name": "today",
+      "community_name": "FormField.jsx",
       "norm_label": "schema"
     },
     {
@@ -7369,7 +7369,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptcreate_receiptcreate",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "receiptcreate()"
     },
@@ -7381,7 +7381,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptlist",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "receiptlist.jsx"
     },
     {
@@ -7392,7 +7392,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptlist_method_badge",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "method_badge"
     },
     {
@@ -7403,7 +7403,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptlist_printreceiptbutton",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "printreceiptbutton()"
     },
     {
@@ -7414,7 +7414,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_receiptlist_receiptlist",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "receiptlist()"
     },
     {
@@ -7424,41 +7424,52 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "salesordercreate.jsx"
     },
     {
       "label": "SIZES",
       "file_type": "code",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L22",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate_sizes",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "sizes"
+    },
+    {
+      "label": "captureOrderLocation()",
+      "file_type": "code",
+      "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
+      "source_location": "L32",
+      "_origin": "ast",
+      "id": "client_src_pages_sales_salesordercreate_captureorderlocation",
+      "community": 43,
+      "community_name": "selectCurrentUser",
+      "norm_label": "captureorderlocation()"
     },
     {
       "label": "headerSchema",
       "file_type": "code",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L30",
+      "source_location": "L67",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate_headerschema",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "headerschema"
     },
     {
       "label": "SalesOrderCreate()",
       "file_type": "code",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L39",
+      "source_location": "L76",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesordercreate_salesordercreate",
-      "community": 22,
-      "community_name": "useOfflineSync.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "salesordercreate()"
     },
     {
@@ -7469,7 +7480,7 @@
       "_origin": "ast",
       "id": "client_src_pages_sales_salesorderdetail",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "salesorderdetail.jsx"
     },
     {
@@ -7490,8 +7501,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesorderlist",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "salesorderlist.jsx"
     },
     {
@@ -7501,8 +7512,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_sales_salesorderlist_salesorderlist",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "salesorderlist()"
     },
     {
@@ -7513,7 +7524,7 @@
       "_origin": "ast",
       "id": "client_src_pages_settings_branchlist",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "branchlist.jsx"
     },
     {
@@ -7524,7 +7535,7 @@
       "_origin": "ast",
       "id": "client_src_pages_settings_branchlist_schema",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "schema"
     },
     {
@@ -7535,7 +7546,7 @@
       "_origin": "ast",
       "id": "client_src_pages_settings_branchlist_branchform",
       "community": 4,
-      "community_name": "Table.jsx",
+      "community_name": "App.jsx",
       "norm_label": "branchform()"
     },
     {
@@ -7545,7 +7556,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "client_src_pages_settings_branchlist_branchlist",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "branchlist()"
     },
@@ -7556,7 +7567,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_settings_companysettings",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "companysettings.jsx"
     },
@@ -7567,7 +7578,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "client_src_pages_settings_companysettings_companysettings",
-      "community": 35,
+      "community": 4,
       "community_name": "App.jsx",
       "norm_label": "companysettings()"
     },
@@ -7579,7 +7590,7 @@
       "_origin": "ast",
       "id": "client_src_pages_settings_periodsmanagement",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "periodsmanagement.jsx"
     },
     {
@@ -7590,7 +7601,7 @@
       "_origin": "ast",
       "id": "client_src_pages_settings_periodsmanagement_months",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "months"
     },
     {
@@ -7655,8 +7666,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_settings_userlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "userlist.jsx"
     },
     {
@@ -7666,8 +7677,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_settings_userlist_createschema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "createschema"
     },
     {
@@ -7677,8 +7688,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "client_src_pages_settings_userlist_editschema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "editschema"
     },
     {
@@ -7688,8 +7699,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "client_src_pages_settings_userlist_userform",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "userform()"
     },
     {
@@ -7699,8 +7710,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "client_src_pages_settings_userlist_userlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "userlist()"
     },
     {
@@ -7710,8 +7721,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_suppliers_supplierlist",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "supplierlist.jsx"
     },
     {
@@ -7721,8 +7732,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "client_src_pages_suppliers_supplierlist_schema",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "schema"
     },
     {
@@ -7732,8 +7743,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "client_src_pages_suppliers_supplierlist_supplierform",
-      "community": 4,
-      "community_name": "Table.jsx",
+      "community": 0,
+      "community_name": "usePermission.js",
       "norm_label": "supplierform()"
     },
     {
@@ -7908,8 +7919,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "driverpayments.jsx"
     },
     {
@@ -7919,8 +7930,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments_methods",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "methods"
     },
     {
@@ -7930,8 +7941,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments_collectmodal",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "collectmodal()"
     },
     {
@@ -7941,8 +7952,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverpayments_driverpayments",
-      "community": 13,
-      "community_name": "fmtCurrency",
+      "community": 26,
+      "community_name": "customersApi.js",
       "norm_label": "driverpayments()"
     },
     {
@@ -7953,7 +7964,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverstock",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "driverstock.jsx"
     },
     {
@@ -7964,7 +7975,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverstock_stockrow",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "stockrow()"
     },
     {
@@ -7975,7 +7986,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_driverstock_driverstock",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "driverstock()"
     },
     {
@@ -7986,7 +7997,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_freeitems",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "freeitems.jsx"
     },
     {
@@ -7997,7 +8008,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_freeitems_quotabar",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "quotabar()"
     },
     {
@@ -8008,7 +8019,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_freeitems_historymodal",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "historymodal()"
     },
     {
@@ -8019,7 +8030,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_freeitems_topupmodal",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "topupmodal()"
     },
     {
@@ -8030,7 +8041,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_freeitems_newallocmodal",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "newallocmodal()"
     },
     {
@@ -8041,7 +8052,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_freeitems_freeitems",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "freeitems()"
     },
     {
@@ -8051,8 +8062,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetcreate",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "loadingsheetcreate.jsx"
     },
     {
@@ -8062,8 +8073,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetcreate_schema",
-      "community": 14,
-      "community_name": "SalesOrderCreate.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "schema"
     },
     {
@@ -8073,8 +8084,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetcreate_loadingsheetcreate",
-      "community": 8,
-      "community_name": "today",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "loadingsheetcreate()"
     },
     {
@@ -8085,7 +8096,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetdetail",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "loadingsheetdetail.jsx"
     },
     {
@@ -8096,7 +8107,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetdetail_fmtqty",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "fmtqty()"
     },
     {
@@ -8107,7 +8118,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetdetail_availcolor",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "availcolor()"
     },
     {
@@ -8118,7 +8129,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetdetail_dayendclosemodal",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "dayendclosemodal()"
     },
     {
@@ -8128,8 +8139,8 @@
       "source_location": "L221",
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetdetail_addinvoicemodal",
-      "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community": 13,
+      "community_name": "fmtCurrency",
       "norm_label": "addinvoicemodal()"
     },
     {
@@ -8140,7 +8151,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetdetail_loadingsheetdetail",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "loadingsheetdetail()"
     },
     {
@@ -8151,7 +8162,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetlist",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "loadingsheetlist.jsx"
     },
     {
@@ -8162,7 +8173,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetlist_status_style",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "status_style"
     },
     {
@@ -8173,7 +8184,7 @@
       "_origin": "ast",
       "id": "client_src_pages_vansales_loadingsheetlist_status_options",
       "community": 0,
-      "community_name": "format.js",
+      "community_name": "usePermission.js",
       "norm_label": "status_options"
     },
     {
@@ -8194,8 +8205,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_pages_vansales_mycollection",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "mycollection.jsx"
     },
     {
@@ -8205,8 +8216,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "client_src_pages_vansales_mycollection_today",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "today()"
     },
     {
@@ -8216,8 +8227,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_pages_vansales_mycollection_method_label",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "method_label"
     },
     {
@@ -8227,8 +8238,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_pages_vansales_mycollection_method_color",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "method_color"
     },
     {
@@ -8238,8 +8249,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_pages_vansales_mycollection_mycollection",
-      "community": 43,
-      "community_name": "fmtNumber",
+      "community": 18,
+      "community_name": "format.js",
       "norm_label": "mycollection()"
     },
     {
@@ -8426,7 +8437,7 @@
       "_origin": "ast",
       "id": "client_src_pages_warehouses_warehouselist_stockview",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "stockview()"
     },
     {
@@ -8491,8 +8502,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_store_authslice",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "authslice.js"
     },
     {
@@ -8502,8 +8513,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "client_src_store_authslice_stored",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "stored()"
     },
     {
@@ -8513,8 +8524,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "client_src_store_authslice_authslice",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "authslice"
     },
     {
@@ -8524,7 +8535,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "client_src_store_authslice_selectcurrentuser",
-      "community": 1,
+      "community": 43,
       "community_name": "selectCurrentUser",
       "norm_label": "selectcurrentuser()"
     },
@@ -8535,8 +8546,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "client_src_store_authslice_selecttoken",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "selecttoken()"
     },
     {
@@ -8557,8 +8568,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "client_src_store_authslice_selectpermissions",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "selectpermissions()"
     },
     {
@@ -8568,8 +8579,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "client_src_store_authslice_selectassignedwarehouse",
-      "community": 38,
-      "community_name": "SalesReturns.jsx",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "selectassignedwarehouse()"
     },
     {
@@ -8579,8 +8590,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "client_src_store_authslice_selectcan",
-      "community": 40,
-      "community_name": "authSlice.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "selectcan()"
     },
     {
@@ -8612,8 +8623,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_store_index",
-      "community": 23,
-      "community_name": "NotificationContext.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "store/index.js"
     },
     {
@@ -8623,8 +8634,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "client_src_store_index_store",
-      "community": 23,
-      "community_name": "NotificationContext.jsx",
+      "community": 40,
+      "community_name": "baseApi.js",
       "norm_label": "store"
     },
     {
@@ -8634,7 +8645,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_src_utils_format",
-      "community": 0,
+      "community": 18,
       "community_name": "format.js",
       "norm_label": "format.js"
     },
@@ -8668,7 +8679,7 @@
       "_origin": "ast",
       "id": "client_src_utils_format_fmtdatetime",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "fmtdatetime()"
     },
     {
@@ -8678,8 +8689,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "client_src_utils_format_fmttime",
-      "community": 0,
-      "community_name": "format.js",
+      "community": 43,
+      "community_name": "selectCurrentUser",
       "norm_label": "fmttime()"
     },
     {
@@ -8690,7 +8701,7 @@
       "_origin": "ast",
       "id": "client_src_utils_format_fmtnumber",
       "community": 43,
-      "community_name": "fmtNumber",
+      "community_name": "selectCurrentUser",
       "norm_label": "fmtnumber()"
     },
     {
@@ -8700,7 +8711,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "client_src_utils_format_today",
-      "community": 8,
+      "community": 35,
       "community_name": "today",
       "norm_label": "today()"
     },
@@ -8789,7 +8800,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "print.js"
     },
     {
@@ -8800,7 +8811,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print_inelectron",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "inelectron()"
     },
     {
@@ -8811,7 +8822,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print_builda4html",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "builda4html()"
     },
     {
@@ -8822,7 +8833,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print_buildposhtml",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "buildposhtml()"
     },
     {
@@ -8833,7 +8844,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print_printcomponent",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "printcomponent()"
     },
     {
@@ -8844,7 +8855,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print_printpos",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "printpos()"
     },
     {
@@ -8855,7 +8866,7 @@
       "_origin": "ast",
       "id": "client_src_utils_print_printposall",
       "community": 18,
-      "community_name": "LoadingSheetDetail.jsx",
+      "community_name": "format.js",
       "norm_label": "printposall()"
     },
     {
@@ -23798,7 +23809,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L10",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -24036,7 +24047,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L13",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -24274,7 +24285,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L11",
+      "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -25003,7 +25014,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L9",
+      "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -25266,7 +25277,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L14",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -25623,7 +25634,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L12",
+      "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -28543,7 +28554,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L19",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -28855,7 +28866,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L19",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -29071,7 +29082,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L19",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -29311,7 +29322,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L19",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -32894,7 +32905,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -33026,7 +33037,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -33039,7 +33050,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L47",
+      "source_location": "L84",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -33504,7 +33515,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L16",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -34428,7 +34439,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L16",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -34441,7 +34452,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L45",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40803,7 +40814,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L30",
+      "source_location": "L32",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_sales_salesordercreate",
+      "target": "client_src_pages_sales_salesordercreate_captureorderlocation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
+      "source_location": "L67",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40814,7 +40836,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L39",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40825,7 +40847,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L22",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40837,7 +40859,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L15",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40849,7 +40871,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L15",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40861,7 +40883,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L15",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40873,7 +40895,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40885,7 +40907,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40897,7 +40919,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40909,7 +40931,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40921,7 +40943,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L18",
+      "source_location": "L20",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
@@ -40933,11 +40955,23 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L18",
+      "source_location": "L20",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate",
       "target": "client_src_utils_offlinequeue_enqueuerequest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
+      "source_location": "L290",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_sales_salesordercreate_salesordercreate",
+      "target": "client_src_pages_sales_salesordercreate_captureorderlocation",
       "confidence_score": 1.0
     },
     {
@@ -40946,7 +40980,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L44",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40958,7 +40992,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L43",
+      "source_location": "L80",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40970,7 +41004,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L366",
+      "source_location": "L398",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40982,7 +41016,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L567",
+      "source_location": "L599",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -40994,7 +41028,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L59",
+      "source_location": "L96",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -41006,7 +41040,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/pages/sales/SalesOrderCreate.jsx",
-      "source_location": "L218",
+      "source_location": "L244",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_sales_salesordercreate_salesordercreate",
@@ -55609,5 +55643,5 @@
       "source_file": "client/index.html"
     }
   ],
-  "built_at_commit": "f90ba3aaa63008d2b6218b09ccd77a9a4b16671e"
+  "built_at_commit": "689f3b9537ee3bdae1108ca2df10a1eb8ccca41b"
 }

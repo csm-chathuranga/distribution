@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import { WifiOff, X, Plus, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
@@ -26,6 +28,41 @@ const SIZES = [
   { label: '1L',    pattern: /(?:^|[^0-9.])1[Ll](?![Ll0-9])/ },
   { label: '1.5L',  pattern: /1\.5[Ll]/i },
 ];
+
+async function captureOrderLocation() {
+  if (Capacitor.isNativePlatform()) {
+    let permissions = await Geolocation.checkPermissions();
+    if (permissions.location !== 'granted') {
+      permissions = await Geolocation.requestPermissions();
+    }
+    if (permissions.location !== 'granted') {
+      throw new Error('Location permission was not granted');
+    }
+
+    const position = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    };
+  }
+
+  if (!navigator.geolocation) throw new Error('Geolocation is unavailable on this device');
+  const position = await new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+  });
+  return {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+  };
+}
 
 const headerSchema = yup.object({
   customer_id:  yup.number().required('Customer required').typeError('Select customer'),
@@ -107,7 +144,6 @@ export default function SalesOrderCreate() {
   const [orderDisc,     setOrderDisc]     = useState('');
   const [orderDiscType, setOrderDiscType] = useState('pct'); // 'pct' | 'amt'
   const [pricingMode,   setPricingMode]   = useState('free'); // 'free' | 'mrp'
-  const [gpsCoords,     setGpsCoords]     = useState(null);
   const [returns,       setReturns]       = useState([]);
 
   const [returnDropPos, setReturnDropPos] = useState({});
@@ -122,16 +158,6 @@ export default function SalesOrderCreate() {
     }
     updateReturn(_id, 'open', true);
   };
-
-  // Silently capture GPS on page load so it's ready when the order is submitted
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => setGpsCoords({ latitude: coords.latitude, longitude: coords.longitude }),
-      () => {}, // ignore denial silently
-      { timeout: 8000, maximumAge: 60000 }
-    );
-  }, []);
 
   const setQty      = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], qty: val } }));
   const setFree     = (id, val) => setQtys(prev => ({ ...prev, [id]: { ...prev[id], free: val } }));
@@ -258,6 +284,12 @@ export default function SalesOrderCreate() {
     if (overQuotaLine) {
       toast.error(`Free-item quantity exceeds the remaining quota for ${overQuotaLine.product.name}`);
       return;
+    }
+    let gpsCoords = null;
+    try {
+      gpsCoords = await captureOrderLocation();
+    } catch {
+      toast('Could not capture your location. The order will be saved without GPS coordinates.');
     }
     const requestId = globalThis.crypto?.randomUUID?.()
       || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
