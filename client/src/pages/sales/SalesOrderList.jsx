@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ClipboardList, ChevronRight, CheckCircle, TrendingUp, BadgeCheck, Clock, Filter, X, CloudUpload, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, Search, ClipboardList, ChevronRight, CheckCircle, TrendingUp, BadgeCheck, Clock, Filter, X, CloudUpload, AlertCircle, RefreshCw, Trash2, FilePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
-import { useGetSalesOrdersQuery, useConfirmSalesOrderMutation } from '../../api/salesApi';
+import { useGetSalesOrdersQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation } from '../../api/salesApi';
 import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { usePermission } from '../../hooks/usePermission';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
@@ -35,6 +35,13 @@ export default function SalesOrderList() {
   const [dateTo,           setDateTo]           = useState('');
   const [salesRepId,       setSalesRepId]       = useState('');
   const [discardingItem,   setDiscardingItem]   = useState(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [confirmingBulkInvoice, setConfirmingBulkInvoice] = useState(false);
+  const [bulkInvoicing, setBulkInvoicing] = useState(false);
+
+  useEffect(() => {
+    setSelectedOrderIds([]);
+  }, [page, search, dateFrom, dateTo, salesRepId]);
 
   const { data: repsData } = useGetUsersForSelectQuery('sales_rep', { skip: !canViewAll });
   const salesReps = repsData || [];
@@ -47,7 +54,11 @@ export default function SalesOrderList() {
   const { data, isLoading } = useGetSalesOrdersQuery(queryParams);
   const { data: todayData } = useGetSalesOrdersQuery({ date_from: TODAY, date_to: TODAY, limit: 200 });
   const [confirmOrder, { isLoading: confirming }] = useConfirmSalesOrderMutation();
+  const [invoiceOrder] = useInvoiceSalesOrderMutation();
   const orders = data?.data || [];
+  const invoiceableOrders = orders.filter(order => order.status === 'CONFIRMED');
+  const allInvoiceableSelected = invoiceableOrders.length > 0
+    && invoiceableOrders.every(order => selectedOrderIds.includes(order.id));
   const total  = data?.total || 0;
   const pendingOrders = page === 1 ? queueItems.filter(item => {
     if (item.url !== '/sales-orders' || item.method !== 'POST') return false;
@@ -76,6 +87,45 @@ export default function SalesOrderList() {
       toast.success('Sales order confirmed');
       setConfirmingOrder(null);
     } catch (e) { toast.error(e.data?.message || 'Failed'); }
+  };
+
+  const handleToggleAllInvoiceable = checked => {
+    const invoiceableIds = invoiceableOrders.map(order => order.id);
+    setSelectedOrderIds(current => checked
+      ? [...new Set([...current, ...invoiceableIds])]
+      : current.filter(id => !invoiceableIds.includes(id)));
+  };
+
+  const handleBulkInvoice = async () => {
+    setBulkInvoicing(true);
+    const selectedOrders = invoiceableOrders.filter(order => selectedOrderIds.includes(order.id));
+    const failures = [];
+    let createdCount = 0;
+
+    for (const order of selectedOrders) {
+      try {
+        await invoiceOrder(order.id).unwrap();
+        createdCount += 1;
+      } catch (error) {
+        failures.push({
+          orderNumber: order.order_number,
+          reason: error?.data?.message || 'Request failed',
+        });
+      }
+    }
+
+    setBulkInvoicing(false);
+    setConfirmingBulkInvoice(false);
+    setSelectedOrderIds([]);
+
+    if (createdCount > 0) {
+      toast.success(`${createdCount} invoice${createdCount === 1 ? '' : 's'} created`);
+    }
+    if (failures.length > 0) {
+      const details = failures.slice(0, 2).map(failure => `${failure.orderNumber}: ${failure.reason}`).join('; ');
+      const remaining = failures.length > 2 ? ` (+${failures.length - 2} more)` : '';
+      toast.error(`${failures.length} order${failures.length === 1 ? '' : 's'} could not be invoiced: ${details}${remaining}`);
+    }
   };
 
   return (
@@ -190,6 +240,33 @@ export default function SalesOrderList() {
       )}
 
       {/* Cards */}
+      {canApprove && invoiceableOrders.length > 0 && (
+        <div className="card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
+              checked={allInvoiceableSelected}
+              onChange={e => handleToggleAllInvoiceable(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              aria-label="Select all confirmed orders on this page"
+            />
+            Select confirmed orders on this page
+          </label>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500">{selectedOrderIds.length} selected</span>
+            <button
+              type="button"
+              onClick={() => setConfirmingBulkInvoice(true)}
+              disabled={selectedOrderIds.length === 0 || bulkInvoicing}
+              className="btn btn-primary flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FilePlus size={15} />
+              Create invoices
+            </button>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-3">
           {[1,2,3].map(i => (
@@ -291,6 +368,18 @@ export default function SalesOrderList() {
                     <p className="text-xs font-mono text-primary-600 mt-0.5">{so.order_number}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {canApprove && so.status === 'CONFIRMED' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedOrderIds.includes(so.id)}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => setSelectedOrderIds(current => e.target.checked
+                          ? [...new Set([...current, so.id])]
+                          : current.filter(id => id !== so.id))}
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        aria-label={`Select order ${so.order_number} for invoicing`}
+                      />
+                    )}
                     <StatusBadge status={so.status} />
                     <ChevronRight size={15} className="text-gray-400" />
                   </div>
@@ -342,6 +431,19 @@ export default function SalesOrderList() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirmingOrder(null)}
         loading={confirming}
+      />
+      <ConfirmDialog
+        open={confirmingBulkInvoice}
+        title="Create invoices for selected orders"
+        message={`Create and post a separate invoice for each of the ${selectedOrderIds.length} selected confirmed orders? This updates stock and customer balances.`}
+        confirmLabel="Create invoices"
+        loadingLabel="Creating invoices..."
+        onConfirm={handleBulkInvoice}
+        onCancel={() => {
+          if (!bulkInvoicing) setConfirmingBulkInvoice(false);
+        }}
+        loading={bulkInvoicing}
+        variant="warning"
       />
       <ConfirmDialog
         open={!!discardingItem}
