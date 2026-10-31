@@ -7,6 +7,7 @@ import { Pencil, Plus, Search, Phone, User, MapPin, Navigation, ChevronDown } fr
 import toast from 'react-hot-toast';
 import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
+import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { usePermission } from '../../hooks/usePermission';
 import Modal from '../../components/ui/Modal';
 import { TextField, TextareaField, SelectField } from '../../components/ui/FormField';
@@ -189,12 +190,18 @@ export default function CustomerList() {
   const [editing,       setEditing]       = useState(null);
   const [routeSearch,   setRouteSearch]   = useState('');
   const [routeDropOpen, setRouteDropOpen] = useState(false);
+  const [repFilter,    setRepFilter]    = useState('');
+  const [repDropOpen,  setRepDropOpen]  = useState(false);
+  const [repSearch,    setRepSearch]    = useState('');
   const routeDropRef = useRef(null);
+  const repDropRef   = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
       if (routeDropRef.current && !routeDropRef.current.contains(e.target))
         setRouteDropOpen(false);
+      if (repDropRef.current && !repDropRef.current.contains(e.target))
+        setRepDropOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -202,9 +209,12 @@ export default function CustomerList() {
 
   const { data: routesData } = useGetRoutesQuery({ limit: 200 });
   const routeOptions = routesData?.data || [];
+  const { data: salesRepsData } = useGetUsersForSelectQuery(null, { skip: !canViewAll });
+  const salesReps = salesRepsData || [];
 
   const queryParams = { search, page, limit: 20 };
   if (routeFilter) queryParams.route_id = routeFilter;
+  if (repFilter)   queryParams.sales_rep_id = repFilter;
   const { data, isLoading } = useGetCustomersQuery(queryParams);
   const customers = data?.data || [];
   const total     = data?.total || 0;
@@ -282,6 +292,53 @@ export default function CustomerList() {
             </div>
           )}
         </div>
+
+        {/* Sales rep filter — admin/manager only */}
+        {canViewAll && (
+          <div ref={repDropRef} className="relative flex-shrink-0" style={{ minWidth: 155 }}>
+            <button
+              type="button"
+              onClick={() => { setRepDropOpen(d => !d); setRepSearch(''); }}
+              className="bg-white border border-gray-200 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all w-full flex items-center justify-between gap-2"
+              style={{ height: 52, borderRadius: 16, fontSize: 15, paddingLeft: 14, paddingRight: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+            >
+              <span className="truncate">
+                {repFilter ? (salesReps.find(r => String(r.id) === String(repFilter))?.name || 'Rep') : 'All Reps'}
+              </span>
+              <ChevronDown size={15} className="text-gray-400 flex-shrink-0" />
+            </button>
+            {repDropOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-56">
+                <div className="p-2 border-b border-gray-100">
+                  <input
+                    autoFocus
+                    value={repSearch}
+                    onChange={e => setRepSearch(e.target.value)}
+                    placeholder="Search reps…"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto py-1">
+                  <button type="button"
+                    onClick={() => { setRepFilter(''); setPage(1); setRepDropOpen(false); }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${!repFilter ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
+                  >All Reps</button>
+                  {salesReps
+                    .filter(r => r.name.toLowerCase().includes(repSearch.toLowerCase()))
+                    .map(r => (
+                      <button key={r.id} type="button"
+                        onClick={() => { setRepFilter(r.id); setPage(1); setRepDropOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${String(repFilter) === String(r.id) ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
+                      >{r.name}</button>
+                    ))}
+                  {salesReps.filter(r => r.name.toLowerCase().includes(repSearch.toLowerCase())).length === 0 && (
+                    <p className="px-4 py-3 text-sm text-gray-400">No reps found</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Card list */}

@@ -23,7 +23,18 @@ export default function ProductList() {
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
-  const { data, isLoading } = useGetProductsQuery({ search, page, limit: 20, is_active: true });
+  const { data: rawData, isLoading } = useGetProductsQuery({ search, page, limit: 20, is_active: true });
+
+  const extractSizeMl = (name = '') => {
+    if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+    if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+    const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? parseFloat(m[1]) : 9999;
+  };
+
+  const data = rawData
+    ? { ...rawData, data: [...(rawData.data || [])].sort((a, b) => extractSizeMl(a.name) - extractSizeMl(b.name)) }
+    : rawData;
   const [deleteProduct, { isLoading: delLoading }] = useDeleteProductMutation();
 
   const openCreate = () => { setEditing(null); setFormKey(k => k + 1); setFormOpen(true); };

@@ -38,30 +38,38 @@ async function captureOrderLocation() {
     if (permissions.location !== 'granted') {
       throw new Error('Location permission was not granted');
     }
-
-    const position = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0,
-    });
-    return {
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-    };
+    // Try high-accuracy first; fall back to low-accuracy if it times out
+    try {
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000,
+      });
+      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    } catch {
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 60000,
+      });
+      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    }
   }
 
   if (!navigator.geolocation) throw new Error('Geolocation is unavailable on this device');
-  const position = await new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0,
-    });
-  });
-  return {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-  };
+
+  const getPosition = (opts) => new Promise((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, opts)
+  );
+
+  // Try high-accuracy; fall back to low-accuracy network-based location
+  try {
+    const position = await getPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+  } catch {
+    const position = await getPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+  }
 }
 
 const headerSchema = yup.object({
@@ -288,7 +296,8 @@ export default function SalesOrderCreate() {
     let gpsCoords = null;
     try {
       gpsCoords = await captureOrderLocation();
-    } catch {
+    } catch (locErr) {
+      console.warn('Location capture failed:', locErr?.message || locErr);
       toast('Could not capture your location. The order will be saved without GPS coordinates.');
     }
     const requestId = globalThis.crypto?.randomUUID?.()

@@ -5,6 +5,8 @@ export const salesApi = baseApi.injectEndpoints({
     getSalesOrders: b.query({ query: params => ({ url: '/sales-orders', params }), providesTags: ['SalesOrder'] }),
     getSalesOrder: b.query({ query: id => `/sales-orders/${id}`, providesTags: (r,e,id) => [{ type:'SalesOrder', id }] }),
     createSalesOrder: b.mutation({ query: body => ({ url: '/sales-orders', method: 'POST', body, timeout: 15000 }), invalidatesTags: ['SalesOrder', 'FreeAlloc', 'Stock'] }),
+    updateSalesOrder: b.mutation({ query: ({ id, ...body }) => ({ url: `/sales-orders/${id}`, method: 'PUT', body }), invalidatesTags: ['SalesOrder', 'Stock'] }),
+    cancelSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}`, method: 'DELETE' }), invalidatesTags: ['SalesOrder', 'Stock'] }),
     confirmSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}/confirm`, method: 'PUT' }), invalidatesTags: ['SalesOrder'] }),
     invoiceSalesOrder: b.mutation({ query: id => ({ url: `/sales-orders/${id}/invoice`, method: 'POST' }), invalidatesTags: ['SalesOrder', 'Invoice'] }),
 
@@ -69,7 +71,7 @@ export const salesApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
+  useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useUpdateSalesOrderMutation, useCancelSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
   useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation, useDeliverInvoiceMutation,
   useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetMyCollectionsQuery, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
   useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation,

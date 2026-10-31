@@ -32,15 +32,21 @@ Driver returns to warehouse
 ## Modules & Files
 
 ### 1. Sales Order
-**Flow:** Sales rep creates order in field → warehouse confirms.
+**Flow:** Sales rep creates order in field → warehouse confirms → admin/salesrep edits if needed → create invoice.
+
+**Status flow:** `CONFIRMED → INVOICED` | `CONFIRMED → CANCELLED`
 
 | Layer | File |
 |-------|------|
 | Model | `server/models/SalesOrder.js`, `server/models/SalesOrderLine.js` |
 | Route | `server/routes/salesOrders.js` |
-| UI    | `client/src/pages/sales/SalesOrderCreate.jsx`, `SalesOrderList.jsx` |
+| UI    | `client/src/pages/sales/SalesOrderCreate.jsx`, `SalesOrderList.jsx`, `SalesOrderDetail.jsx`, `SalesOrderEdit.jsx` |
 
 **SalesOrderLine fields:** `product_id`, `quantity`, `free_quantity` *(FOC — added migration 007)*, `unit_price`, `discount_rate`, `vat_rate`, `line_total`
+
+**Edit (PUT /:id):** Admin (`sales.approve`) or the order creator can edit a CONFIRMED order's lines and notes. Releases old stock reservations, creates new ones. Only works on CONFIRMED status.
+
+**Cancel (DELETE /:id):** Admin or order creator can cancel a CONFIRMED order. Releases stock reservations and sets status to `CANCELLED`.
 
 ---
 

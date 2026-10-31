@@ -394,7 +394,113 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
   } catch (err) { next(err); }
 });
 
-router.put('/:id', authorize('sales.approve'), crud.update);
+router.put('/:id', authorize('sales.view_own'), async (req, res, next) => {
+  try {
+    const canApprove = req.permissions?.has('sales.approve');
+    const order = await SalesOrder.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'CONFIRMED') return res.status(422).json({ message: 'Only confirmed orders can be edited' });
+    if (!canApprove && String(order.created_by) !== String(req.user.id))
+      return res.status(403).json({ message: 'Not authorized to edit this order' });
+
+    const { lines, returns = [], notes, total_amount } = req.body;
+    if (!lines || lines.length === 0) return res.status(400).json({ message: 'At least one line is required' });
+
+    const t = await db.transaction();
+    try {
+      // Release old stock reservations
+      const oldLines = await SalesOrderLine.findAll({ where: { order_id: order.id } });
+      for (const l of oldLines) {
+        const qty = parseFloat(l.quantity || 0);
+        if (qty <= 0) continue;
+        const stock = await Stock.findOne({
+          where: { warehouse_id: order.warehouse_id, product_id: l.product_id },
+          transaction: t, lock: true,
+        });
+        if (stock) {
+          await stock.update({ reserved_quantity: Math.max(0, parseFloat(stock.reserved_quantity) - qty) }, { transaction: t });
+        }
+      }
+
+      // Replace lines
+      await SalesOrderLine.destroy({ where: { order_id: order.id }, transaction: t });
+
+      for (const line of lines) {
+        const billedQty = parseFloat(line.quantity || 0);
+        if (billedQty > 0) {
+          const stock = await Stock.findOne({
+            where: { warehouse_id: order.warehouse_id, product_id: line.product_id },
+            transaction: t, lock: true,
+          });
+          if (stock) {
+            const freeStock = parseFloat(stock.quantity) - parseFloat(stock.reserved_quantity);
+            if (freeStock < billedQty) {
+              await t.rollback();
+              return res.status(422).json({ message: `Insufficient stock for product ID ${line.product_id}. Available: ${freeStock.toFixed(2)}, Required: ${billedQty}` });
+            }
+            await stock.increment('reserved_quantity', { by: billedQty, transaction: t });
+          }
+        }
+      }
+
+      await SalesOrderLine.bulkCreate(lines.map(l => ({ ...l, order_id: order.id })), { transaction: t });
+
+      // Replace returns
+      await OrderReturn.destroy({ where: { order_id: order.id }, transaction: t });
+      if (returns.length) {
+        await OrderReturn.bulkCreate(returns.map(r => ({ ...r, order_id: order.id })), { transaction: t });
+      }
+
+      const calcTotal = lines.reduce((s, l) => {
+        const qty = parseFloat(l.quantity || 0);
+        const price = parseFloat(l.unit_price || 0);
+        const disc = parseFloat(l.discount_rate || 0);
+        return s + qty * price * (1 - disc / 100);
+      }, 0);
+
+      const returnDeduction = returns
+        .filter(r => r.action === 'DEDUCT')
+        .reduce((s, r) => s + parseFloat(r.quantity || 0) * parseFloat(r.unit_price || 0), 0);
+      const netTotal = Math.max(0, (total_amount ?? calcTotal) - returnDeduction);
+
+      await order.update({ notes: notes ?? order.notes, total_amount: netTotal, subtotal_amount: calcTotal }, { transaction: t });
+      await t.commit();
+      res.json(order);
+    } catch (e) { await t.rollback(); throw e; }
+  } catch (err) { next(err); }
+});
+
+router.delete('/:id', authorize('sales.view_own'), async (req, res, next) => {
+  try {
+    const canApprove = req.permissions?.has('sales.approve');
+    const order = await SalesOrder.findByPk(req.params.id, {
+      include: [{ model: SalesOrderLine, as: 'Lines' }],
+    });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'CONFIRMED') return res.status(422).json({ message: 'Only confirmed orders can be cancelled' });
+    if (!canApprove && String(order.created_by) !== String(req.user.id))
+      return res.status(403).json({ message: 'Not authorized to cancel this order' });
+
+    const t = await db.transaction();
+    try {
+      for (const l of (order.Lines || [])) {
+        const qty = parseFloat(l.quantity || 0);
+        if (qty <= 0) continue;
+        const stock = await Stock.findOne({
+          where: { warehouse_id: order.warehouse_id, product_id: l.product_id },
+          transaction: t, lock: true,
+        });
+        if (stock) {
+          await stock.update({ reserved_quantity: Math.max(0, parseFloat(stock.reserved_quantity) - qty) }, { transaction: t });
+        }
+      }
+      await order.update({ status: 'CANCELLED' }, { transaction: t });
+      await t.commit();
+      res.json({ message: 'Order cancelled' });
+    } catch (e) { await t.rollback(); throw e; }
+  } catch (err) { next(err); }
+});
+
 router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) => {
   try {
     const order = await SalesOrder.findByPk(req.params.id);

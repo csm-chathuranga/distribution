@@ -1,7 +1,7 @@
 import { fmtDate } from '../../utils/format';
 
 const W = '76mm';
-const receiptFont = '"Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", sans-serif';
+const receiptFont = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
 
 function fmtAmt(val) {
   return parseFloat(val || 0).toFixed(2);
@@ -36,7 +36,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
   const root = {
     fontFamily: receiptFont,
-    fontSize: '18px',
+    fontSize: '14px',
     fontWeight: '500',
     color: '#000',
     background: '#fff',
@@ -54,51 +54,51 @@ export default function InvoicePrintPOS({ invoice, company }) {
     <div style={root}>
 
       {/* Principal brand */}
-      <div style={{ ...center, fontWeight: '700', fontSize: '24px' }}>MAX BEVERAGES</div>
-      <div style={{ ...center, fontSize: '15px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
-      <div style={{ ...center, fontSize: '15px' }}>Korathota, Kaduwela.</div>
-      <div style={{ ...center, fontSize: '15px' }}>Tel: +94 112 054 943</div>
-      <div style={{ ...center, fontSize: '15px' }}>+94 770 139 200</div>
+      <div style={{ ...center, fontWeight: '700', fontSize: '18px' }}>MAX BEVERAGES</div>
+      <div style={{ ...center, fontSize: '12px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
+      <div style={{ ...center, fontSize: '12px' }}>Korathota, Kaduwela.</div>
+      <div style={{ ...center, fontSize: '12px' }}>Tel: +94 112 054 943</div>
+      <div style={{ ...center, fontSize: '12px' }}>+94 770 139 200</div>
 
       <Divider dashed />
 
-      <div style={{ ...center, ...bold, fontSize: '18px' }}>
+      <div style={{ ...center, ...bold, fontSize: '14px' }}>
         {company?.name || 'Rathnayaka Distribution'}
       </div>
 
       <Divider />
 
       {/* Document type + number */}
-      <div style={{ ...center, ...bold, fontSize: '19px' }}>{typeLabel} {invoice.invoice_number}</div>
+      <div style={{ ...center, ...bold, fontSize: '15px' }}>{typeLabel} {invoice.invoice_number}</div>
 
       <Divider dashed />
 
       {/* Customer */}
       <div style={row}>
-        <span style={{ fontSize: '18px', fontWeight: '700' }}>Customer:</span>
-        <span style={{ fontSize: '18px', fontWeight: '700' }}>{invoice.Customer?.name || '—'}</span>
+        <span style={{ fontSize: '14px', fontWeight: '700' }}>Customer:</span>
+        <span style={{ fontSize: '14px', fontWeight: '700' }}>{invoice.Customer?.name || '—'}</span>
       </div>
       {invoice.Customer?.code && (
         <div style={row}>
-          <span style={{ fontSize: '18px', fontWeight: '700' }}>Code:</span>
-          <span style={{ fontSize: '18px', fontWeight: '700' }}>{invoice.Customer.code}</span>
+          <span style={{ fontSize: '14px', fontWeight: '700' }}>Code:</span>
+          <span style={{ fontSize: '14px', fontWeight: '700' }}>{invoice.Customer.code}</span>
         </div>
       )}
       <div style={row}>
-        <span style={{ fontSize: '18px', fontWeight: '700' }}>Date:</span>
-        <span style={{ fontSize: '18px', fontWeight: '700' }}>{fmtDate(invoice.invoice_date)}</span>
+        <span style={{ fontSize: '14px', fontWeight: '700' }}>Date:</span>
+        <span style={{ fontSize: '14px', fontWeight: '700' }}>{fmtDate(invoice.invoice_date)}</span>
       </div>
       {invoice.due_date && (
         <div style={row}>
-          <span style={{ fontSize: '18px', fontWeight: '700' }}>Due:</span>
-          <span style={{ fontSize: '18px', fontWeight: '700' }}>{fmtDate(invoice.due_date)}</span>
+          <span style={{ fontSize: '14px', fontWeight: '700' }}>Due:</span>
+          <span style={{ fontSize: '14px', fontWeight: '700' }}>{fmtDate(invoice.due_date)}</span>
         </div>
       )}
 
       <Divider dashed />
 
       {/* Items header */}
-      <div style={{ display: 'flex', fontSize: '17px' }}>
+      <div style={{ display: 'flex', fontSize: '13px' }}>
         <span style={{ flex: 1, ...bold }}>ITEM</span>
         <span style={{ width: '65px', textAlign: 'right', ...bold }}>QTY</span>
         <span style={{ width: '85px', textAlign: 'right', ...bold }}>PRICE</span>
@@ -112,14 +112,14 @@ export default function InvoicePrintPOS({ invoice, company }) {
         const freeQty = line.free_quantity ? parseInt(line.free_quantity) : 0;
         return (
           <div key={line.id || i} style={{ marginBottom: '5px' }}>
-            <div style={{ fontSize: '18px', ...bold }}>
+            <div style={{ fontSize: '14px', ...bold }}>
               {line.Product?.name || `Product #${line.product_id}`}
             </div>
 
             {(parseFloat(line.discount_rate || 0) > 0 || freeQty > 0) && (
-              <div style={{ fontSize: '17px' }}>
+              <div style={{ fontSize: '13px' }}>
                 {parseFloat(line.discount_rate || 0) > 0 && <span style={{ color: '#c00' }}>{`Disc ${line.discount_rate}%`}</span>}
-                {freeQty > 0 && <span style={{ fontSize: '18px', fontWeight: '700', color: '#000' }}>{` +${freeQty} free`}</span>}
+                {freeQty > 0 && <span style={{ fontSize: '14px', fontWeight: '700', color: '#000' }}>{` +${freeQty} free`}</span>}
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -181,7 +181,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
 
       <Divider />
 
-      <div style={{ ...row, ...bold, fontSize: '20px' }}>
+      <div style={{ ...row, ...bold, fontSize: '16px' }}>
         <span>TOTAL</span>
         <span>LKR {fmtAmt(total)}</span>
       </div>
@@ -195,7 +195,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {balance > 0 && (
         <>
           <Divider />
-          <div style={{ ...row, ...bold, fontSize: '20px' }}>
+          <div style={{ ...row, ...bold, fontSize: '16px' }}>
             <span>BALANCE DUE</span>
             <span>LKR {fmtAmt(balance)}</span>
           </div>
@@ -206,31 +206,30 @@ export default function InvoicePrintPOS({ invoice, company }) {
       {invoice.notes && (
         <>
           <Divider dashed />
-          <div style={{ fontSize: '17px' }}>Note: {invoice.notes}</div>
+          <div style={{ fontSize: '13px' }}>Note: {invoice.notes}</div>
         </>
       )}
 
       <Divider dashed />
 
       {/* Signature */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '17px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '12px', fontSize: '13px' }}>
         <div style={{ textAlign: 'center', width: '45%' }}>
-          <div style={{ minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: '2px' }}>
-            {invoice.SalesRep?.name && <span style={{ fontWeight: '700' }}>{invoice.SalesRep.name}</span>}
-          </div>
+          {invoice.SalesRep?.name && (
+            <div style={{ fontWeight: '700', marginBottom: '2px' }}>{invoice.SalesRep.name}</div>
+          )}
           <div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Prepared By</div>
         </div>
         <div style={{ textAlign: 'center', width: '45%' }}>
-          <div style={{ minHeight: '28px', marginBottom: '2px' }} />
           <div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Received By</div>
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ ...center, fontSize: '16px', color: '#333', marginTop: '8px' }}>
+      <div style={{ ...center, fontSize: '12px', color: '#333', marginTop: '8px' }}>
         {new Date().toLocaleString('en-LK')}
       </div>
-      <div style={{ ...center, fontSize: '16px', color: '#333' }}>
+      <div style={{ ...center, fontSize: '12px', color: '#333' }}>
         Computer generated document
       </div>
 

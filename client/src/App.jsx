@@ -64,6 +64,7 @@ import RouteDetail from './pages/customers/RouteDetail';
 import SalesOrderList from './pages/sales/SalesOrderList';
 import SalesOrderCreate from './pages/sales/SalesOrderCreate';
 import SalesOrderDetail from './pages/sales/SalesOrderDetail';
+import SalesOrderEdit from './pages/sales/SalesOrderEdit';
 import InvoiceList from './pages/sales/InvoiceList';
 import InvoiceCreate from './pages/sales/InvoiceCreate';
 import InvoiceDetail from './pages/sales/InvoiceDetail';
@@ -179,6 +180,7 @@ export default function App() {
           <Route path="routes/:id" element={<ProtectedRoute permission="sales.view_all"><RouteDetail /></ProtectedRoute>} />
           <Route path="sales-orders" element={<ProtectedRoute permission="sales.view_own"><SalesOrderList /></ProtectedRoute>} />
           <Route path="sales-orders/new" element={<ProtectedRoute permission="sales.create"><SalesOrderCreate /></ProtectedRoute>} />
+          <Route path="sales-orders/:id/edit" element={<ProtectedRoute permission="sales.view_own"><SalesOrderEdit /></ProtectedRoute>} />
           <Route path="sales-orders/:id" element={<ProtectedRoute permission="sales.view_own"><SalesOrderDetail /></ProtectedRoute>} />
           <Route path="invoices" element={<ProtectedRoute permission={["sales.view_own","sales.view_all"]}><InvoiceList /></ProtectedRoute>} />
           <Route path="invoices/new" element={<ProtectedRoute permission="sales.create"><InvoiceCreate /></ProtectedRoute>} />

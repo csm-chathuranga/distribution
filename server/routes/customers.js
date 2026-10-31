@@ -98,7 +98,7 @@ router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), as
 
 router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
   try {
-    const { search, page = 1, limit = 50, route_id } = req.query;
+    const { search, page = 1, limit = 50, route_id, sales_rep_id } = req.query;
     const where = {};
     if (route_id) where.route_id = route_id;
     if (search) {
@@ -107,9 +107,14 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
 
     const isAdmin = ['super_admin', 'admin'].includes(req.user.Role?.name);
     const canViewAll = isAdmin || req.permissions?.has('sales.view_all');
-    const routeInclude = canViewAll
-      ? { model: Route, attributes: ['id', 'name'] }
-      : { model: Route, attributes: ['id', 'name'], where: { sales_rep_id: req.user.id }, required: true };
+    const routeWhere = !canViewAll
+      ? { sales_rep_id: req.user.id }
+      : sales_rep_id ? { sales_rep_id } : null;
+    const routeInclude = {
+      model: Route,
+      attributes: ['id', 'name'],
+      ...(routeWhere ? { where: routeWhere, required: true } : {}),
+    };
 
     const { count, rows } = await Customer.findAndCountAll({
       where,

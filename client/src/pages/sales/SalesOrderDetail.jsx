@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin } from 'lucide-react';
+import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin, Pencil, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetSalesOrderQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation } from '../../api/salesApi';
+import { useSelector } from 'react-redux';
+import { useGetSalesOrderQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation, useCancelSalesOrderMutation } from '../../api/salesApi';
 import { usePermission } from '../../hooks/usePermission';
+import { selectCurrentUser } from '../../store/authSlice';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { fmtCurrency, fmtDate } from '../../utils/format';
@@ -12,11 +14,14 @@ export default function SalesOrderDetail() {
   const { id }       = useParams();
   const navigate     = useNavigate();
   const canApprove   = usePermission('sales.approve');
+  const currentUser  = useSelector(selectCurrentUser);
   const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const { data: order, isLoading, isError } = useGetSalesOrderQuery(id);
   const [confirmOrder,  { isLoading: confirming_ }] = useConfirmSalesOrderMutation();
   const [invoiceOrder,  { isLoading: invoicing }]   = useInvoiceSalesOrderMutation();
+  const [cancelOrder,   { isLoading: cancelling_ }] = useCancelSalesOrderMutation();
 
   const handleConfirm = async () => {
     try {
@@ -34,6 +39,14 @@ export default function SalesOrderDetail() {
     } catch (e) { toast.error(e.data?.message || 'Failed to create invoice'); }
   };
 
+  const handleCancel = async () => {
+    try {
+      await cancelOrder(id).unwrap();
+      toast.success('Order cancelled');
+      navigate('/sales-orders');
+    } catch (e) { toast.error(e.data?.message || 'Failed to cancel order'); }
+  };
+
   if (isLoading) return (
     <div className="space-y-4">
       <div className="card p-6 animate-pulse space-y-3">
@@ -49,8 +62,19 @@ export default function SalesOrderDetail() {
     </div>
   );
 
-  const lines = order.Lines || [];
+  const extractSizeMl = (name = '') => {
+    if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+    if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+    const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? parseFloat(m[1]) : 9999;
+  };
+
+  const lines = [...(order.Lines || [])].sort((a, b) =>
+    extractSizeMl(a.Product?.name) - extractSizeMl(b.Product?.name)
+  );
   const total = parseFloat(order.total_amount || 0);
+  const isOwner = String(order.created_by) === String(currentUser?.id);
+  const canEdit = (canApprove || isOwner) && order.status === 'CONFIRMED';
 
   return (
     <div className="space-y-4 pb-24">
@@ -59,6 +83,18 @@ export default function SalesOrderDetail() {
         <h1 className="text-lg font-bold text-gray-900 font-mono">{order.order_number}</h1>
         <StatusBadge status={order.status} />
         <span className="text-xs text-gray-400 ml-auto">{fmtDate(order.order_date)}</span>
+        {canEdit && (
+          <div className="flex items-center gap-2 ml-2">
+            <button onClick={() => navigate(`/sales-orders/${id}/edit`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">
+              <Pencil size={13} /> Edit
+            </button>
+            <button onClick={() => setCancelling(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors">
+              <X size={13} /> Cancel
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Info card */}
@@ -332,6 +368,16 @@ export default function SalesOrderDetail() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
         loading={confirming_}
+      />
+
+      <ConfirmDialog
+        open={cancelling}
+        title="Cancel Sales Order"
+        message={`This will cancel order ${order.order_number} and release all stock reservations. This cannot be undone.`}
+        confirmLabel="Cancel Order"
+        onConfirm={handleCancel}
+        onCancel={() => setCancelling(false)}
+        loading={cancelling_}
       />
     </div>
   );

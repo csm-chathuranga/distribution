@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, Printer, Truck, MapPin, Banknote, CreditCard } from 'lucide-react';
+import { CheckCircle, Printer, Truck, MapPin, Banknote, CreditCard, ArrowLeft } from 'lucide-react';
 import MapModal from '../../components/MapModal';
 import Modal from '../../components/ui/Modal';
 import toast from 'react-hot-toast';
@@ -207,7 +207,10 @@ export default function InvoiceDetail() {
     <div className={`space-y-4 max-w-2xl mx-auto md:max-w-4xl ${showStickyBar ? 'md:pb-6' : 'pb-6'}`} style={showStickyBar ? { paddingBottom: 260 } : {}}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-end gap-2 flex-wrap">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <button onClick={() => navigate(-1)} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
+          <ArrowLeft size={15} /> Back
+        </button>
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-sm py-1.5">
             <Printer size={15} /> Print

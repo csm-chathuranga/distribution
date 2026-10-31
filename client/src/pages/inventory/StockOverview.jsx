@@ -41,13 +41,22 @@ export default function StockOverview() {
 
   const warehouseOpts = warehouses?.data || [];
 
+  const extractSizeMl = (name = '') => {
+    if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+    if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+    const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? parseFloat(m[1]) : 9999;
+  };
+
   const q = search.toLowerCase().trim();
-  const rows = (data?.data || []).filter(r => {
-    if (warehouseId && String(r.warehouse_id) !== String(warehouseId)) return false;
-    if (showLowOnly && !r.low_stock) return false;
-    if (q && !r.product?.toLowerCase().includes(q) && !r.sku?.toLowerCase().includes(q)) return false;
-    return true;
-  });
+  const rows = (data?.data || [])
+    .filter(r => {
+      if (warehouseId && String(r.warehouse_id) !== String(warehouseId)) return false;
+      if (showLowOnly && !r.low_stock) return false;
+      if (q && !r.product?.toLowerCase().includes(q) && !r.sku?.toLowerCase().includes(q)) return false;
+      return true;
+    })
+    .sort((a, b) => extractSizeMl(a.product) - extractSizeMl(b.product));
 
   return (
     <div className="space-y-5">

@@ -15,11 +15,18 @@ export default function OpeningStock() {
   const { data: productsData, isLoading } = useGetProductsQuery({ limit: 500, is_active: true });
   const [setOpeningStock, { isLoading: saving }] = useSetOpeningStockMutation();
 
+  const extractSizeMl = (name = '') => {
+    if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+    if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+    const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? parseFloat(m[1]) : 9999;
+  };
+
   const products = useMemo(() => {
     const all = productsData?.data || [];
-    if (!search) return all;
     const q = search.toLowerCase();
-    return all.filter(p => p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q));
+    const filtered = q ? all.filter(p => p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)) : all;
+    return [...filtered].sort((a, b) => extractSizeMl(a.name) - extractSizeMl(b.name));
   }, [productsData, search]);
 
   const setQty = (id, val) => setQuantities(prev => ({ ...prev, [id]: val }));
