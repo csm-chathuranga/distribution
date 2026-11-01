@@ -9,6 +9,12 @@ const cellStyle = {
 const labelStyle = { ...cellStyle, fontWeight: '700', background: '#f3f4f6' };
 
 const qty = value => (parseFloat(value) || 0).toFixed(2);
+const fmtCases = (q, caseSize) => {
+  if (!caseSize || caseSize <= 1 || !q) return null;
+  const cs = Math.floor(q / caseSize); const units = q % caseSize;
+  if (cs === 0) return null;
+  return units > 0 ? `${cs}cs+${units}u` : `${cs} cs`;
+};
 
 export default function LoadingSheetPrint({ sheet, company }) {
   if (!sheet) return null;
@@ -103,30 +109,25 @@ export default function LoadingSheetPrint({ sheet, company }) {
             const lost = parseFloat(line.lost_quantity) || 0;
             const balance = Math.max(0, loaded - sold - returned - damaged - lost);
             const unitCost = parseFloat(line.unit_cost) || 0;
-            const values = [
-              index + 1,
-              line.Product?.name || '—',
-              line.Product?.sku || '—',
-              qty(loaded),
-              qty(sold),
-              qty(returned),
-              qty(damaged),
-              qty(lost),
-              qty(balance),
-              fmtCurrency(unitCost),
-              fmtCurrency(loaded * unitCost),
-            ];
+            const caseSize = line.Product?.case_size ? parseInt(line.Product.case_size) : null;
+            const isClosed = sheet.status === 'CLOSED';
+            const casesLabel = fmtCases(loaded, caseSize);
             return (
               <tr key={line.id || index}>
-                {values.map((value, cellIndex) => (
-                  <td key={cellIndex} style={{
-                    ...cellStyle,
-                    textAlign: cellIndex === 1 || cellIndex === 2 ? 'left' : 'center',
-                    overflowWrap: 'anywhere',
-                  }}>
-                    {value}
-                  </td>
-                ))}
+                <td style={{ ...cellStyle, textAlign: 'center' }}>{index + 1}</td>
+                <td style={{ ...cellStyle, textAlign: 'left', overflowWrap: 'anywhere' }}>{line.Product?.name || '—'}</td>
+                <td style={{ ...cellStyle, textAlign: 'left' }}>{line.Product?.sku || '—'}</td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                  {qty(loaded)}
+                  {casesLabel && <div style={{ fontSize: '8px', color: '#666', marginTop: '1px' }}>{casesLabel}</div>}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(sold) : ''}</td>
+                <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(returned) : ''}</td>
+                <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(damaged) : ''}</td>
+                <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(lost) : ''}</td>
+                <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(balance) : ''}</td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>{fmtCurrency(unitCost)}</td>
+                <td style={{ ...cellStyle, textAlign: 'right' }}>{fmtCurrency(loaded * unitCost)}</td>
               </tr>
             );
           })}
@@ -140,10 +141,10 @@ export default function LoadingSheetPrint({ sheet, company }) {
           <tr style={{ fontWeight: '700', background: '#f3f4f6' }}>
             <td colSpan={3} style={{ ...cellStyle, textAlign: 'right' }}>TOTAL</td>
             <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(totals.loaded)}</td>
-            <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(totals.sold)}</td>
-            <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(totals.returned)}</td>
-            <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(totals.damaged)}</td>
-            <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(totals.lost)}</td>
+            <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.sold) : ''}</td>
+            <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.returned) : ''}</td>
+            <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.damaged) : ''}</td>
+            <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.lost) : ''}</td>
             <td style={cellStyle}> </td>
             <td style={cellStyle}> </td>
             <td style={{ ...cellStyle, textAlign: 'right' }}>{fmtCurrency(totals.loadValue)}</td>
