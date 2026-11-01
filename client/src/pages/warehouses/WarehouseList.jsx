@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Pencil, Package, Users, X, UserPlus, Trash2 } from 'lucide-react';
+import { Pencil, Package, Users, X, UserPlus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetWarehousesQuery, useCreateWarehouseMutation, useUpdateWarehouseMutation, useDeleteWarehouseMutation, useGetWarehouseStockQuery, useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation } from '../../api/warehousesApi';
+import { useGetWarehousesQuery, useCreateWarehouseMutation, useUpdateWarehouseMutation, useDeleteWarehouseMutation, useToggleWarehouseActiveMutation, useGetWarehouseStockQuery, useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation } from '../../api/warehousesApi';
 import { useGetBranchesQuery, useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { usePermission } from '../../hooks/usePermission';
 import Table from '../../components/ui/Table';
@@ -182,9 +182,10 @@ export default function WarehouseList() {
   const [editing, setEditing] = useState(null);
   const [stockWh, setStockWh] = useState(null);
   const [staffWh, setStaffWh] = useState(null);
-  const { data, isLoading } = useGetWarehousesQuery({});
+  const { data, isLoading } = useGetWarehousesQuery({ all: '1' });
   const { data: branches } = useGetBranchesQuery({});
   const [deleteWarehouse] = useDeleteWarehouseMutation();
+  const [toggleActive] = useToggleWarehouseActiveMutation();
 
   const handleDelete = async (r) => {
     if (!window.confirm(`Delete warehouse "${r.name}"? This cannot be undone.`)) return;
@@ -198,9 +199,21 @@ export default function WarehouseList() {
   const openNew = () => { setEditing(null); setFormKey(k => k + 1); setFormOpen(true); };
   const closeForm = () => { setFormOpen(false); setEditing(null); };
 
+  const handleToggle = async (r) => {
+    try {
+      await toggleActive(r.id).unwrap();
+      toast.success(`Warehouse ${r.is_active ? 'deactivated' : 'activated'}`);
+    } catch (e) { toast.error(e.data?.message || 'Failed'); }
+  };
+
   const columns = [
     { key: 'code', header: 'Code', cell: r => <span className="font-mono text-xs">{r.code || '-'}</span> },
-    { key: 'name', header: 'Warehouse', cell: r => <span className="font-medium">{r.name}</span> },
+    { key: 'name', header: 'Warehouse', cell: r => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{r.name}</span>
+        {!r.is_active && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">Inactive</span>}
+      </div>
+    )},
     { key: 'branch', header: 'Branch', cell: r => r.Branch?.name },
     { key: 'actions', header: '', className: 'text-right', cell: r => (
       <div className="flex items-center justify-end gap-1">
@@ -208,7 +221,12 @@ export default function WarehouseList() {
         {canCreate && (
           <>
             <button onClick={() => setStaffWh(r)} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Manage Staff"><Users size={14} /></button>
-            <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Pencil size={14} /></button>
+            <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Edit"><Pencil size={14} /></button>
+            <button onClick={() => handleToggle(r)}
+              className={`p-1.5 rounded-lg transition-colors ${r.is_active ? 'text-green-500 hover:text-amber-600 hover:bg-amber-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`}
+              title={r.is_active ? 'Deactivate' : 'Activate'}>
+              {r.is_active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+            </button>
             <button onClick={() => handleDelete(r)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 size={14} /></button>
           </>
         )}

@@ -9,15 +9,25 @@ const SCOPED_ROLES = ['sales_rep', 'driver'];
 
 const isScoped = (req) => SCOPED_ROLES.includes(req.user?.Role?.name);
 
-// GET /warehouses — scoped roles see only their assigned warehouse
+// GET /warehouses — scoped roles see only their assigned warehouse; dropdowns get active only
 router.get('/', authorize.any('inventory.view', 'sales.view_own', 'sales.create'), async (req, res, next) => {
   try {
     if (isScoped(req)) {
       const rows = await Warehouse.findAll({
+        where: { is_active: true },
         include: [
           { model: Branch, attributes: ['id', 'name'] },
           { model: User, as: 'AssignedUsers', where: { id: req.user.id }, attributes: [], through: { attributes: [] } },
         ],
+      });
+      return res.json({ data: rows });
+    }
+    // Management page: pass ?all=1 to see inactive too
+    if (req.query.all !== '1') {
+      const rows = await Warehouse.findAll({
+        where: { is_active: true },
+        include: [{ model: Branch, attributes: ['id', 'name'] }],
+        order: [['name', 'ASC']],
       });
       return res.json({ data: rows });
     }
@@ -28,6 +38,16 @@ router.get('/', authorize.any('inventory.view', 'sales.view_own', 'sales.create'
 router.get('/:id', authorize.any('inventory.view', 'sales.view_own', 'sales.create'), crud.get);
 router.post('/', authorize('inventory.create'), crud.create);
 router.put('/:id', authorize('inventory.create'), crud.update);
+
+// PATCH /warehouses/:id/toggle-active
+router.patch('/:id/toggle-active', authorize('inventory.create'), async (req, res, next) => {
+  try {
+    const warehouse = await Warehouse.findByPk(req.params.id);
+    if (!warehouse) return res.status(404).json({ message: 'Warehouse not found' });
+    await warehouse.update({ is_active: !warehouse.is_active });
+    res.json(warehouse);
+  } catch (err) { next(err); }
+});
 
 router.get('/:id/stock', authorize('inventory.view'), async (req, res, next) => {
   try {

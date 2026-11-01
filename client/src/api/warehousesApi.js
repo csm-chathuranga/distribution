@@ -26,6 +26,10 @@ export const warehousesApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/warehouses/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Warehouse'],
     }),
+    toggleWarehouseActive: b.mutation({
+      query: (id) => ({ url: `/warehouses/${id}/toggle-active`, method: 'PATCH' }),
+      invalidatesTags: ['Warehouse'],
+    }),
     getWarehouseUsers: b.query({
       query: id => `/warehouses/${id}/users`,
       providesTags: (r, e, id) => [{ type: 'WarehouseUser', id }],
@@ -44,5 +48,6 @@ export const warehousesApi = baseApi.injectEndpoints({
 export const {
   useGetWarehousesQuery, useGetWarehouseQuery, useGetWarehouseStockQuery,
   useCreateWarehouseMutation, useUpdateWarehouseMutation, useDeleteWarehouseMutation,
+  useToggleWarehouseActiveMutation,
   useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation,
 } = warehousesApi;

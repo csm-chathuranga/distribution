@@ -18,6 +18,7 @@ const schema = yup.object({
   wholesale_price: yup.number().min(0).nullable().typeError('Enter a number'),
   vat_rate: yup.number().min(0).max(100).typeError('Enter percentage').default(0),
   reorder_point: yup.number().integer().min(0).typeError('Enter a number').default(0),
+  case_size: yup.number().integer().min(1).nullable().typeError('Enter a number'),
   description: yup.string().nullable().max(1000),
 });
 
@@ -47,8 +48,9 @@ export default function ProductForm({ onClose, editing, companyId }) {
       wholesale_price: editing.wholesale_price ?? '',
       vat_rate: editing.vat_rate ?? 0,
       reorder_point: editing.reorder_point ?? 0,
+      case_size: editing.case_size ?? 12,
       description: editing.description || '',
-    } : { vat_rate: 0, reorder_point: 0, cost_price: 0, selling_price: 0 },
+    } : { vat_rate: 0, reorder_point: 0, case_size: 12, cost_price: 0, selling_price: 0 },
   });
 
   const onSubmit = async (data) => {
@@ -114,6 +116,7 @@ export default function ProductForm({ onClose, editing, companyId }) {
         <div className="grid grid-cols-2 gap-4">
           <TextField label="VAT Rate (%)" type="number" step="0.01" hint="e.g. 18 for 18%" error={errors.vat_rate?.message} {...register('vat_rate')} />
           <TextField label="Reorder Point" type="number" hint="Min stock before alert" error={errors.reorder_point?.message} {...register('reorder_point')} />
+          <TextField label="Case Size" type="number" hint="Units per case (e.g. 12, 24)" error={errors.case_size?.message} {...register('case_size')} />
         </div>
 
         <TextareaField label="Description" rows={2} error={errors.description?.message} {...register('description')} />
