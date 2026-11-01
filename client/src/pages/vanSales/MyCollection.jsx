@@ -131,7 +131,7 @@ export default function MyCollection() {
               <div key={r.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 text-sm truncate">{r.Customer?.name ?? '—'}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{r.receipt_number} · {fmtDateTime(r.receipt_date)}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{r.receipt_number} · {fmtDateTime(r.createdAt || r.created_at || r.receipt_date)}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-bold text-slate-900 text-sm">LKR {fmtNumber(r.amount)}</p>

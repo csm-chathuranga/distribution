@@ -74,13 +74,16 @@ export default function Header({ minimal = false }) {
 
     function getSubTitle(p) {
       if (SUB_TITLES[p])                     return SUB_TITLES[p];
+      if (p === '/driver/deliveries')         return 'My Deliveries';
+      if (p === '/driver/payments')           return 'My Payments';
+      if (p.startsWith('/driver/'))          return '';
       if (p.startsWith('/sales-orders/'))    return 'Sales Order';
       if (p.startsWith('/invoices/'))        return 'Invoice';
       if (p.startsWith('/customers/'))       return 'Customer';
       if (p.startsWith('/loading-sheets/'))  return 'Loading Sheet';
       if (p.startsWith('/customer-returns/'))return 'Return';
       if (p.startsWith('/deliveries/'))      return 'Delivery';
-      return 'Back';
+      return '';
     }
 
     const pathParts = path.split('/').filter(Boolean);
@@ -94,37 +97,37 @@ export default function Header({ minimal = false }) {
         WebkitBackdropFilter: 'blur(24px)',
         boxShadow: '0 1px 0 rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.05)',
       }}>
-        <div className="flex items-center justify-between px-4" style={{ height: 80 }}>
+        <div className="grid items-center px-4" style={{ height: 80, gridTemplateColumns: '1fr auto 1fr' }}>
 
           {/* Left: back button or brand */}
-          {isSubPage ? (
-            <button onClick={() => navigate(-1)}
-              className="flex items-center justify-center rounded-2xl active:scale-95 transition-transform"
-              style={{ width: 52, height: 52, background: 'rgba(0,0,0,0.06)' }}>
-              <ArrowLeft size={26} strokeWidth={2.5} className="text-gray-800" />
-            </button>
-          ) : (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center rounded-2xl shadow-md"
-                style={{ width: 50, height: 50, background: 'linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%)' }}>
-                <Truck size={24} className="text-white" />
+          <div className="flex items-center">
+            {isSubPage ? (
+              <button onClick={() => navigate(-1)}
+                className="flex items-center gap-1.5 rounded-2xl active:scale-95 transition-transform px-3"
+                style={{ height: 52, background: 'rgba(0,0,0,0.06)' }}>
+                <ArrowLeft size={22} strokeWidth={2.5} className="text-gray-800" />
+                <span className="font-semibold text-gray-800 text-sm">Back</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center rounded-2xl shadow-md"
+                  style={{ width: 50, height: 50, background: 'linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%)' }}>
+                  <Truck size={24} className="text-white" />
+                </div>
+                <span className="font-extrabold text-gray-900 tracking-tight" style={{ fontSize: 22 }}>
+                  Lanka<span className="text-blue-600">Dist</span>
+                </span>
               </div>
-              <span className="font-extrabold text-gray-900 tracking-tight" style={{ fontSize: 22 }}>
-                Lanka<span className="text-blue-600">Dist</span>
-              </span>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Centered page title (sub-pages only) */}
-          {isSubPage && (
-            <h1 className="absolute left-1/2 -translate-x-1/2 font-bold text-gray-900 tracking-tight pointer-events-none"
-              style={{ fontSize: 20 }}>
-              {pageTitle}
-            </h1>
-          )}
+          <h1 className="font-bold text-gray-900 tracking-tight text-center" style={{ fontSize: 18 }}>
+            {isSubPage ? pageTitle : ''}
+          </h1>
 
           {/* Right actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <button onClick={handleRefresh}
               className="flex items-center justify-center rounded-2xl text-gray-500 active:opacity-60 transition-all"
               style={{ width: 48, height: 48, background: 'rgba(0,0,0,0.05)' }}>

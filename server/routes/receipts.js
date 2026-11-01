@@ -91,14 +91,20 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
       return res.status(404).json({ message: 'Customer not found' });
     }
     const amountCents = Math.round(Number(data.amount) * 100);
-    const outstandingCents = Math.round(Number(customer.outstanding_balance || 0) * 100);
     if (!Number.isFinite(amountCents) || amountCents <= 0) {
       await t.rollback();
       return res.status(400).json({ message: 'Receipt amount must be greater than zero' });
     }
-    if (amountCents > outstandingCents) {
+    // Check against live invoice balances (not denormalized outstanding_balance which can drift)
+    const { Invoice: Inv } = require('../models');
+    const liveOutstanding = await Inv.sum('balance_due', {
+      where: { customer_id: data.customer_id, status: ['POSTED', 'PARTIAL', 'OVERDUE', 'DELIVERED'] },
+      transaction: t,
+    });
+    const liveOutstandingCents = Math.round((liveOutstanding || 0) * 100);
+    if (amountCents > liveOutstandingCents) {
       await t.rollback();
-      return res.status(400).json({ message: 'Receipt amount cannot exceed the customer outstanding balance' });
+      return res.status(400).json({ message: `Receipt amount cannot exceed the outstanding balance of LKR ${((liveOutstanding || 0).toFixed(2))}` });
     }
     // Fall back to linked invoice's company/branch when user record lacks them
     if ((!data.company_id || !data.branch_id) && allocations?.length) {

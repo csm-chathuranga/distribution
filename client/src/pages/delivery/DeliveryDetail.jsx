@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Printer, MapPin, Truck, CheckCircle, RotateCcw, Package, User, Route } from 'lucide-react';
+import { Printer, MapPin, Truck, CheckCircle, RotateCcw, Package, User, Route, Banknote, X } from 'lucide-react';
 import MapModal from '../../components/MapModal';
 import toast from 'react-hot-toast';
 import {
@@ -24,9 +24,12 @@ export default function DeliveryDetail() {
   const canCreate   = usePermission('sales.create');
   const isDriver    = currentUser?.Role?.name === 'delivery';
 
-  const [mapOpen,    setMapOpen]    = useState(false);
-  const [actionOpen, setActionOpen] = useState(null); // 'dispatch' | 'deliver' | 'return'
-  const [notes,      setNotes]      = useState('');
+  const [mapOpen,       setMapOpen]       = useState(false);
+  const [actionOpen,    setActionOpen]    = useState(null); // 'dispatch' | 'deliver' | 'return'
+  const [notes,         setNotes]         = useState('');
+  const [deliverOpen,   setDeliverOpen]   = useState(false);
+  const [paymentType,   setPaymentType]   = useState('full'); // 'full' | 'partial' | 'none'
+  const [cashCollected, setCashCollected] = useState('');
 
   const { data: delivery, isLoading } = useGetDeliveryQuery(id);
   const { data: company }             = useGetCompanyQuery();
@@ -39,13 +42,29 @@ export default function DeliveryDetail() {
   const handleAction = async () => {
     try {
       if (actionOpen === 'dispatch') await dispatchDn({ id }).unwrap();
-      else if (actionOpen === 'deliver') await deliverDn({ id, notes }).unwrap();
       else await returnDn({ id, notes }).unwrap();
-      toast.success(
-        actionOpen === 'dispatch' ? 'Delivery dispatched' :
-        actionOpen === 'deliver'  ? 'Marked as delivered' : 'Marked as returned'
-      );
+      toast.success(actionOpen === 'dispatch' ? 'Delivery dispatched' : 'Marked as returned');
       setActionOpen(null); setNotes('');
+    } catch (e) { toast.error(e.data?.message || 'Action failed'); }
+  };
+
+  const openDeliver = () => {
+    const total = parseFloat(invoice?.total_amount || 0);
+    setPaymentType('full');
+    setCashCollected(total > 0 ? String(total) : '');
+    setNotes('');
+    setDeliverOpen(true);
+  };
+
+  const handleDeliver = async () => {
+    const total = parseFloat(invoice?.total_amount || 0);
+    const collected = paymentType === 'full'    ? total
+                    : paymentType === 'partial'  ? parseFloat(cashCollected || 0)
+                    : 0;
+    try {
+      await deliverDn({ id, notes, cash_collected: collected }).unwrap();
+      toast.success('Marked as delivered' + (collected > 0 ? ` · LKR ${collected.toFixed(2)} collected` : ''));
+      setDeliverOpen(false);
     } catch (e) { toast.error(e.data?.message || 'Action failed'); }
   };
 
@@ -89,7 +108,7 @@ export default function DeliveryDetail() {
           )}
           {isDispatched && canAct && (
             <>
-              <button onClick={() => setActionOpen('deliver')}
+              <button onClick={openDeliver}
                 className="hidden md:flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
                 <CheckCircle size={15} /> Mark Delivered
               </button>
@@ -254,7 +273,7 @@ export default function DeliveryDetail() {
           {isDispatched && (
             <div className="flex gap-3">
               <button
-                onClick={() => setActionOpen('deliver')}
+                onClick={openDeliver}
                 className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-base transition-colors"
               >
                 <CheckCircle size={20} /> Mark Delivered
@@ -270,41 +289,126 @@ export default function DeliveryDetail() {
         </div>
       )}
 
-      {/* Confirm dialog */}
+      {/* Dispatch / Return confirm dialog */}
       <ConfirmDialog
         open={!!actionOpen}
         onCancel={() => { setActionOpen(null); setNotes(''); }}
         onConfirm={handleAction}
-        loading={dispatching || delivering || returning}
+        loading={dispatching || returning}
         variant={actionOpen === 'return' ? 'warning' : 'info'}
-        title={
-          actionOpen === 'dispatch' ? 'Confirm Dispatch' :
-          actionOpen === 'deliver'  ? 'Confirm Delivery' : 'Mark as Returned'
-        }
-        confirmLabel={
-          actionOpen === 'dispatch' ? 'Dispatch' :
-          actionOpen === 'deliver'  ? 'Mark Delivered' : 'Mark Returned'
-        }
+        title={actionOpen === 'dispatch' ? 'Confirm Dispatch' : 'Mark as Returned'}
+        confirmLabel={actionOpen === 'dispatch' ? 'Dispatch' : 'Mark Returned'}
         message={
           <div className="space-y-3">
-            <p className="text-sm text-gray-600">
-              {delivery.dn_number} — {delivery.Customer?.name}
-            </p>
-            {actionOpen !== 'dispatch' && (
+            <p className="text-sm text-gray-600">{delivery.dn_number} — {delivery.Customer?.name}</p>
+            {actionOpen === 'return' && (
               <div>
-                <label className="label">Notes (optional)</label>
-                <textarea
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  rows={3}
-                  className="input text-sm"
-                  placeholder={actionOpen === 'return' ? 'Reason for return…' : 'Any delivery notes…'}
-                />
+                <label className="label">Reason (optional)</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
+                  className="input text-sm" placeholder="Reason for return…" />
               </div>
             )}
           </div>
         }
       />
+
+      {/* Deliver + Payment Collection modal */}
+      {deliverOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+          style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Banknote size={18} className="text-green-600" />
+                <h3 className="font-bold text-gray-900">Collect Payment</h3>
+              </div>
+              <button onClick={() => setDeliverOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              {/* Invoice total */}
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                <span className="text-sm text-gray-500">Invoice Total</span>
+                <span className="font-bold text-gray-900 font-mono">{fmtCurrency(invoice?.total_amount || 0)}</span>
+              </div>
+
+              {/* Payment type */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Payment Collected</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: 'full',    label: 'Full',    color: 'green' },
+                    { key: 'partial', label: 'Partial', color: 'amber' },
+                    { key: 'none',    label: 'None',    color: 'red'   },
+                  ].map(({ key, label, color }) => (
+                    <button key={key} type="button" onClick={() => {
+                      setPaymentType(key);
+                      if (key === 'full') setCashCollected(String(parseFloat(invoice?.total_amount || 0)));
+                      if (key === 'none') setCashCollected('0');
+                    }}
+                      className={`py-2.5 rounded-xl text-sm font-bold border-2 transition-colors ${
+                        paymentType === key
+                          ? color === 'green' ? 'border-green-500 bg-green-50 text-green-700'
+                          : color === 'amber' ? 'border-amber-500 bg-amber-50 text-amber-700'
+                          : 'border-red-400 bg-red-50 text-red-700'
+                          : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                      }`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount input — only for partial */}
+              {paymentType === 'partial' && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Amount Collected (LKR)</label>
+                  <input
+                    type="number" inputMode="decimal" min="0"
+                    max={parseFloat(invoice?.total_amount || 0)}
+                    value={cashCollected}
+                    onChange={e => setCashCollected(e.target.value)}
+                    onFocus={e => e.target.select()}
+                    placeholder="0.00"
+                    className="input w-full text-right text-lg font-bold"
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              {/* Full amount display */}
+              {paymentType === 'full' && (
+                <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-center">
+                  <p className="text-xs text-green-600 font-medium">Collecting full amount</p>
+                  <p className="text-xl font-bold text-green-700 font-mono mt-0.5">{fmtCurrency(invoice?.total_amount || 0)}</p>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Notes (optional)</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+                  className="input text-sm w-full" placeholder="Any delivery notes…" />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 pb-5 flex gap-3">
+              <button onClick={() => setDeliverOpen(false)}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleDeliver} disabled={delivering || (paymentType === 'partial' && !parseFloat(cashCollected))}
+                className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors disabled:opacity-50">
+                {delivering ? 'Saving…' : 'Mark Delivered'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

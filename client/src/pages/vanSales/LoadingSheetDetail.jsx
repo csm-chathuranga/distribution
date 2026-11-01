@@ -17,6 +17,12 @@ import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
 const fmtQty = v => { const n = parseFloat(v) || 0; return n % 1 === 0 ? String(n) : n.toFixed(2); };
+const fmtCases = (qty, caseSize) => {
+  if (!caseSize || caseSize <= 1 || !qty) return null;
+  const cs = Math.floor(qty / caseSize); const units = qty % caseSize;
+  if (cs === 0) return null;
+  return units > 0 ? `${cs} cs + ${units} u` : `${cs} cs`;
+};
 
 const availColor = (avail, loaded) => {
   if (avail <= 0) return 'text-red-600 bg-red-50 font-bold';
@@ -658,7 +664,12 @@ export default function LoadingSheetDetail() {
                         {line.Product?.name}
                         {line.damage_notes && <span className="block text-xs text-orange-600 mt-0.5">{line.damage_notes}</span>}
                       </td>
-                      <td className="table-td text-right">{fmtQty(line._loaded)}</td>
+                      <td className="table-td text-right">
+                        <span>{fmtQty(line._loaded)}</span>
+                        {fmtCases(line._loaded, line.Product?.case_size) && (
+                          <p className="text-[10px] text-gray-400 mt-0.5">{fmtCases(line._loaded, line.Product?.case_size)}</p>
+                        )}
+                      </td>
                       <td className="table-td text-right font-semibold text-blue-700">{fmtQty(line._sold)}</td>
                       <td className="table-td text-right text-gray-500">{fmtQty(line._returned)}</td>
                       {sheet.status === 'CLOSED' && <td className="table-td text-right text-orange-600 font-semibold">{line._damaged > 0 ? fmtQty(line._damaged) : '—'}</td>}
@@ -673,7 +684,7 @@ export default function LoadingSheetDetail() {
                       {sheet.status !== 'LOADED' && (
                         <>
                           <td className="table-td text-right text-gray-500">{fmtCurrency(line.unit_cost)}</td>
-                          <td className="table-td text-right">{fmtCurrency(line._sold * parseFloat(line.unit_cost))}</td>
+                          <td className="table-td text-right">{fmtCurrency(line._loaded * parseFloat(line.unit_cost))}</td>
                         </>
                       )}
                     </tr>

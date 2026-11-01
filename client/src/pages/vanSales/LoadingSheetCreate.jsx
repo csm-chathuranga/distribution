@@ -15,6 +15,14 @@ import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import FormField from '../../components/ui/FormField';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import { today, fmtCurrency, fmtDate } from '../../utils/format';
+
+const fmtCases = (qty, caseSize) => {
+  if (!caseSize || caseSize <= 1 || !qty) return null;
+  const cs = Math.floor(qty / caseSize);
+  const units = qty % caseSize;
+  if (cs === 0) return null;
+  return units > 0 ? `${cs} cs + ${units} u` : `${cs} cs`;
+};
 import { usePermission } from '../../hooks/usePermission';
 
 const schema = yup.object({
@@ -101,9 +109,12 @@ export default function LoadingSheetCreate() {
     { warehouse_id: warehouseId, limit: 1000 },
     { skip: !warehouseId },
   );
-  // Map product_id → available quantity for fast lookup
+  // Map product_id → { available, caseSize } for fast lookup
   const stockMap = (stockData?.data || []).reduce((m, s) => {
-    m[s.product_id] = parseFloat(s.quantity || 0);
+    m[s.product_id] = {
+      available: parseFloat(s.quantity || 0),
+      caseSize: s.Product?.case_size ? parseInt(s.Product.case_size) : null,
+    };
     return m;
   }, {});
 
@@ -116,8 +127,8 @@ export default function LoadingSheetCreate() {
 
   const totalValue  = lines.reduce((s, l) => s + (parseFloat(l.loaded_quantity) || 0) * (parseFloat(l.unit_cost) || 0), 0);
   const hasOverStock = lines.some(l => {
-    const avail = stockMap[Number(l.product_id)];
-    return avail !== undefined && (parseFloat(l.loaded_quantity) || 0) > avail;
+    const entry = stockMap[Number(l.product_id)];
+    return entry !== undefined && (parseFloat(l.loaded_quantity) || 0) > entry.available;
   });
 
   const onSubmit = async (values) => {
@@ -210,7 +221,9 @@ export default function LoadingSheetCreate() {
                   {fields.map((field, i) => {
                     const lineTotal  = (parseFloat(lines[i]?.loaded_quantity) || 0) * (parseFloat(lines[i]?.unit_cost) || 0);
                     const productId  = Number(lines[i]?.product_id);
-                    const available  = productId ? (stockMap[productId] ?? null) : null;
+                    const stockEntry = productId ? (stockMap[productId] ?? null) : null;
+                    const available  = stockEntry !== null ? stockEntry.available : null;
+                    const caseSize   = stockEntry?.caseSize ?? null;
                     const loadQty    = parseFloat(lines[i]?.loaded_quantity) || 0;
                     const overStock  = available !== null && loadQty > available;
                     return (
@@ -237,9 +250,14 @@ export default function LoadingSheetCreate() {
                           {available === null ? (
                             <span className="text-gray-300 text-xs">—</span>
                           ) : (
-                            <span className={`text-xs font-semibold ${available === 0 ? 'text-red-600' : overStock ? 'text-amber-600' : 'text-emerald-600'}`}>
-                              {available}
-                            </span>
+                            <div>
+                              <span className={`text-xs font-semibold ${available === 0 ? 'text-red-600' : overStock ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                {available}
+                              </span>
+                              {fmtCases(available, caseSize) && (
+                                <p className="text-[10px] text-gray-400 mt-0.5">{fmtCases(available, caseSize)}</p>
+                              )}
+                            </div>
                           )}
                         </td>
                         <td className="table-td">

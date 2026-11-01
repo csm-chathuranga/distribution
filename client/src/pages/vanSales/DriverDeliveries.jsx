@@ -53,45 +53,68 @@ function PaymentRow({ row, onChange, onRemove, canRemove, total }) {
   );
 }
 
-function CollectModal({ invoice, onConfirm, onClose }) {
+function CollectModal({ invoice, onConfirm, onClose, deliverMode = false, loading = false }) {
   const invoiceTotal = parseFloat(invoice.total_amount) || 0;
-  const [rows, setRows] = useState([{ method: 'CASH', amount: String(invoiceTotal), chequeNo: '' }]);
+  const alreadyPaid  = parseFloat(invoice.paid_amount || 0);
+  const outstanding  = Math.max(0, invoiceTotal - alreadyPaid);
+  const [rows, setRows] = useState([{ method: 'CASH', amount: outstanding.toFixed(2), chequeNo: '' }]);
+  const [noPayment, setNoPayment] = useState(false);
 
   const totalEntered = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const remaining = invoiceTotal - totalEntered;
-  const valid = rows.every(r => parseFloat(r.amount) > 0 && (r.method !== 'CHEQUE' || r.chequeNo.trim())) && totalEntered > 0;
+  const remaining = outstanding - totalEntered;
+  const rowsValid = rows.every(r => parseFloat(r.amount) > 0 && (r.method !== 'CHEQUE' || r.chequeNo.trim()));
+  const canSubmit = noPayment || (rowsValid && totalEntered > 0);
 
   const updateRow = (i, val) => setRows(rs => rs.map((r, idx) => idx === i ? val : r));
   const addRow = () => setRows(rs => [...rs, { method: 'CASH', amount: remaining > 0 ? String(remaining.toFixed(2)) : '', chequeNo: '' }]);
   const removeRow = i => setRows(rs => rs.filter((_, idx) => idx !== i));
 
+  const handleConfirm = () => {
+    if (noPayment) { onConfirm([]); return; }
+    onConfirm(rows.map(r => ({ amount: parseFloat(r.amount), method: r.method, chequeNo: r.chequeNo.trim() || null })));
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-5" onClick={e => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-gray-800 mb-0.5">Collect Payment</h3>
-        <p className="text-sm text-gray-500 mb-3">{invoice.invoice_number} — {invoice.Customer?.name}</p>
-
-        <div className="space-y-2 mb-3">
-          {rows.map((row, i) => (
-            <PaymentRow key={i} row={row} onChange={val => updateRow(i, val)} onRemove={() => removeRow(i)} canRemove={rows.length > 1} />
-          ))}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/50">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-5">
+        <h3 className="text-base font-bold text-gray-800 mb-0.5">
+          {deliverMode ? 'Deliver & Collect' : 'Collect Payment'}
+        </h3>
+        <p className="text-sm text-gray-500 mb-2">{invoice.invoice_number} — {invoice.Customer?.name}</p>
+        <div className="flex justify-between text-xs mb-3 bg-gray-50 rounded-lg px-3 py-2">
+          <span className="text-gray-500">Total: <span className="font-semibold text-gray-700">LKR {invoiceTotal.toFixed(2)}</span></span>
+          {alreadyPaid > 0 && <span className="text-gray-500">Paid: <span className="font-semibold text-green-600">LKR {alreadyPaid.toFixed(2)}</span></span>}
+          <span className="text-gray-500">Due: <span className="font-semibold text-amber-600">LKR {outstanding.toFixed(2)}</span></span>
         </div>
 
-        <div className="flex items-center justify-between mb-3 text-xs">
-          <button type="button" onClick={addRow}
-            className="text-primary-600 font-semibold hover:underline">
-            + Add split
-          </button>
-          <span className={`font-semibold ${Math.abs(remaining) < 0.01 ? 'text-green-600' : remaining > 0 ? 'text-amber-600' : 'text-red-500'}`}>
-            {Math.abs(remaining) < 0.01 ? 'Fully allocated' : remaining > 0 ? `LKR ${remaining.toFixed(2)} remaining` : `LKR ${Math.abs(remaining).toFixed(2)} over`}
-          </span>
-        </div>
+        {!noPayment && (
+          <>
+            <div className="space-y-2 mb-3">
+              {rows.map((row, i) => (
+                <PaymentRow key={i} row={row} onChange={val => updateRow(i, val)} onRemove={() => removeRow(i)} canRemove={rows.length > 1} />
+              ))}
+            </div>
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <button type="button" onClick={addRow} className="text-primary-600 font-semibold hover:underline">
+                + Add split
+              </button>
+              <span className={`font-semibold ${Math.abs(remaining) < 0.01 ? 'text-green-600' : remaining > 0 ? 'text-amber-600' : 'text-red-500'}`}>
+                {Math.abs(remaining) < 0.01 ? 'Fully allocated' : remaining > 0 ? `LKR ${remaining.toFixed(2)} remaining` : `LKR ${Math.abs(remaining).toFixed(2)} over`}
+              </span>
+            </div>
+          </>
+        )}
+
+        <button type="button" onClick={() => setNoPayment(v => !v)}
+          className={`w-full mb-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${noPayment ? 'bg-gray-100 border-gray-300 text-gray-700' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}>
+          {noPayment ? '↩ Enter payment amount' : 'No payment collected'}
+        </button>
 
         <div className="flex gap-3">
-          <button className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600" onClick={onClose}>Back</button>
-          <button disabled={!valid} className="flex-1 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-bold disabled:opacity-40"
-            onClick={() => onConfirm(rows.map(r => ({ amount: parseFloat(r.amount), method: r.method, chequeNo: r.chequeNo.trim() || null })))}>
-            Record
+          <button disabled={loading} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 disabled:opacity-50" onClick={onClose}>Back</button>
+          <button disabled={!canSubmit || loading} className="flex-1 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2" onClick={handleConfirm}>
+            {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+            {loading ? 'Saving…' : deliverMode ? (noPayment ? 'Deliver' : 'Deliver & Record') : 'Record'}
           </button>
         </div>
       </div>
@@ -104,11 +127,9 @@ function CancelModal({ invoice, onConfirm, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/50"
-      onClick={onClose}
     >
       <div
         className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-5"
-        onClick={e => e.stopPropagation()}
       >
         <h3 className="text-base font-bold text-gray-800 mb-1">Cancel Invoice</h3>
         <p className="text-sm text-gray-500 mb-4">
@@ -154,26 +175,13 @@ export default function DriverDeliveries() {
 
   const [cancelTarget,  setCancelTarget]  = useState(null);
   const [collectTarget, setCollectTarget] = useState(null);
+  const [deliverTarget, setDeliverTarget] = useState(null); // deliver + collect in one step
   const [busyId, setBusyId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   // optimistic local overrides so buttons disable instantly before refetch
   const [localStatus, setLocalStatus] = useState({});
 
   const invoices = sheet?.Invoices ?? [];
-
-  async function handleDeliver(inv) {
-    if (busyId) return;
-    setBusyId(inv.id);
-    try {
-      await deliverInvoice(inv.id).unwrap();
-      setLocalStatus(s => ({ ...s, [inv.id]: 'DELIVERED' }));
-      setExpandedId(null);
-    } catch (e) {
-      alert(e?.data?.message ?? 'Failed to mark as delivered');
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function handleCancel(reason) {
     if (!cancelTarget) return;
@@ -190,13 +198,19 @@ export default function DriverDeliveries() {
     }
   }
 
-  async function handleCollect(payments) {
-    if (!collectTarget) return;
-    const inv = collectTarget;
+  async function handleCollect(payments, isDeliverMode = false) {
+    const inv = isDeliverMode ? deliverTarget : collectTarget;
+    if (!inv) return;
     setBusyId(inv.id);
     const today = new Date().toISOString().slice(0, 10);
     try {
+      if (isDeliverMode) {
+        await deliverInvoice(inv.id).unwrap();
+        setLocalStatus(s => ({ ...s, [inv.id]: 'DELIVERED' }));
+        setExpandedId(null);
+      }
       for (const { amount, method, chequeNo } of payments) {
+        if (!amount || amount <= 0) continue;
         await createReceipt({
           customer_id:    inv.customer_id,
           receipt_date:   today,
@@ -207,9 +221,9 @@ export default function DriverDeliveries() {
           ...(method === 'CHEQUE' && chequeNo ? { cheque: { cheque_number: chequeNo, bank_name: '', cheque_date: today, amount } } : {}),
         }).unwrap();
       }
-      setCollectTarget(null);
+      isDeliverMode ? setDeliverTarget(null) : setCollectTarget(null);
     } catch (e) {
-      alert(e?.data?.message ?? 'Failed to record payment');
+      alert(e?.data?.message ?? (isDeliverMode ? 'Failed to mark as delivered' : 'Failed to record payment'));
     } finally {
       setBusyId(null);
     }
@@ -399,31 +413,22 @@ export default function DriverDeliveries() {
 
               {/* Action buttons */}
               {actionable && !done && !cancelled && (
-                <div className="px-4 pb-4 pt-1 space-y-2">
-                  <div className="flex gap-2">
-                    <button
-                      disabled={busy}
-                      onClick={() => handleDeliver(inv)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50"
-                    >
-                      <CheckCircle size={15} />
-                      {busy ? 'Saving…' : 'Delivered'}
-                    </button>
-                    <button
-                      disabled={busy}
-                      onClick={() => setCancelTarget(inv)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-50 text-red-600 text-sm font-semibold border border-red-100 disabled:opacity-50"
-                    >
-                      <XCircle size={15} />
-                      Cancel
-                    </button>
-                  </div>
+                <div className="px-4 pb-4 pt-1 flex gap-2">
                   <button
                     disabled={busy}
-                    onClick={() => setCollectTarget(inv)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold disabled:opacity-50"
+                    onClick={() => setDeliverTarget(inv)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50"
                   >
-                    <Banknote size={15} /> Collect Payment
+                    <CheckCircle size={15} />
+                    {busy ? 'Saving…' : 'Delivered'}
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => setCancelTarget(inv)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-50 text-red-600 text-sm font-semibold border border-red-100 disabled:opacity-50"
+                  >
+                    <XCircle size={15} />
+                    Cancel
                   </button>
                 </div>
               )}
@@ -473,12 +478,24 @@ export default function DriverDeliveries() {
         />
       )}
 
-      {/* Collect payment modal */}
+      {/* Deliver + collect modal */}
+      {deliverTarget && (
+        <CollectModal
+          invoice={deliverTarget}
+          onConfirm={payments => handleCollect(payments, true)}
+          onClose={() => setDeliverTarget(null)}
+          deliverMode
+          loading={!!busyId}
+        />
+      )}
+
+      {/* Collect payment modal (already-delivered invoices) */}
       {collectTarget && (
         <CollectModal
           invoice={collectTarget}
-          onConfirm={handleCollect}
+          onConfirm={payments => handleCollect(payments, false)}
           onClose={() => setCollectTarget(null)}
+          loading={!!busyId}
         />
       )}
     </div>

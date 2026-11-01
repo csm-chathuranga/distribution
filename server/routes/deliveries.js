@@ -105,9 +105,26 @@ router.put('/:id/deliver', async (req, res, next) => {
     const isDriver  = dn.driver_id === req.user.id;
     if (!canCreate && !isDriver) return res.status(403).json({ message: 'Insufficient permissions' });
     if (dn.status !== 'DISPATCHED') return res.status(400).json({ message: 'Can only deliver DISPATCHED notes' });
+
     await dn.update({ status: 'DELIVERED', delivered_at: new Date(), notes: req.body.notes || dn.notes });
+
+    // Apply cash collected to the invoice
+    const cashCollected = parseFloat(req.body.cash_collected || 0);
+    if (cashCollected > 0 && dn.invoice_id) {
+      const { Invoice } = require('../models');
+      const inv = await Invoice.findByPk(dn.invoice_id);
+      if (inv) {
+        const total      = parseFloat(inv.total_amount || 0);
+        const alreadyPaid = parseFloat(inv.paid_amount || 0);
+        const newPaid    = Math.min(alreadyPaid + cashCollected, total);
+        const newBalance = Math.max(0, total - newPaid);
+        const newStatus  = newBalance <= 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : inv.status;
+        await inv.update({ paid_amount: newPaid, balance_due: newBalance, status: newStatus });
+      }
+    }
+
     const delivered = await DeliveryNote.findByPk(dn.id, { include });
-    notify({ roleName: 'manager',  type: 'DELIVERY_COMPLETED', title: 'Delivery Completed', body: `${delivered.dn_number} delivered successfully`, link: `/deliveries/${dn.id}` });
+    notify({ roleName: 'manager',   type: 'DELIVERY_COMPLETED', title: 'Delivery Completed', body: `${delivered.dn_number} delivered successfully`, link: `/deliveries/${dn.id}` });
     notify({ roleName: 'sales_rep', type: 'DELIVERY_COMPLETED', title: 'Delivery Completed', body: `${delivered.dn_number} delivered successfully`, link: `/deliveries/${dn.id}` });
     res.json(delivered);
   } catch (err) { next(err); }

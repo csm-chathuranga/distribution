@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 
 const include = [
-  { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'cost_price'] }] },
+  { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'cost_price', 'case_size'] }] },
   { model: Warehouse, attributes: ['id', 'name'] },
   { model: Route, attributes: ['id', 'name'] },
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
@@ -99,7 +99,7 @@ router.get('/:id/van-stock', async (req, res, next) => {
   try {
     const sheet = await LoadingSheet.findByPk(req.params.id, {
       include: [
-        { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'vat_rate'] }] },
+        { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'vat_rate', 'case_size'] }] },
         { model: Warehouse, attributes: ['id', 'name'] },
         { model: Invoice, as: 'Invoices', attributes: ['id', 'status'],
           include: [{ model: InvoiceLine, as: 'Lines', attributes: ['product_id', 'quantity'] }] },
@@ -230,24 +230,45 @@ router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'DRAFT') return res.status(400).json({ message: 'Already loaded' });
 
+    // Build map of stock already deducted by invoices on this sheet (to avoid double-deduction)
+    const alreadyDeductedMap = {};
+    const sheetInvoices = await Invoice.findAll({
+      where: { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] },
+      include: [{ model: InvoiceLine, as: 'Lines', attributes: ['product_id', 'quantity'] }],
+      transaction: t,
+    });
+    sheetInvoices.forEach(inv => {
+      (inv.Lines || []).forEach(l => {
+        const pid = String(l.product_id);
+        alreadyDeductedMap[pid] = (alreadyDeductedMap[pid] || 0) + parseFloat(l.quantity || 0);
+      });
+    });
+
     for (const line of sheet.Lines) {
+      const loadQty      = parseFloat(line.loaded_quantity);
+      const alreadyDone  = alreadyDeductedMap[String(line.product_id)] || 0;
+      const stillToDeduct = Math.max(0, loadQty - alreadyDone);
+
       const stock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t, lock: true });
       const totalQty    = stock ? parseFloat(stock.quantity) : 0;
       const reservedQty = stock ? parseFloat(stock.reserved_quantity || 0) : 0;
       const available   = totalQty - reservedQty;
-      if (available < parseFloat(line.loaded_quantity)) {
+
+      if (stillToDeduct > 0 && available < stillToDeduct) {
         await t.rollback();
         const name = line.Product ? `${line.Product.sku} — ${line.Product.name}` : `Product ID ${line.product_id}`;
-        return res.status(400).json({ message: `Insufficient stock for ${name}. Available: ${available.toFixed(2)}, Required: ${line.loaded_quantity}` });
+        return res.status(400).json({ message: `Insufficient stock for ${name}. Available: ${available.toFixed(2)}, Required: ${stillToDeduct.toFixed(2)}` });
       }
-      const newQty = totalQty - parseFloat(line.loaded_quantity);
-      await stock.update({ quantity: newQty }, { transaction: t });
-      await StockMovement.create({
-        warehouse_id: sheet.warehouse_id, product_id: line.product_id,
-        movement_type: 'OUT', source_type: 'LOADING_SHEET', source_id: sheet.id,
-        quantity: line.loaded_quantity, balance_after: newQty, unit_cost: line.unit_cost,
-        created_by: req.user.id,
-      }, { transaction: t });
+      if (stillToDeduct > 0) {
+        const newQty = totalQty - stillToDeduct;
+        await stock.update({ quantity: newQty }, { transaction: t });
+        await StockMovement.create({
+          warehouse_id: sheet.warehouse_id, product_id: line.product_id,
+          movement_type: 'OUT', source_type: 'LOADING_SHEET', source_id: sheet.id,
+          quantity: stillToDeduct, balance_after: newQty, unit_cost: line.unit_cost,
+          created_by: req.user.id,
+        }, { transaction: t });
+      }
     }
     await sheet.update({ status: 'LOADED' }, { transaction: t });
     await t.commit();
