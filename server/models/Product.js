@@ -16,6 +16,7 @@ module.exports = (sequelize) => {
     wholesale_price: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
     vat_rate: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
     reorder_point: { type: DataTypes.INTEGER, defaultValue: 0 },
+    case_size: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 12 },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
   }, {
     tableName: 'products',

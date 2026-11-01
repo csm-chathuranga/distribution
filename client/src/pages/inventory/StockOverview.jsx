@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { AlertTriangle, Package, TrendingUp, Warehouse } from 'lucide-react';
 import { useGetStockOnHandQuery } from '../../api/inventoryApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { selectAssignedWarehouse } from '../../store/authSlice';
 import { fmtCurrency } from '../../utils/format';
+
+function fmtCases(qty, caseSize) {
+  if (!caseSize || caseSize <= 0) return null;
+  const cases = Math.floor(qty / caseSize);
+  const units = qty % caseSize;
+  if (cases === 0) return `${units} u`;
+  if (units === 0) return `${cases} cs`;
+  return `${cases} cs + ${units} u`;
+}
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue' }) {
   const colors = {
@@ -40,6 +49,12 @@ export default function StockOverview() {
   const { data: warehouses } = useGetWarehousesQuery({});
 
   const warehouseOpts = warehouses?.data || [];
+
+  useEffect(() => {
+    if (warehouseOpts.length > 0 && !warehouseId) {
+      setWarehouseId(String(warehouseOpts[0].id));
+    }
+  }, [warehouseOpts]);
 
   const extractSizeMl = (name = '') => {
     if (/1\.5\s*[Ll]/i.test(name)) return 1500;
@@ -91,7 +106,6 @@ export default function StockOverview() {
             onChange={e => setWarehouseId(e.target.value)}
             className="input text-sm w-52"
           >
-            <option value="">All Warehouses</option>
             {warehouseOpts.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
           </select>
         )}
@@ -122,6 +136,7 @@ export default function StockOverview() {
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Warehouse</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">On Hand</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">Cases</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">Reserved</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">Available</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">Stock Value</th>
@@ -139,9 +154,21 @@ export default function StockOverview() {
                       {r.quantity % 1 === 0 ? r.quantity : r.quantity.toFixed(2)}
                       {r.unit && <span className="text-xs text-gray-400 ml-1">{r.unit}</span>}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      {r.case_size ? (
+                        <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                          {fmtCases(r.quantity, r.case_size)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right font-mono text-gray-500">{r.reserved || 0}</td>
                     <td className={`px-4 py-3 text-right font-mono font-semibold ${r.available <= 0 ? 'text-red-600' : 'text-green-700'}`}>
                       {r.available % 1 === 0 ? r.available : r.available.toFixed(2)}
+                      {r.case_size && r.available > 0 && (
+                        <div className="text-xs font-normal text-gray-400">{fmtCases(r.available, r.case_size)}</div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-gray-700">{fmtCurrency(r.stock_value)}</td>
                     <td className="px-4 py-3 text-center">

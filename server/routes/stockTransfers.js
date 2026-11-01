@@ -39,7 +39,7 @@ router.get('/:id', authorize('inventory.view'), async (req, res, next) => {
       include: [
         { model: Warehouse, as: 'FromWarehouse', attributes: ['id', 'name'] },
         { model: Warehouse, as: 'ToWarehouse', attributes: ['id', 'name'] },
-        { model: StockTransferLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'sku', 'name'] }] },
+        { model: StockTransferLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'sku', 'name', 'case_size'] }] },
       ],
     });
     if (!trf) return res.status(404).json({ message: 'Not found' });

@@ -12,6 +12,15 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { fmtDate } from '../../utils/format';
 
+function fmtCases(qty, caseSize) {
+  if (!caseSize || caseSize <= 0) return null;
+  const cases = Math.floor(qty / caseSize);
+  const units = qty % caseSize;
+  if (cases === 0) return `${units} u`;
+  if (units === 0) return `${cases} cs`;
+  return `${cases} cs + ${units} u`;
+}
+
 export default function StockTransferDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,18 +110,29 @@ export default function StockTransferDetail() {
               <th className="px-4 py-2 text-left">Product</th>
               <th className="px-4 py-2 text-left">SKU</th>
               <th className="px-4 py-2 text-right">Qty</th>
+              <th className="px-4 py-2 text-right">Cases</th>
             </tr>
           </thead>
           <tbody>
-            {lines.map((line, i) => (
+            {lines.map((line, i) => {
+              const qty      = parseFloat(line.requested_quantity || 0);
+              const caseSize = line.Product?.case_size;
+              const cases    = fmtCases(qty, caseSize);
+              return (
               <tr key={line.id || i} className="border-b border-gray-50 hover:bg-gray-50">
                 <td className="px-4 py-2 font-medium">{line.Product?.name || `Product #${line.product_id}`}</td>
                 <td className="px-4 py-2 text-gray-500 font-mono">{line.Product?.sku || '—'}</td>
-                <td className="px-4 py-2 text-right font-semibold">{line.requested_quantity}</td>
+                <td className="px-4 py-2 text-right font-semibold">{qty}</td>
+                <td className="px-4 py-2 text-right">
+                  {cases ? (
+                    <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">{cases}</span>
+                  ) : '—'}
+                </td>
               </tr>
-            ))}
+              );
+            })}
             {lines.length === 0 && (
-              <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400">No items</td></tr>
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-gray-400">No items</td></tr>
             )}
           </tbody>
         </table>

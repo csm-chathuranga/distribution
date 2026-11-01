@@ -232,13 +232,15 @@ router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
 
     for (const line of sheet.Lines) {
       const stock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t, lock: true });
-      const available = stock ? parseFloat(stock.quantity) : 0;
+      const totalQty    = stock ? parseFloat(stock.quantity) : 0;
+      const reservedQty = stock ? parseFloat(stock.reserved_quantity || 0) : 0;
+      const available   = totalQty - reservedQty;
       if (available < parseFloat(line.loaded_quantity)) {
         await t.rollback();
         const name = line.Product ? `${line.Product.sku} — ${line.Product.name}` : `Product ID ${line.product_id}`;
-        return res.status(400).json({ message: `Insufficient stock for ${name}. Available: ${available}, Required: ${line.loaded_quantity}` });
+        return res.status(400).json({ message: `Insufficient stock for ${name}. Available: ${available.toFixed(2)}, Required: ${line.loaded_quantity}` });
       }
-      const newQty = parseFloat(stock.quantity) - parseFloat(line.loaded_quantity);
+      const newQty = totalQty - parseFloat(line.loaded_quantity);
       await stock.update({ quantity: newQty }, { transaction: t });
       await StockMovement.create({
         warehouse_id: sheet.warehouse_id, product_id: line.product_id,

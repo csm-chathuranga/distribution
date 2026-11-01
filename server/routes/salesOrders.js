@@ -60,9 +60,9 @@ router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
         { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
         { model: Route,          attributes: ['id', 'name'], required: false },
         { model: SalesOrderLine, as: 'Lines',
-          include: [{ model: Product, attributes: ['id', 'sku', 'name'] }] },
+          include: [{ model: Product, attributes: ['id', 'sku', 'name', 'case_size'] }] },
         { model: OrderReturn, as: 'Returns',
-          include: [{ model: Product, attributes: ['id', 'sku', 'name'] }] },
+          include: [{ model: Product, attributes: ['id', 'sku', 'name', 'case_size'] }] },
       ],
     });
     if (!order) return res.status(404).json({ message: 'Order not found' });

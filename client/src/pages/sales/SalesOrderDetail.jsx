@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin, Pencil, X } from 'lucide-react';
+import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin, Pencil, X, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useGetSalesOrderQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation, useCancelSalesOrderMutation } from '../../api/salesApi';
@@ -9,6 +9,15 @@ import { selectCurrentUser } from '../../store/authSlice';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { fmtCurrency, fmtDate } from '../../utils/format';
+
+function fmtCases(qty, caseSize) {
+  if (!caseSize || caseSize <= 0) return null;
+  const cases = Math.floor(qty / caseSize);
+  const units = qty % caseSize;
+  if (cases === 0) return `${units} u`;
+  if (units === 0) return `${cases} cs`;
+  return `${cases} cs + ${units} u`;
+}
 
 export default function SalesOrderDetail() {
   const { id }       = useParams();
@@ -80,6 +89,10 @@ export default function SalesOrderDetail() {
     <div className="space-y-4 pb-24">
       {/* Order title row */}
       <div className="flex items-center gap-2 flex-wrap pt-1">
+        <button onClick={() => navigate('/sales-orders')}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 text-sm font-medium transition-colors">
+          <ArrowLeft size={15} /> Back
+        </button>
         <h1 className="text-lg font-bold text-gray-900 font-mono">{order.order_number}</h1>
         <StatusBadge status={order.status} />
         <span className="text-xs text-gray-400 ml-auto">{fmtDate(order.order_date)}</span>
@@ -170,6 +183,7 @@ export default function SalesOrderDetail() {
               <tr>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
                 <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
+                <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cases</th>
                 <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">FOC</th>
                 <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Unit Price</th>
                 <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Disc%</th>
@@ -184,6 +198,11 @@ export default function SalesOrderDetail() {
                     <p className="text-xs font-mono text-gray-400">{line.Product?.sku}</p>
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-gray-700">{parseFloat(line.quantity)}</td>
+                  <td className="px-4 py-3 text-right">
+                    {fmtCases(parseFloat(line.quantity), line.Product?.case_size)
+                      ? <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">{fmtCases(parseFloat(line.quantity), line.Product?.case_size)}</span>
+                      : <span className="text-gray-300">—</span>}
+                  </td>
                   <td className="px-4 py-3 text-right font-mono text-gray-400">{parseFloat(line.free_quantity) || '—'}</td>
                   <td className="px-4 py-3 text-right font-mono text-gray-700">{fmtCurrency(line.unit_price)}</td>
                   <td className="px-4 py-3 text-right text-gray-500">{parseFloat(line.discount_rate) || '—'}</td>

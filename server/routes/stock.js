@@ -28,7 +28,7 @@ router.get('/on-hand', authorize.any('inventory.view', 'sales.create'), async (r
       where,
       include: [
         {
-          model: Product, attributes: ['id', 'name', 'sku', 'cost_price'],
+          model: Product, attributes: ['id', 'name', 'sku', 'cost_price', 'case_size'],
           where: Object.keys(productWhere).length ? productWhere : undefined,
           include: [
             { model: Category, attributes: ['id', 'name'] },
@@ -55,6 +55,7 @@ router.get('/on-hand', authorize.any('inventory.view', 'sales.create'), async (r
       quantity:      parseFloat(s.quantity || 0),
       reserved:      parseFloat(s.reserved_quantity || 0),
       available:     parseFloat(s.quantity || 0) - parseFloat(s.reserved_quantity || 0),
+      case_size:     s.Product?.case_size ? parseInt(s.Product.case_size) : null,
       cost_price:    parseFloat(s.Product?.cost_price || 0),
       stock_value:   parseFloat(s.quantity || 0) * parseFloat(s.Product?.cost_price || 0),
       low_stock:     parseFloat(s.quantity || 0) === 0,

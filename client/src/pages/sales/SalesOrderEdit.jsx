@@ -553,10 +553,12 @@ export default function SalesOrderEdit() {
       )}
 
       {/* Cancel Order */}
-      <button type="button" onClick={() => setShowCancel(true)}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium transition-colors">
-        <X size={14} /> Cancel This Order
-      </button>
+      <div className="card p-4">
+        <button type="button" onClick={() => setShowCancel(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium transition-colors">
+          <X size={14} /> Cancel This Order
+        </button>
+      </div>
 
       {/* Sticky save bar */}
       <div className="fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3" style={{ bottom: 88 }}>

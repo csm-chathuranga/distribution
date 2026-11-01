@@ -1,4 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+function fmtCases(qty, caseSize) {
+  if (!caseSize || caseSize <= 0) return null;
+  const cases = Math.floor(qty / caseSize);
+  const units = qty % caseSize;
+  if (cases === 0) return `${units} u`;
+  if (units === 0) return `${cases} cs`;
+  return `${cases} cs + ${units} u`;
+}
 import { Gift, Plus, ChevronUp, History, Package, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
@@ -245,6 +254,12 @@ export default function FreeItems() {
     allocations.filter(a => a.SalesRep).map(a => [a.SalesRep.id, a.SalesRep])
   ).values()].sort((a, b) => a.name.localeCompare(b.name));
 
+  useEffect(() => {
+    if (repOptions.length > 0 && !filterRepId) {
+      setFilterRepId(String(repOptions[0].id));
+    }
+  }, [repOptions.length]);
+
   const visibleAllocations = allocations.filter(a => {
     if (filterRepId && String(a.SalesRep?.id) !== filterRepId) return false;
     if (searchQ.trim()) {
@@ -290,7 +305,6 @@ export default function FreeItems() {
               onChange={e => setFilterRepId(e.target.value)}
               className="input text-sm py-1.5 sm:w-40"
             >
-              <option value="">All Reps</option>
               {repOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           )}
@@ -305,7 +319,7 @@ export default function FreeItems() {
         </div>
       </div>
 
-      {/* Cards */}
+      {/* Table */}
       {isLoading ? (
         <div className="card p-10 text-center text-gray-400">Loading…</div>
       ) : allocations.length === 0 ? (
@@ -315,50 +329,82 @@ export default function FreeItems() {
           {canApprove && <p className="text-sm text-gray-400 mt-1">Click "New Allocation" to assign promotional items to a sales rep</p>}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleAllocations.map(a => {
-            const allocated = parseFloat(a.allocated_quantity);
-            const used      = parseFloat(a.used_quantity);
-            const remaining = allocated - used;
-            const isEmpty   = remaining <= 0;
-            return (
-              <div key={a.id} className={`card p-3 border-l-4 ${isEmpty ? 'border-red-300 opacity-75' : 'border-purple-400'}`}>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm leading-snug truncate">{a.Product?.name}</p>
-                    <p className="text-xs text-gray-400 font-mono">{a.Product?.sku}</p>
-                    {canApprove && (
-                      <p className="text-xs text-purple-600 font-semibold mt-0.5">{a.SalesRep?.name}</p>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className={`text-lg font-bold font-mono ${isEmpty ? 'text-red-500' : 'text-green-600'}`}>{fmtNumber(remaining, 0)}</p>
-                    <p className="text-xs text-gray-400">of {fmtNumber(allocated, 0)} units</p>
-                  </div>
-                </div>
-
-                <QuotaBar used={used} total={allocated} />
-                <p className="text-xs text-gray-400 mt-1">{fmtNumber(used, 0)} used · from {a.Warehouse?.name}</p>
-                {a.notes && <p className="text-xs text-gray-500 italic mt-1 truncate">{a.notes}</p>}
-
-                <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
-                  <button onClick={() => setHistory(a)}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors">
-                    <History size={13} /> History
-                  </button>
-                  {canApprove && (
-                    <button onClick={() => setTopping(a)}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors">
-                      <ChevronUp size={13} /> Top Up
-                    </button>
-                  )}
-                  <span className={`ml-auto text-xs font-semibold px-2 py-1 ${isEmpty ? 'text-red-500' : 'text-purple-600'}`}>
-                    {isEmpty ? 'Quota empty' : 'Given via invoice'}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left">Product</th>
+                  {canApprove && <th className="px-4 py-3 text-left">Sales Rep</th>}
+                  <th className="px-4 py-3 text-left">Warehouse</th>
+                  <th className="px-4 py-3 text-right">Allocated</th>
+                  <th className="px-4 py-3 text-right">Used</th>
+                  <th className="px-4 py-3 text-right">Remaining</th>
+                  <th className="px-4 py-3 text-right">Cases</th>
+                  <th className="px-4 py-3 text-center">Usage</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {visibleAllocations.map(a => {
+                  const allocated = parseFloat(a.allocated_quantity);
+                  const used      = parseFloat(a.used_quantity);
+                  const remaining = allocated - used;
+                  const isEmpty   = remaining <= 0;
+                  const caseSize  = a.Product?.case_size;
+                  return (
+                    <tr key={a.id} className={`hover:bg-gray-50 transition-colors ${isEmpty ? 'opacity-70' : ''}`}>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900">{a.Product?.name}</p>
+                        <p className="text-xs text-gray-400 font-mono">{a.Product?.sku}</p>
+                      </td>
+                      {canApprove && (
+                        <td className="px-4 py-3 text-purple-600 font-medium">{a.SalesRep?.name || '—'}</td>
+                      )}
+                      <td className="px-4 py-3 text-gray-600">{a.Warehouse?.name || '—'}</td>
+                      <td className="px-4 py-3 text-right font-mono text-gray-700">{fmtNumber(allocated, 0)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-gray-500">{fmtNumber(used, 0)}</td>
+                      <td className={`px-4 py-3 text-right font-bold font-mono ${isEmpty ? 'text-red-500' : 'text-green-600'}`}>
+                        {fmtNumber(remaining, 0)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {fmtCases(remaining, caseSize)
+                          ? <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">{fmtCases(remaining, caseSize)}</span>
+                          : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="w-24 mx-auto">
+                          <QuotaBar used={used} total={allocated} />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          isEmpty ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {isEmpty ? 'Empty' : 'Active'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => setHistory(a)}
+                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
+                            <History size={12} /> History
+                          </button>
+                          {canApprove && (
+                            <button onClick={() => setTopping(a)}
+                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-sm">
+                              <ChevronUp size={12} /> Top Up
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

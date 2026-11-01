@@ -107,28 +107,174 @@ export default function Login() {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col bg-[#050d1a]"
-        style={{ backgroundImage: 'linear-gradient(160deg, #0c1f4a 0%, #0d2060 40%, #071430 100%), radial-gradient(ellipse at 70% 10%, #1a3a8a 0%, transparent 55%)' }}>
+      <div className="min-h-screen flex bg-[#050d1a]">
 
-        {/* ── Brand ── */}
-        <div className="flex flex-col items-center pt-6 pb-6 px-6">
-          <div className="w-20 h-20 rounded-[22px] flex items-center justify-center shadow-2xl mb-5"
-            style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
-            <Truck size={38} className="text-white" strokeWidth={1.8} />
+        {/* ── LEFT: Illustrated Panel ── */}
+        <div className="hidden lg:flex lg:w-1/2 relative flex-col overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #052e16 0%, #14532d 45%, #064e3b 100%)' }}>
+
+          {/* decorative blobs */}
+          <div className="absolute top-[-80px] left-[-80px] w-80 h-80 rounded-full opacity-25"
+            style={{ background: 'radial-gradient(circle, #4ade80 0%, transparent 70%)' }} />
+          <div className="absolute bottom-[-60px] right-[-60px] w-72 h-72 rounded-full opacity-20"
+            style={{ background: 'radial-gradient(circle, #059669 0%, transparent 70%)' }} />
+
+          {/* SVG illustration */}
+          <div className="absolute inset-0 flex items-center justify-center p-10">
+            <svg viewBox="0 0 480 380" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-md opacity-90">
+              {/* road */}
+              <rect x="40" y="270" width="400" height="28" rx="4" fill="#052e16" />
+              <rect x="40" y="281" width="400" height="4" rx="2" fill="#14532d" />
+              {/* road dashes */}
+              {[80,160,240,320].map(x => (
+                <rect key={x} x={x} y="282" width="40" height="3" rx="1" fill="#166534" />
+              ))}
+
+              {/* main truck body */}
+              <rect x="60" y="220" width="130" height="55" rx="6" fill="#16a34a" />
+              <rect x="170" y="230" width="55" height="45" rx="5" fill="#0d7a3a" />
+              {/* truck window */}
+              <rect x="175" y="235" width="44" height="24" rx="3" fill="#7ee8a2" opacity="0.4" />
+              {/* truck wheels */}
+              <circle cx="95" cy="298" r="14" fill="#0f172a" />
+              <circle cx="95" cy="298" r="8" fill="#1e293b" />
+              <circle cx="95" cy="298" r="3" fill="#64748b" />
+              <circle cx="165" cy="298" r="14" fill="#0f172a" />
+              <circle cx="165" cy="298" r="8" fill="#1e293b" />
+              <circle cx="165" cy="298" r="3" fill="#64748b" />
+              {/* truck headlight */}
+              <rect x="221" y="255" width="8" height="6" rx="2" fill="#fde68a" opacity="0.9" />
+              {/* headlight beam */}
+              <path d="M229 258 L260 248 L260 270 Z" fill="#fde68a" opacity="0.12" />
+
+              {/* small truck 2 (background) */}
+              <rect x="290" y="238" width="90" height="38" rx="5" fill="#1d4ed8" opacity="0.7" />
+              <rect x="370" y="244" width="36" height="32" rx="4" fill="#1e40af" opacity="0.7" />
+              <rect x="373" y="248" width="28" height="16" rx="2" fill="#93c5fd" opacity="0.25" />
+              <circle cx="310" cy="298" r="11" fill="#0f172a" />
+              <circle cx="310" cy="298" r="6" fill="#1e293b" />
+              <circle cx="310" cy="298" r="2" fill="#64748b" />
+              <circle cx="370" cy="298" r="11" fill="#0f172a" />
+              <circle cx="370" cy="298" r="6" fill="#1e293b" />
+              <circle cx="370" cy="298" r="2" fill="#64748b" />
+
+              {/* route line */}
+              <path d="M140 200 Q200 140 280 160 Q340 175 390 120" stroke="#16a34a" strokeWidth="2.5" strokeDasharray="8 5" strokeLinecap="round" opacity="0.6" />
+
+              {/* location pins */}
+              <circle cx="140" cy="200" r="6" fill="#16a34a" />
+              <circle cx="140" cy="200" r="3" fill="white" />
+              <circle cx="280" cy="160" r="6" fill="#16a34a" />
+              <circle cx="280" cy="160" r="3" fill="white" />
+              <circle cx="390" cy="120" r="8" fill="#16a34a" />
+              <circle cx="390" cy="120" r="4" fill="white" />
+              {/* destination pulse */}
+              <circle cx="390" cy="120" r="14" stroke="#16a34a" strokeWidth="1.5" opacity="0.35" />
+              <circle cx="390" cy="120" r="22" stroke="#16a34a" strokeWidth="1" opacity="0.15" />
+
+              {/* floating stat cards */}
+              {/* card 1 */}
+              <rect x="28" y="80" width="120" height="56" rx="10" fill="#052e16" stroke="#166534" strokeWidth="1" />
+              <rect x="38" y="90" width="28" height="28" rx="7" fill="#16a34a" opacity="0.9" />
+              <rect x="50" y="98" width="4" height="12" rx="1" fill="white" />
+              <rect x="44" y="104" width="16" height="4" rx="1" fill="white" />
+              <text x="74" y="102" fill="#94a3b8" fontSize="8" fontFamily="sans-serif">Deliveries</text>
+              <text x="74" y="116" fill="white" fontSize="15" fontWeight="bold" fontFamily="sans-serif">1,248</text>
+              <text x="74" y="128" fill="#4ade80" fontSize="8" fontFamily="sans-serif">↑ 12% today</text>
+
+              {/* card 2 */}
+              <rect x="332" y="48" width="118" height="56" rx="10" fill="#052e16" stroke="#166534" strokeWidth="1" />
+              <rect x="342" y="58" width="28" height="28" rx="7" fill="#1d4ed8" opacity="0.9" />
+              <rect x="352" y="64" width="8" height="16" rx="1" fill="white" opacity="0.8" />
+              <rect x="362" y="68" width="8" height="12" rx="1" fill="white" opacity="0.8" />
+              <text x="378" y="70" fill="#94a3b8" fontSize="8" fontFamily="sans-serif">Active Routes</text>
+              <text x="378" y="84" fill="white" fontSize="15" fontWeight="bold" fontFamily="sans-serif">34</text>
+              <text x="378" y="96" fill="#60a5fa" fontSize="8" fontFamily="sans-serif">Live now</text>
+
+              {/* card 3 */}
+              <rect x="175" y="30" width="118" height="52" rx="10" fill="#052e16" stroke="#166534" strokeWidth="1" />
+              <rect x="185" y="40" width="26" height="26" rx="7" fill="#7c3aed" opacity="0.85" />
+              <circle cx="198" cy="53" r="7" stroke="white" strokeWidth="1.8" fill="none" />
+              <path d="M198 47 L198 53 L202 53" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+              <text x="218" y="50" fill="#94a3b8" fontSize="8" fontFamily="sans-serif">Drivers</text>
+              <text x="218" y="64" fill="white" fontSize="15" fontWeight="bold" fontFamily="sans-serif">47</text>
+              <text x="218" y="76" fill="#c4b5fd" fontSize="8" fontFamily="sans-serif">On duty</text>
+            </svg>
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight text-center">{companyName}</h1>
-          <p className="text-slate-400 text-sm mt-1 mb-6">Distribution Management System</p>
 
+          {/* content over image */}
+          <div className="relative z-10 flex flex-col justify-between h-full p-10">
+            {/* logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl"
+                style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
+                <Truck size={24} className="text-white" strokeWidth={1.8} />
+              </div>
+              <span className="text-white font-bold text-lg leading-tight">{companyName}</span>
+            </div>
+
+            {/* center tagline */}
+            <div>
+              <h2 className="text-4xl font-extrabold text-white leading-tight mb-4">
+                Smarter Distribution,<br />Every Mile.
+              </h2>
+              <p className="text-slate-300 text-base leading-relaxed max-w-sm">
+                Manage routes, drivers, deliveries and inventory — all in one powerful platform built for Sri Lanka.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3">
+                {[
+                  'Real-time delivery tracking',
+                  'Driver & route management',
+                  'Inventory & stock control',
+                ].map(f => (
+                  <div key={f} className="flex items-center gap-2.5 text-sm text-slate-200">
+                    <CheckCircle2 size={15} className="text-green-400 flex-shrink-0" />
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-slate-500 text-xs">Lanka Distribution Management System · v1.0</p>
+          </div>
         </div>
 
-        {/* ── Form ── */}
-        <div className="flex flex-col items-center px-5 pb-4">
-          <div className="w-full max-w-sm">
-            <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-7 shadow-2xl">
-              <h2 className="text-white text-xl font-bold mb-1">Welcome back</h2>
-              <p className="text-slate-400 text-sm mb-6">Sign in to continue</p>
+        {/* ── RIGHT: Form Panel ── */}
+        <div className="flex flex-col w-full lg:w-1/2 min-h-screen"
+          style={{ background: 'linear-gradient(160deg, #0c1f4a 0%, #071430 100%)' }}>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* mobile brand (hidden on lg) */}
+          <div className="flex flex-col items-center pt-10 pb-4 px-6 lg:hidden">
+            <div className="w-16 h-16 rounded-[18px] flex items-center justify-center shadow-2xl mb-4"
+              style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
+              <Truck size={30} className="text-white" strokeWidth={1.8} />
+            </div>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight text-center">{companyName}</h1>
+            <p className="text-slate-400 text-sm mt-1">Distribution Management System</p>
+          </div>
+
+          {/* form centered */}
+          <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
+            <div className="w-full max-w-sm">
+
+              {/* desktop heading */}
+              <div className="hidden lg:block mb-8">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl mb-6"
+                  style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
+                  <Truck size={26} className="text-white" strokeWidth={1.8} />
+                </div>
+                <h2 className="text-3xl font-extrabold text-white mb-1">Welcome back</h2>
+                <p className="text-slate-400 text-sm">Sign in to your account to continue</p>
+              </div>
+
+              {/* mobile heading */}
+              <div className="lg:hidden mb-6">
+                <h2 className="text-xl font-bold text-white mb-1">Welcome back</h2>
+                <p className="text-slate-400 text-sm">Sign in to continue</p>
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">Email or Username</label>
                   <input
@@ -158,7 +304,7 @@ export default function Login() {
                 </div>
 
                 <button type="submit" disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white mt-1
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white
                              disabled:opacity-50 transition-opacity"
                   style={{ background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' }}>
                   {isLoading
@@ -166,36 +312,35 @@ export default function Login() {
                     : <><span>Sign In</span><ArrowRight size={15} /></>}
                 </button>
               </form>
-            </div>
 
-            {/* ── Install button — always visible when not installed ── */}
-            <div className="mt-3">
-              {isInstalled ? (
-                <div className="flex items-center justify-center gap-2 py-3 text-green-400 text-sm font-semibold">
-                  <CheckCircle2 size={16} />
-                  App installed · works offline
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={install}
-                  className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl border border-green-700/60
-                             bg-green-900/30 hover:bg-green-900/50 active:bg-green-900/70 text-green-300 text-sm font-semibold transition-colors"
-                >
-                  <Download size={15} />
-                  Download App — works offline
-                </button>
-              )}
+              {/* Install button */}
+              <div className="mt-4">
+                {isInstalled ? (
+                  <div className="flex items-center justify-center gap-2 py-3 text-green-400 text-sm font-semibold">
+                    <CheckCircle2 size={16} />
+                    App installed · works offline
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={install}
+                    className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl border border-green-700/60
+                               bg-green-900/30 hover:bg-green-900/50 active:bg-green-900/70 text-green-300 text-sm font-semibold transition-colors"
+                  >
+                    <Download size={15} />
+                    Download App — works offline
+                  </button>
+                )}
+              </div>
+
+              <p className="text-center text-slate-600 text-xs mt-8 lg:hidden">
+                Lanka Distribution Management System · v1.0
+              </p>
             </div>
           </div>
         </div>
-
-        <p className="text-center text-slate-700 text-xs pb-12 mt-auto">
-          Lanka Distribution Management System · v1.0
-        </p>
       </div>
 
-      {/* Install instructions modal */}
       {showInstructions && <InstallInstructionsModal onClose={dismissInstructions} />}
     </>
   );
