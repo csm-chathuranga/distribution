@@ -8,5 +8,5 @@ module.exports = (sequelize) => {
     code: DataTypes.STRING(50),
     address: DataTypes.TEXT,
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
-  }, { tableName: 'warehouses', timestamps: false });
+  }, { tableName: 'warehouses', timestamps: true, createdAt: false, updatedAt: 'updated_at' });
 };
