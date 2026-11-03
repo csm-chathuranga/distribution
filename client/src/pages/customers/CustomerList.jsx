@@ -235,7 +235,7 @@ export default function CustomerList() {
         )}
       </div>
 
-      {/* Search + Route filter */}
+      {/* Search + Rep filter + Route filter */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -247,6 +247,55 @@ export default function CustomerList() {
             style={{ height: 52, borderRadius: 16, fontSize: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           />
         </div>
+
+        {/* Sales rep filter — admin/manager only (first) */}
+        {canViewAll && (
+          <div ref={repDropRef} className="relative flex-shrink-0" style={{ minWidth: 155 }}>
+            <button
+              type="button"
+              onClick={() => { setRepDropOpen(d => !d); setRepSearch(''); }}
+              className="bg-white border border-gray-200 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all w-full flex items-center justify-between gap-2"
+              style={{ height: 52, borderRadius: 16, fontSize: 15, paddingLeft: 14, paddingRight: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+            >
+              <span className="truncate">
+                {repFilter ? (salesReps.find(r => String(r.id) === String(repFilter))?.name || 'Rep') : 'All Reps'}
+              </span>
+              <ChevronDown size={15} className="text-gray-400 flex-shrink-0" />
+            </button>
+            {repDropOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-56">
+                <div className="p-2 border-b border-gray-100">
+                  <input
+                    autoFocus
+                    value={repSearch}
+                    onChange={e => setRepSearch(e.target.value)}
+                    placeholder="Search reps…"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto py-1">
+                  <button type="button"
+                    onClick={() => { setRepFilter(''); setRouteFilter(''); setPage(1); setRepDropOpen(false); }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${!repFilter ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
+                  >All Reps</button>
+                  {salesReps
+                    .filter(r => r.name.toLowerCase().includes(repSearch.toLowerCase()))
+                    .map(r => (
+                      <button key={r.id} type="button"
+                        onClick={() => { setRepFilter(r.id); setRouteFilter(''); setPage(1); setRepDropOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${String(repFilter) === String(r.id) ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
+                      >{r.name}</button>
+                    ))}
+                  {salesReps.filter(r => r.name.toLowerCase().includes(repSearch.toLowerCase())).length === 0 && (
+                    <p className="px-4 py-3 text-sm text-gray-400">No reps found</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Route filter — filtered by selected rep */}
         <div ref={routeDropRef} className="relative flex-shrink-0" style={{ minWidth: 160 }}>
           <button
             type="button"
@@ -278,67 +327,27 @@ export default function CustomerList() {
                   >All Routes</button>
                 )}
                 {routeOptions
-                  .filter(r => r.name.toLowerCase().includes(routeSearch.toLowerCase()))
+                  .filter(r => {
+                    const matchesRep = !repFilter || String(r.sales_rep_id) === String(repFilter);
+                    const matchesSearch = r.name.toLowerCase().includes(routeSearch.toLowerCase());
+                    return matchesRep && matchesSearch;
+                  })
                   .map(r => (
                     <button key={r.id} type="button"
                       onClick={() => { setRouteFilter(r.id); setPage(1); setRouteDropOpen(false); }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${String(routeFilter) === String(r.id) ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
                     >{r.name}</button>
                   ))}
-                {routeOptions.filter(r => r.name.toLowerCase().includes(routeSearch.toLowerCase())).length === 0 && (
+                {routeOptions.filter(r => {
+                  const matchesRep = !repFilter || String(r.sales_rep_id) === String(repFilter);
+                  return matchesRep && r.name.toLowerCase().includes(routeSearch.toLowerCase());
+                }).length === 0 && (
                   <p className="px-4 py-3 text-sm text-gray-400">No routes found</p>
                 )}
               </div>
             </div>
           )}
         </div>
-
-        {/* Sales rep filter — admin/manager only */}
-        {canViewAll && (
-          <div ref={repDropRef} className="relative flex-shrink-0" style={{ minWidth: 155 }}>
-            <button
-              type="button"
-              onClick={() => { setRepDropOpen(d => !d); setRepSearch(''); }}
-              className="bg-white border border-gray-200 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all w-full flex items-center justify-between gap-2"
-              style={{ height: 52, borderRadius: 16, fontSize: 15, paddingLeft: 14, paddingRight: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
-            >
-              <span className="truncate">
-                {repFilter ? (salesReps.find(r => String(r.id) === String(repFilter))?.name || 'Rep') : 'All Reps'}
-              </span>
-              <ChevronDown size={15} className="text-gray-400 flex-shrink-0" />
-            </button>
-            {repDropOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-56">
-                <div className="p-2 border-b border-gray-100">
-                  <input
-                    autoFocus
-                    value={repSearch}
-                    onChange={e => setRepSearch(e.target.value)}
-                    placeholder="Search reps…"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  />
-                </div>
-                <div className="max-h-60 overflow-y-auto py-1">
-                  <button type="button"
-                    onClick={() => { setRepFilter(''); setPage(1); setRepDropOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${!repFilter ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
-                  >All Reps</button>
-                  {salesReps
-                    .filter(r => r.name.toLowerCase().includes(repSearch.toLowerCase()))
-                    .map(r => (
-                      <button key={r.id} type="button"
-                        onClick={() => { setRepFilter(r.id); setPage(1); setRepDropOpen(false); }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary-50 ${String(repFilter) === String(r.id) ? 'text-primary-600 font-semibold' : 'text-gray-700'}`}
-                      >{r.name}</button>
-                    ))}
-                  {salesReps.filter(r => r.name.toLowerCase().includes(repSearch.toLowerCase())).length === 0 && (
-                    <p className="px-4 py-3 text-sm text-gray-400">No reps found</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Card list */}
