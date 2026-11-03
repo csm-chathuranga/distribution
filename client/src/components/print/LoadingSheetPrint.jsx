@@ -97,7 +97,7 @@ export default function LoadingSheetPrint({ sheet, company }) {
         </colgroup>
         <thead>
           <tr style={{ textAlign: 'center', background: '#f3f4f6' }}>
-            {['#', 'Product', 'SKU', 'Qty', 'Cases', 'Sold', 'Returned', 'Damaged', 'Lost', 'Balance', 'Unit Cost', 'Value'].map(title => (
+            {['#', 'Product', 'SKU', 'Cases', 'Qty', 'Sold', 'Returned', 'Damaged', 'Lost', 'Balance', 'Unit Cost', 'Value'].map(title => (
               <th key={title} style={{ ...cellStyle, fontWeight: '700' }}>{title}</th>
             ))}
           </tr>
@@ -118,8 +118,8 @@ export default function LoadingSheetPrint({ sheet, company }) {
                 <td style={{ ...cellStyle, textAlign: 'center' }}>{index + 1}</td>
                 <td style={{ ...cellStyle, textAlign: 'left', overflowWrap: 'anywhere' }}>{line.Product?.name || '—'}</td>
                 <td style={{ ...cellStyle, textAlign: 'left' }}>{line.Product?.sku || '—'}</td>
+                <td style={{ ...cellStyle, textAlign: 'center', fontWeight: '700', fontSize: '9.5px' }}>{fmtCases(loaded, caseSize)}</td>
                 <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(loaded)}</td>
-                <td style={{ ...cellStyle, textAlign: 'center', color: '#444' }}>{fmtCases(loaded, caseSize)}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(sold) : ''}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(returned) : ''}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(damaged) : ''}</td>
