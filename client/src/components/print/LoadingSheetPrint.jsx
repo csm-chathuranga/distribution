@@ -3,16 +3,16 @@ import { fmtCurrency, fmtDate } from '../../utils/format';
 const tableStyle = { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' };
 const cellStyle = {
   border: '1px solid #555',
-  padding: '5px 6px',
+  padding: '3px 4px',
   verticalAlign: 'middle',
 };
 const labelStyle = { ...cellStyle, fontWeight: '700', background: '#f3f4f6' };
 
 const qty = value => (parseFloat(value) || 0).toFixed(2);
 const fmtCases = (q, caseSize) => {
-  if (!caseSize || caseSize <= 1 || !q) return null;
+  if (!caseSize || caseSize <= 1 || !q) return '—';
   const cs = Math.floor(q / caseSize); const units = q % caseSize;
-  if (cs === 0) return null;
+  if (cs === 0) return '—';
   return units > 0 ? `${cs}cs+${units}u` : `${cs} cs`;
 };
 
@@ -41,20 +41,20 @@ export default function LoadingSheetPrint({ sheet, company }) {
     <div style={{
       width: '100%',
       fontFamily: 'Arial, sans-serif',
-      fontSize: '10px',
-      lineHeight: 1.25,
+      fontSize: '8.5px',
+      lineHeight: 1.2,
       color: '#111',
       background: '#fff',
-      padding: '6mm',
+      padding: '5mm',
     }}>
-      <header style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <div style={{ fontSize: '17px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
-        {company?.address && <div>{company.address}</div>}
-        {company?.phone && <div>Tel: {company.phone}</div>}
-        <div style={{ fontSize: '14px', fontWeight: '700', marginTop: '5px' }}>LOADING SHEET / STOCK REGISTER</div>
+      <header style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <div style={{ fontSize: '14px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
+        {company?.address && <div style={{ fontSize: '8px' }}>{company.address}</div>}
+        {company?.phone && <div style={{ fontSize: '8px' }}>Tel: {company.phone}</div>}
+        <div style={{ fontSize: '11px', fontWeight: '700', marginTop: '4px' }}>LOADING SHEET / STOCK REGISTER</div>
       </header>
 
-      <table style={{ ...tableStyle, marginBottom: '10px', fontSize: '9px' }}>
+      <table style={{ ...tableStyle, marginBottom: '8px', fontSize: '8px' }}>
         <tbody>
           <tr>
             <td style={{ ...labelStyle, width: '12%' }}>Sheet No.</td>
@@ -79,23 +79,25 @@ export default function LoadingSheetPrint({ sheet, company }) {
         </tbody>
       </table>
 
-      <table style={{ ...tableStyle, fontSize: '9px' }}>
+      {/* 12 columns: #, Product, SKU, Qty, Cases, Sold, Returned, Damaged, Lost, Balance, Unit Cost, Value */}
+      <table style={{ ...tableStyle, fontSize: '8px' }}>
         <colgroup>
           <col style={{ width: '3%' }} />
-          <col style={{ width: '24%' }} />
-          <col style={{ width: '7%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
+          <col style={{ width: '22%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '6%' }} />
           <col style={{ width: '7%' }} />
           <col style={{ width: '7%' }} />
-          <col style={{ width: '8%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '7%' }} />
           <col style={{ width: '9%' }} />
           <col style={{ width: '11%' }} />
         </colgroup>
         <thead>
           <tr style={{ textAlign: 'center', background: '#f3f4f6' }}>
-            {['#', 'Product', 'SKU', 'Loaded', 'Sold', 'Returned', 'Damaged', 'Lost', 'Balance', 'Unit Cost', 'Value'].map(title => (
+            {['#', 'Product', 'SKU', 'Qty', 'Cases', 'Sold', 'Returned', 'Damaged', 'Lost', 'Balance', 'Unit Cost', 'Value'].map(title => (
               <th key={title} style={{ ...cellStyle, fontWeight: '700' }}>{title}</th>
             ))}
           </tr>
@@ -111,16 +113,13 @@ export default function LoadingSheetPrint({ sheet, company }) {
             const unitCost = parseFloat(line.unit_cost) || 0;
             const caseSize = line.Product?.case_size ? parseInt(line.Product.case_size) : null;
             const isClosed = sheet.status === 'CLOSED';
-            const casesLabel = fmtCases(loaded, caseSize);
             return (
               <tr key={line.id || index}>
                 <td style={{ ...cellStyle, textAlign: 'center' }}>{index + 1}</td>
                 <td style={{ ...cellStyle, textAlign: 'left', overflowWrap: 'anywhere' }}>{line.Product?.name || '—'}</td>
                 <td style={{ ...cellStyle, textAlign: 'left' }}>{line.Product?.sku || '—'}</td>
-                <td style={{ ...cellStyle, textAlign: 'center' }}>
-                  {qty(loaded)}
-                  {casesLabel && <div style={{ fontSize: '8px', color: '#666', marginTop: '1px' }}>{casesLabel}</div>}
-                </td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(loaded)}</td>
+                <td style={{ ...cellStyle, textAlign: 'center', color: '#444' }}>{fmtCases(loaded, caseSize)}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(sold) : ''}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(returned) : ''}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(damaged) : ''}</td>
@@ -133,7 +132,7 @@ export default function LoadingSheetPrint({ sheet, company }) {
           })}
           {lines.length === 0 && (
             <tr>
-              <td colSpan={11} style={{ ...cellStyle, textAlign: 'center' }}>No items on this loading sheet.</td>
+              <td colSpan={12} style={{ ...cellStyle, textAlign: 'center' }}>No items on this loading sheet.</td>
             </tr>
           )}
         </tbody>
@@ -141,30 +140,31 @@ export default function LoadingSheetPrint({ sheet, company }) {
           <tr style={{ fontWeight: '700', background: '#f3f4f6' }}>
             <td colSpan={3} style={{ ...cellStyle, textAlign: 'right' }}>TOTAL</td>
             <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(totals.loaded)}</td>
+            <td style={cellStyle}></td>
             <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.sold) : ''}</td>
             <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.returned) : ''}</td>
             <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.damaged) : ''}</td>
             <td style={{ ...cellStyle, textAlign: 'center' }}>{sheet.status === 'CLOSED' ? qty(totals.lost) : ''}</td>
-            <td style={cellStyle}> </td>
-            <td style={cellStyle}> </td>
+            <td style={cellStyle}></td>
+            <td style={cellStyle}></td>
             <td style={{ ...cellStyle, textAlign: 'right' }}>{fmtCurrency(totals.loadValue)}</td>
           </tr>
           {sheet.status === 'CLOSED' && (
             <tr>
-              <td colSpan={9} style={{ ...cellStyle, textAlign: 'right', fontWeight: '700' }}>Cash Collected</td>
+              <td colSpan={10} style={{ ...cellStyle, textAlign: 'right', fontWeight: '700' }}>Cash Collected</td>
               <td colSpan={2} style={{ ...cellStyle, textAlign: 'right' }}>{fmtCurrency(sheet.cash_collected)}</td>
             </tr>
           )}
           {sheet.status === 'CLOSED' && (
             <tr>
-              <td colSpan={9} style={{ ...cellStyle, textAlign: 'right', fontWeight: '700' }}>Total Sales</td>
+              <td colSpan={10} style={{ ...cellStyle, textAlign: 'right', fontWeight: '700' }}>Total Sales</td>
               <td colSpan={2} style={{ ...cellStyle, textAlign: 'right' }}>{fmtCurrency(sheet.total_sales_amount || totals.salesValue)}</td>
             </tr>
           )}
         </tfoot>
       </table>
 
-      <table style={{ width: '100%', marginTop: '28px', fontSize: '9px', textAlign: 'center' }}>
+      <table style={{ width: '100%', marginTop: '24px', fontSize: '8px', textAlign: 'center' }}>
         <tbody>
           <tr>
             <td style={{ width: '33%', padding: '0 18px' }}>

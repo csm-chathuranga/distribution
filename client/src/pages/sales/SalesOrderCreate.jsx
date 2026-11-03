@@ -226,8 +226,16 @@ export default function SalesOrderCreate() {
     const repRoutes = all.filter(r => String(r.sales_rep_id) === String(selectedSalesRepId));
     return repRoutes.length > 0 ? repRoutes : all;
   }, [routes?.data, selectedSalesRepId]);
-  const routeOpts     = [{ value: '', label: '— No route —' }, ...filteredRoutes.map(r => ({ value: r.id, label: r.name }))];
-  const userOpts      = [{ value: '', label: '— No rep —' }, ...(users?.data?.map(u => ({ value: u.id, label: u.name })) || [])];
+  const routeOpts = [{ value: '', label: '— No route —' }, ...filteredRoutes.map(r => ({ value: r.id, label: r.name }))];
+  // Build sales rep list from users who are assigned to at least one route
+  const salesRepOpts = useMemo(() => {
+    const seen = new Map();
+    (routes?.data || []).forEach(r => {
+      if (r.SalesRep && !seen.has(r.SalesRep.id)) seen.set(r.SalesRep.id, r.SalesRep.name);
+    });
+    return [{ value: '', label: '— No rep —' }, ...Array.from(seen.entries()).map(([id, name]) => ({ value: id, label: name }))];
+  }, [routes?.data]);
+  const userOpts = salesRepOpts;
 
   // Compute totals — MRP mode uses marked_price (falls back to selling_price)
   const lines = products
