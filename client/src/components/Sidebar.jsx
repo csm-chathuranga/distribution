@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import { usePermission, useCanAny } from '../hooks/usePermission';
+import { useGetCompanyQuery } from '../api/reportsApi';
 
 function NavGroup({ icon: Icon, label, children, isOpen, onToggle }) {
   return (
@@ -56,6 +57,7 @@ function NavItem({ to, icon: Icon, label }) {
 export default function Sidebar() {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const { data: company } = useGetCompanyQuery();
   const canInventory = usePermission('inventory.view');
   const canPurchase = usePermission('purchase.view');
   const canSales = useCanAny('sales.view_own', 'sales.view_all');
@@ -80,7 +82,7 @@ export default function Sidebar() {
             <Truck size={18} className="text-white" />
           </div>
           <div>
-            <p className="font-bold text-white text-sm leading-tight">Lanka Dist.</p>
+            <p className="font-bold text-white text-sm leading-tight">{company?.name || 'Lanka Dist.'}</p>
             <p className="text-xs text-slate-300 mt-0.5">Distribution System</p>
           </div>
         </div>
