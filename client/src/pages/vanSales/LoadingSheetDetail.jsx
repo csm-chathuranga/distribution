@@ -18,6 +18,12 @@ import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
 
 const fmtQty = v => { const n = parseFloat(v) || 0; return n % 1 === 0 ? String(n) : n.toFixed(2); };
+const extractSizeMl = (name = '') => {
+  if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+  if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+  const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+  return m ? parseFloat(m[1]) : 9999;
+};
 const fmtCases = (qty, caseSize) => {
   if (!caseSize || caseSize <= 1 || !qty) return null;
   const cs = Math.floor(qty / caseSize); const units = qty % caseSize;
@@ -633,7 +639,11 @@ export default function LoadingSheetDetail() {
             const avail    = Math.max(0, loaded - sold - returned);
             return { ...line, _loaded: loaded, _sold: sold, _returned: returned, _damaged: damaged, _lost: lost, _avail: avail };
           })
-          .sort((a, b) => sheet.status === 'LOADED' ? a._avail - b._avail : 0);
+          .sort((a, b) => {
+            const sizeDiff = extractSizeMl(a.Product?.name) - extractSizeMl(b.Product?.name);
+            if (sizeDiff !== 0) return sizeDiff;
+            return (a.Product?.name || '').localeCompare(b.Product?.name || '');
+          });
 
         return (
           <div className="card">
