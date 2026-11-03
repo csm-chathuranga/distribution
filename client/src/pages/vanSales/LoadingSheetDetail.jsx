@@ -355,7 +355,7 @@ export default function LoadingSheetDetail() {
 
   const handlePrint = () => printComponent(<LoadingSheetPrint sheet={sheet} company={company} />, { orientation: 'landscape' });
   const handlePrintRouteSheet = () => printComponent(
-    <LoadingSheetRoutePrint sheet={routeSheetData?.sheet || sheet} customers={routeSheetData?.customers || []} company={company} />,
+    <LoadingSheetRoutePrint sheet={routeSheetData?.sheet || sheet} customers={routeSheetData?.customers || []} products={routeSheetData?.products || []} company={company} />,
     { orientation: 'landscape' }
   );
   const handlePrintInvoices = () => {

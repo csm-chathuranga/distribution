@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -42,14 +42,14 @@ async function captureOrderLocation() {
     try {
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 20000,
         maximumAge: 30000,
       });
       return { latitude: position.coords.latitude, longitude: position.coords.longitude };
     } catch {
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: false,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 60000,
       });
       return { latitude: position.coords.latitude, longitude: position.coords.longitude };
@@ -64,10 +64,10 @@ async function captureOrderLocation() {
 
   // Try high-accuracy; fall back to low-accuracy network-based location
   try {
-    const position = await getPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+    const position = await getPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 30000 });
     return { latitude: position.coords.latitude, longitude: position.coords.longitude };
   } catch {
-    const position = await getPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+    const position = await getPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
     return { latitude: position.coords.latitude, longitude: position.coords.longitude };
   }
 }
@@ -110,6 +110,15 @@ export default function SalesOrderCreate() {
 
   const selectedWarehouseId = watch('warehouse_id');
   const selectedSalesRepId  = watch('sales_rep_id');
+
+  // Pre-capture GPS on mount so it's ready when user submits
+  const locationRef = useRef(null);
+  const [gpsStatus, setGpsStatus] = useState('pending'); // 'pending' | 'ok' | 'denied'
+  useEffect(() => {
+    captureOrderLocation()
+      .then(coords => { locationRef.current = coords; setGpsStatus('ok'); })
+      .catch(() => setGpsStatus('denied'));
+  }, []);
 
   // Auto-set warehouse and route when admin picks a sales rep
   useEffect(() => {
@@ -310,12 +319,15 @@ export default function SalesOrderCreate() {
       toast.error(`Free-item quantity exceeds the remaining quota for ${overQuotaLine.product.name}`);
       return;
     }
-    let gpsCoords = null;
-    try {
-      gpsCoords = await captureOrderLocation();
-    } catch (locErr) {
-      console.warn('Location capture failed:', locErr?.message || locErr);
-      toast('Could not capture your location. The order will be saved without GPS coordinates.');
+    // Use pre-captured location; try fresh capture if still pending
+    let gpsCoords = locationRef.current;
+    if (!gpsCoords) {
+      try {
+        gpsCoords = await captureOrderLocation();
+        locationRef.current = gpsCoords;
+      } catch (locErr) {
+        console.warn('Location capture failed:', locErr?.message || locErr);
+      }
     }
     const requestId = globalThis.crypto?.randomUUID?.()
       || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
@@ -813,6 +825,12 @@ export default function SalesOrderCreate() {
 
       {/* Sticky submit */}
       <div className="fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3" style={{ bottom: 88 }}>
+        <div className="flex items-center gap-1.5 mb-2 text-xs">
+          <span className={`w-2 h-2 rounded-full ${gpsStatus === 'ok' ? 'bg-green-500' : gpsStatus === 'denied' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
+          <span className={gpsStatus === 'ok' ? 'text-green-600' : gpsStatus === 'denied' ? 'text-red-500' : 'text-amber-600'}>
+            {gpsStatus === 'ok' ? 'GPS ready' : gpsStatus === 'denied' ? 'GPS unavailable — enable location in browser settings' : 'Getting GPS…'}
+          </span>
+        </div>
         <button
           type="button"
           onClick={handleSubmit(onSubmit)}
