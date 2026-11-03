@@ -485,14 +485,11 @@ export default function LoadingSheetDetail() {
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
             <Printer size={15} /> Route Sheet
           </button>
-          <button onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
-            <Printer size={15} /> Print
-          </button>
-          <button onClick={handlePrintInvoices}
+
+          {/* <button onClick={handlePrintInvoices}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
             <Printer size={15} /> Print Invoices
-          </button>
+          </button> */}
           <button onClick={handlePOSPrintInvoices}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
             <Printer size={15} /> POS Print
