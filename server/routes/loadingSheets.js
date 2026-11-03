@@ -94,6 +94,29 @@ router.get('/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/loading-sheets/:id/route-sheet — sheet + route customers + all products for route print
+router.get('/:id/route-sheet', async (req, res, next) => {
+  try {
+    const { Product: Prod, Category } = require('../models');
+    const sheet = await LoadingSheet.findByPk(req.params.id, { include });
+    if (!sheet) return res.status(404).json({ message: 'Not found' });
+    const customers = sheet.route_id
+      ? await Customer.findAll({
+          where: { route_id: sheet.route_id, is_active: true },
+          attributes: ['id', 'name', 'code', 'address', 'visit_order'],
+          order: [['visit_order', 'ASC'], ['name', 'ASC']],
+        })
+      : [];
+    const products = await Prod.findAll({
+      where: { is_active: true },
+      attributes: ['id', 'name', 'sku', 'case_size'],
+      include: [{ model: Category, attributes: ['id', 'name'] }],
+      order: [['name', 'ASC']],
+    });
+    res.json({ sheet, customers, products });
+  } catch (err) { next(err); }
+});
+
 // GET /api/loading-sheets/:id/van-stock — remaining stock per product for a LOADED sheet
 router.get('/:id/van-stock', async (req, res, next) => {
   try {

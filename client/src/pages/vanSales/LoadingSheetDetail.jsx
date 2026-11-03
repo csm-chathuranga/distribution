@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { RotateCcw, Printer, Truck, Trash2, Plus, X, FileText, CheckSquare, ArrowLeft } from 'lucide-react';
-import { useGetLoadingSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetExpensesQuery, useCreateExpenseMutation, useGetAvailableInvoicesQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation } from '../../api/salesApi';
+import { useGetLoadingSheetQuery, useGetLoadingSheetRouteSheetQuery, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetExpensesQuery, useCreateExpenseMutation, useGetAvailableInvoicesQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation } from '../../api/salesApi';
 import { useGetUsersForSelectQuery } from '../../api/settingsApi';
 import { useGetCompanyQuery } from '../../api/reportsApi';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -10,6 +10,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
 import LoadingSheetPrint from '../../components/print/LoadingSheetPrint';
 import LoadingSheetPrintPOS from '../../components/print/LoadingSheetPrintPOS';
+import LoadingSheetRoutePrint from '../../components/print/LoadingSheetRoutePrint';
 import InvoicePrint from '../../components/print/InvoicePrint';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
 import { printComponent, printPOS, printPOSAll } from '../../utils/print';
@@ -315,6 +316,7 @@ export default function LoadingSheetDetail() {
   const canLoadVan = usePermission('sales.approve');
 
   const { data: sheet, isLoading } = useGetLoadingSheetQuery(id);
+  const { data: routeSheetData }   = useGetLoadingSheetRouteSheetQuery(id);
   const { data: company }          = useGetCompanyQuery();
   const [load,   { isLoading: loading  }] = useLoadLoadingSheetMutation();
   const [close,  { isLoading: closing  }] = useCloseLoadingSheetMutation();
@@ -346,6 +348,10 @@ export default function LoadingSheetDetail() {
   const sheetExpenses = expenseData?.data || [];
 
   const handlePrint = () => printComponent(<LoadingSheetPrint sheet={sheet} company={company} />, { orientation: 'landscape' });
+  const handlePrintRouteSheet = () => printComponent(
+    <LoadingSheetRoutePrint sheet={routeSheetData?.sheet || sheet} customers={routeSheetData?.customers || []} company={company} />,
+    { orientation: 'landscape' }
+  );
   const handlePrintInvoices = () => {
     const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
     if (!sheetInvoices.length) return;
@@ -469,6 +475,10 @@ export default function LoadingSheetDetail() {
               <Plus size={15} /> Create Invoice
             </button>
           )}
+          <button onClick={handlePrintRouteSheet}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
+            <Printer size={15} /> Route Sheet
+          </button>
           <button onClick={handlePrint}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 whitespace-nowrap flex-shrink-0 transition-colors active:opacity-80">
             <Printer size={15} /> Print
