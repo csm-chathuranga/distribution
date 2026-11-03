@@ -16,7 +16,15 @@ function Divider({ dashed }) {
 export default function InvoicePrintPOS({ invoice, company }) {
   if (!invoice) return null;
 
-  const lines   = invoice.Lines || [];
+  const extractSizeMl = (name = '') => {
+    if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+    if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+    const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? parseFloat(m[1]) : 9999;
+  };
+  const lines = [...(invoice.Lines || [])].sort((a, b) =>
+    extractSizeMl(a.Product?.name) - extractSizeMl(b.Product?.name)
+  );
   const returns = invoice.Order?.Returns || [];
   const paid    = parseFloat(invoice.paid_amount    || 0);
   const balance = parseFloat(invoice.balance_due    || 0);
@@ -54,17 +62,25 @@ export default function InvoicePrintPOS({ invoice, company }) {
     <div style={root}>
 
       {/* Principal brand */}
-      <div style={{ ...center, fontWeight: '700', fontSize: '18px' }}>MAX BEVERAGES</div>
+      <div style={{ ...center, fontWeight: '700', fontSize: '18px' }}>MAX BEVERAGES (PVT) LTD</div>
       <div style={{ ...center, fontSize: '12px', marginTop: '1px' }}>640/4, Metro Park, Thunandahena,</div>
       <div style={{ ...center, fontSize: '12px' }}>Korathota, Kaduwela.</div>
-      <div style={{ ...center, fontSize: '12px' }}>Tel: +94 112 054 943</div>
-      <div style={{ ...center, fontSize: '12px' }}>+94 770 139 200</div>
+      <div style={{ ...center, fontSize: '12px' }}>Tel: +94 112 054 943, +94 770 139 200</div>
+      <div style={{ ...center, fontSize: '12px' }}>Fax: +94 112 7772 003</div>
+      <div style={{ ...center, fontSize: '12px' }}>Web: maxbeverages.lk</div>
+      <div style={{ ...center, fontSize: '12px' }}>E-mail: info@maxbeverages.lk</div>
 
       <Divider dashed />
 
       <div style={{ ...center, ...bold, fontSize: '14px' }}>
         {company?.name || 'Rathnayaka Distribution'}
       </div>
+      {company?.address && (
+        <div style={{ ...center, fontSize: '12px' }}>{company.address}</div>
+      )}
+      {company?.phone && (
+        <div style={{ ...center, fontSize: '12px' }}>Tel: {company.phone}</div>
+      )}
 
       <Divider />
 

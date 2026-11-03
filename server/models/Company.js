@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
     address: DataTypes.TEXT,
     phone: DataTypes.STRING(20),
     email: DataTypes.STRING(100),
+    website: DataTypes.STRING(255),
     tin_number: DataTypes.STRING(50),
     vat_number: DataTypes.STRING(50),
     logo_url: DataTypes.STRING(500),

@@ -45,6 +45,10 @@ export default function CompanySettings() {
             <label className="form-label">Email</label>
             <input {...register('email')} className="input" type="email" placeholder="info@company.lk" />
           </div>
+          <div className="sm:col-span-2">
+            <label className="form-label">Website</label>
+            <input {...register('website')} className="input" placeholder="www.company.lk" />
+          </div>
           <div>
             <label className="form-label">TIN Number</label>
             <input {...register('tin_number')} className="input" placeholder="TIN / Tax ID" />

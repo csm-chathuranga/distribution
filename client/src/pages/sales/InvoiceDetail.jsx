@@ -189,7 +189,15 @@ export default function InvoiceDetail() {
     </div>
   );
 
-  const lines   = invoice.Lines || [];
+  const extractSizeMl = (name = '') => {
+    if (/1\.5\s*[Ll]/i.test(name)) return 1500;
+    if (/(?:^|[^0-9.])1\s*[Ll](?![Ll0-9])/i.test(name)) return 1000;
+    const m = name.match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? parseFloat(m[1]) : 9999;
+  };
+  const lines = [...(invoice.Lines || [])].sort((a, b) =>
+    extractSizeMl(a.Product?.name) - extractSizeMl(b.Product?.name)
+  );
   const paid    = parseFloat(invoice.paid_amount || 0);
   const balance = parseFloat(invoice.balance_due || 0);
   const overdue = balance > 0 && invoice.due_date && new Date(invoice.due_date) < new Date();
