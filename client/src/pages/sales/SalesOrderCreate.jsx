@@ -18,7 +18,7 @@ import { selectCurrentUser, selectAssignedWarehouse } from '../../store/authSlic
 import { usePermission } from '../../hooks/usePermission';
 import { useOfflineSync } from '../../hooks/useOfflineSync';
 import { enqueueRequest } from '../../utils/offlineQueue';
-import { TextField, SelectField, TextareaField } from '../../components/ui/FormField';
+import { TextField, SelectField, TextareaField, SearchableSelectField } from '../../components/ui/FormField';
 import { today, fmtCurrency, fmtNumber } from '../../utils/format';
 
 const SIZES = [
@@ -111,13 +111,16 @@ export default function SalesOrderCreate() {
   const selectedWarehouseId = watch('warehouse_id');
   const selectedSalesRepId  = watch('sales_rep_id');
 
-  // Auto-set warehouse when admin picks a sales rep who has an assigned warehouse
+  // Auto-set warehouse and route when admin picks a sales rep
   useEffect(() => {
     if (!canManageUsers || !selectedSalesRepId || !users?.data) return;
     const rep = users.data.find(u => String(u.id) === String(selectedSalesRepId));
     const wh  = rep?.AssignedWarehouses?.[0];
     if (wh) setValue('warehouse_id', wh.id);
-  }, [selectedSalesRepId, users?.data, canManageUsers, setValue]);
+    const repRoutes = (routes?.data || []).filter(r => String(r.sales_rep_id) === String(selectedSalesRepId));
+    if (repRoutes.length === 1) setValue('route_id', repRoutes[0].id);
+    else if (repRoutes.length > 1) setValue('route_id', '');
+  }, [selectedSalesRepId, users?.data, routes?.data, canManageUsers, setValue]);
   const { data: stockRaw } = useGetStockOnHandQuery(
     { warehouse_id: selectedWarehouseId },
     { skip: !selectedWarehouseId }
@@ -217,7 +220,13 @@ export default function SalesOrderCreate() {
     return filtered.map(c => ({ value: c.id, label: c.name }));
   }, [customers?.data, canManageUsers, repRouteIds]);
   const warehouseOpts = warehouses?.data?.map(w => ({ value: w.id, label: w.name })) || [];
-  const routeOpts     = [{ value: '', label: '— No route —' }, ...(routes?.data?.map(r => ({ value: r.id, label: r.name })) || [])];
+  const filteredRoutes = useMemo(() => {
+    const all = routes?.data || [];
+    if (!selectedSalesRepId) return all;
+    const repRoutes = all.filter(r => String(r.sales_rep_id) === String(selectedSalesRepId));
+    return repRoutes.length > 0 ? repRoutes : all;
+  }, [routes?.data, selectedSalesRepId]);
+  const routeOpts     = [{ value: '', label: '— No route —' }, ...filteredRoutes.map(r => ({ value: r.id, label: r.name }))];
   const userOpts      = [{ value: '', label: '— No rep —' }, ...(users?.data?.map(u => ({ value: u.id, label: u.name })) || [])];
 
   // Compute totals — MRP mode uses marked_price (falls back to selling_price)
@@ -421,14 +430,21 @@ export default function SalesOrderCreate() {
           )}
 
           <div className={`grid gap-3 ${canManageUsers ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            <SelectField label="Route" options={routeOpts}
-              error={errors.route_id?.message} {...register('route_id')} />
             {canManageUsers ? (
               <SelectField label="Sales Rep" options={userOpts}
                 error={errors.sales_rep_id?.message} {...register('sales_rep_id')} />
             ) : (
               <input type="hidden" {...register('sales_rep_id')} value={currentUser?.id} />
             )}
+            <SearchableSelectField
+              label="Route"
+              options={routeOpts}
+              value={watch('route_id') ?? ''}
+              onChange={val => setValue('route_id', val, { shouldValidate: true })}
+              disabled={!selectedSalesRepId}
+              error={errors.route_id?.message}
+              placeholder={selectedSalesRepId ? 'Select route...' : 'Select a sales rep first'}
+            />
           </div>
 
           <TextField label="Order Date" required type="date"
