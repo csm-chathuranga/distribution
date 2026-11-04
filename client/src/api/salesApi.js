@@ -28,6 +28,7 @@ export const salesApi = baseApi.injectEndpoints({
     depositCheque: b.mutation({ query: id => ({ url: `/cheques/${id}/deposit`, method: 'PUT' }), invalidatesTags: ['Cheque'] }),
     clearCheque: b.mutation({ query: id => ({ url: `/cheques/${id}/clear`, method: 'PUT' }), invalidatesTags: ['Cheque'] }),
     bounceCheques: b.mutation({ query: id => ({ url: `/cheques/${id}/bounce`, method: 'PUT' }), invalidatesTags: ['Cheque'] }),
+    receiveCheque: b.mutation({ query: id => ({ url: `/cheques/${id}/receive`, method: 'PUT' }), invalidatesTags: ['Cheque'] }),
 
     getPayments: b.query({ query: params => ({ url: '/payments', params }), providesTags: ['Payment'] }),
     createPayment: b.mutation({ query: body => ({ url: '/payments', method: 'POST', body }), invalidatesTags: ['Payment', 'Journal'] }),

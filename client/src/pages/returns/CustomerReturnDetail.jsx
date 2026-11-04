@@ -2,7 +2,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetCustomerReturnQuery, useConfirmCustomerReturnMutation, useCancelCustomerReturnMutation } from '../../api/salesApi';
+import { useGetCompanyQuery } from '../../api/reportsApi';
 import { fmtDate, fmtCurrency } from '../../utils/format';
+import { printComponent, printPOS } from '../../utils/print';
+import CustomerReturnPrint from '../../components/print/CustomerReturnPrint';
+import CustomerReturnPrintPOS from '../../components/print/CustomerReturnPrintPOS';
 
 const STATUS_BADGE = {
   DRAFT:     'badge-warning',
@@ -15,6 +19,7 @@ export default function CustomerReturnDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: ret, isLoading } = useGetCustomerReturnQuery(id);
+  const { data: company } = useGetCompanyQuery();
   const [confirm, { isLoading: confirming }] = useConfirmCustomerReturnMutation();
   const [cancel,  { isLoading: cancelling }] = useCancelCustomerReturnMutation();
 
@@ -33,7 +38,8 @@ export default function CustomerReturnDetail() {
     } catch (e) { toast.error(e.data?.message || 'Failed'); }
   };
 
-  const handlePrint = () => window.print();
+  const handlePrint    = () => printComponent(<CustomerReturnPrint ret={ret} company={company} />);
+  const handlePOSPrint = () => printPOS(<CustomerReturnPrintPOS ret={ret} company={company} />);
 
   if (isLoading) return <div className="p-8 text-center text-gray-500">Loading…</div>;
   if (!ret) return <div className="p-8 text-center text-red-500">Return note not found</div>;
@@ -43,16 +49,8 @@ export default function CustomerReturnDetail() {
 
   return (
     <>
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { font-size: 12px; }
-          .print-border { border: 1px solid #000 !important; }
-        }
-      `}</style>
 
-      <div className="max-w-2xl mx-auto space-y-4 pb-8">
+<div className="max-w-2xl mx-auto space-y-4 pb-8">
         {/* Header */}
         <div className="flex items-center justify-between no-print">
           <div className="flex items-center gap-3">
@@ -64,6 +62,9 @@ export default function CustomerReturnDetail() {
           <div className="flex gap-2">
             <button onClick={handlePrint} className="btn btn-secondary flex items-center gap-1">
               <Printer size={15} /> Print
+            </button>
+            <button onClick={handlePOSPrint} className="btn btn-secondary flex items-center gap-1">
+              <Printer size={15} /> POS Print
             </button>
             {ret.status === 'DRAFT' && (
               <>

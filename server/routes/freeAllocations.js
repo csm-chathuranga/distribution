@@ -3,7 +3,7 @@ const authorize = require('../middleware/authorize');
 const { FreeItemAllocation, FreeItemUsage, Product, User, Warehouse, Customer, Invoice, Stock, StockMovement, sequelize } = require('../models');
 
 const include = [
-  { model: Product,   attributes: ['id', 'name', 'sku', 'case_size'] },
+  { model: Product,   attributes: ['id', 'name', 'sku', 'case_size', 'selling_price'] },
   { model: Warehouse, attributes: ['id', 'name'] },
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
 ];

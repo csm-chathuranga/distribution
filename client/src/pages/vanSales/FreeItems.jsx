@@ -12,7 +12,7 @@ import { Gift, Plus, ChevronUp, History, Package, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
 import { usePermission } from '../../hooks/usePermission';
-import { fmtNumber, fmtDate } from '../../utils/format';
+import { fmtNumber, fmtDate, fmtCurrency } from '../../utils/format';
 import {
   useGetFreeAllocationsQuery, useCreateFreeAllocationMutation,
   useTopupFreeAllocationMutation, useGetFreeAllocationHistoryQuery,
@@ -343,6 +343,7 @@ export default function FreeItems() {
                   <th className="px-4 py-3 text-right">Cases</th>
                   <th className="px-4 py-3 text-center">Usage</th>
                   <th className="px-4 py-3 text-center">Status</th>
+                  <th className="px-4 py-3 text-right">Value</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -353,6 +354,8 @@ export default function FreeItems() {
                   const remaining = allocated - used;
                   const isEmpty   = remaining <= 0;
                   const caseSize  = a.Product?.case_size;
+                  const sellingPrice = parseFloat(a.Product?.selling_price) || 0;
+                  const totalValue = allocated * sellingPrice;
                   return (
                     <tr key={a.id} className={`hover:bg-gray-50 transition-colors ${isEmpty ? 'opacity-70' : ''}`}>
                       <td className="px-4 py-3">
@@ -384,6 +387,9 @@ export default function FreeItems() {
                         }`}>
                           {isEmpty ? 'Empty' : 'Active'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-gray-700">
+                        {totalValue > 0 ? fmtCurrency(totalValue) : <span className="text-gray-300">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">

@@ -110,7 +110,6 @@ export default function GRNCreate() {
         <div className="card p-6 space-y-4">
           <div className="flex items-center justify-between border-b pb-2">
             <h2 className="font-semibold text-gray-700">Items Received</h2>
-            <button type="button" onClick={() => append({ product_id: '', quantity_received: 1, unit_cost: 0, free_issue_qty: 0 })} className="btn-secondary text-sm flex items-center gap-1"><Plus size={14} /> Add Item</button>
           </div>
           {errors.lines?.message && <p className="text-sm text-red-600">{errors.lines.message}</p>}
 
@@ -177,6 +176,10 @@ export default function GRNCreate() {
                 </div>
               );
             })}
+          </div>
+
+          <div className="flex justify-start">
+            <button type="button" onClick={() => append({ product_id: '', quantity_received: 1, unit_cost: 0, free_issue_qty: 0 })} className="btn-secondary text-sm flex items-center gap-1"><Plus size={14} /> Add Item</button>
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t">

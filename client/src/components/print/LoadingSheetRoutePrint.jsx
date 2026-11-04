@@ -19,13 +19,21 @@ const shortCode = (sku, name) => {
   return m ? m[1] : name.slice(0, 3).toUpperCase();
 };
 
+const fmtCases = (q, caseSize) => {
+  if (!caseSize || caseSize <= 1 || !q) return '';
+  const cs = Math.floor(q / caseSize);
+  if (cs === 0) return '';
+  const units = q % caseSize;
+  return units > 0 ? `${cs}cs+${units}` : `${cs}cs`;
+};
+
 const B = '1px solid #555';
 const cell = { border: B, padding: '2px 2px', verticalAlign: 'middle', textAlign: 'center', fontSize: '7.5px', whiteSpace: 'nowrap' };
 const hCell = { ...cell, fontWeight: '700', background: '#e5e7eb', fontSize: '7.5px' };
 const szCell = { ...hCell, background: '#b6c3d4', fontSize: '8px', padding: '3px 2px' };
-const outletCell = { ...cell, textAlign: 'left', fontSize: '7.5px', maxWidth: '38mm', overflowWrap: 'anywhere', whiteSpace: 'normal', padding: '2px 3px' };
+const outletCell = { ...cell, textAlign: 'left', fontSize: '7.5px', maxWidth: '26mm', overflowWrap: 'anywhere', whiteSpace: 'normal', padding: '2px 3px' };
 const noCell = { ...cell, width: '7mm', fontSize: '7.5px' };
-const valCell = { ...cell, textAlign: 'right', fontSize: '7px', minWidth: '18mm' };
+const valCell = { ...cell, textAlign: 'right', fontSize: '7px', minWidth: '12mm' };
 
 export default function LoadingSheetRoutePrint({ sheet, customers = [], products = [], company }) {
   if (!sheet) return null;
@@ -83,6 +91,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
 
   const footerRows = [
     { label: 'Loaded',  key: 'loaded_quantity',    always: true },
+    { label: 'Cases',   key: null,                  always: true,  isCases: true },
     { label: 'Free',    key: null,                  always: true,  isFree: true },
     { label: 'Sold',    key: 'sold_quantity',        always: false },
     { label: 'Return',  key: 'returned_quantity',    always: false },
@@ -130,12 +139,12 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
       {/* Main table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
         <colgroup>
-          <col style={{ width: '8mm' }} />
-          <col style={{ width: '38mm' }} />
+          <col style={{ width: '7mm' }} />
+          <col style={{ width: '26mm' }} />
           {sortedProducts.map(p => (
-            <col key={p.id} style={{ width: `${Math.max(9, Math.floor(200 / sortedProducts.length))}px` }} />
+            <col key={p.id} style={{ width: `${Math.max(13, Math.floor(260 / sortedProducts.length))}px` }} />
           ))}
-          <col style={{ width: '20mm' }} />
+          <col style={{ width: '14mm' }} />
         </colgroup>
 
         <thead>
@@ -214,19 +223,23 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
         </tbody>
 
         <tfoot>
-          {footerRows.map(({ label, key, always, isFree }) => (
+          {footerRows.map(({ label, key, always, isFree, isCases }) => (
             <tr key={label}>
               <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '7px' }}>{label}</td>
               {sortedProducts.map(p => {
                 let val = '';
-                if (isFree) {
+                if (isCases) {
+                  const loaded = loadedMap[p.id] || 0;
+                  const caseSize = p.case_size ? parseInt(p.case_size) : null;
+                  val = fmtCases(loaded, caseSize);
+                } else if (isFree) {
                   val = freeTotalByProduct[p.id] || '';
                 } else {
                   const line = (sheet.Lines || []).find(l => l.product_id === p.id);
                   val = line && (always || isClosed) ? (parseFloat(line[key]) || 0) || '' : '';
                 }
                 const isLoaded = loadedMap[p.id] > 0;
-                const color = label === 'Loaded' ? '#1d4ed8' : label === 'Free' ? '#059669' : '#000';
+                const color = label === 'Loaded' ? '#1d4ed8' : label === 'Cases' ? '#6d28d9' : label === 'Free' ? '#059669' : '#000';
                 return (
                   <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '7px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color }}>
                     {val}
