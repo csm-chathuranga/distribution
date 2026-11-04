@@ -76,7 +76,7 @@ export const {
   useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useUpdateSalesOrderMutation, useCancelSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
   useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation, useDeliverInvoiceMutation,
   useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetMyCollectionsQuery, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
-  useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation,
+  useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation, useReceiveChequeMutation,
   useGetPaymentsQuery, useCreatePaymentMutation,
   useGetExpensesQuery, useCreateExpenseMutation,
   useGetDeliveriesQuery, useGetDeliveryQuery, useCreateDeliveryMutation, useDispatchDeliveryMutation, useDeliverDeliveryMutation, useReturnDeliveryMutation,
