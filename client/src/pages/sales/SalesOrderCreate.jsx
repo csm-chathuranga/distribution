@@ -116,11 +116,20 @@ export default function SalesOrderCreate() {
   // Pre-capture GPS on mount so it's ready when user submits
   const locationRef = useRef(null);
   const [gpsStatus, setGpsStatus] = useState('pending'); // 'pending' | 'ok' | 'denied'
+  const [capturedCoords, setCapturedCoords] = useState(null);
   const retryGps = () => {
     setGpsStatus('pending');
     captureOrderLocation()
-      .then(coords => { locationRef.current = coords; setGpsStatus('ok'); })
-      .catch(() => setGpsStatus('denied'));
+      .then(coords => {
+        locationRef.current = coords;
+        setCapturedCoords(coords);
+        setGpsStatus('ok');
+        console.log('[GPS] captured:', coords);
+      })
+      .catch((err) => {
+        console.warn('[GPS] capture failed:', err?.message || err);
+        setGpsStatus('denied');
+      });
   };
   useEffect(() => { retryGps(); }, []);
 
@@ -380,6 +389,7 @@ export default function SalesOrderCreate() {
     }
 
     try {
+      console.log('[Order] submitting payload coords:', payload.latitude, payload.longitude);
       const result = await create(payload).unwrap();
       if (result?.__queued) {
         toast.success('Order saved on this device — it will sync when connected');
@@ -829,10 +839,14 @@ export default function SalesOrderCreate() {
 
       {/* Sticky submit */}
       <div className="fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3" style={{ bottom: 88 }}>
-        <div className="flex items-center gap-1.5 mb-2 text-xs">
+        <div className="flex items-center gap-1.5 mb-2 text-xs flex-wrap">
           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${gpsStatus === 'ok' ? 'bg-green-500' : gpsStatus === 'denied' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
           <span className={gpsStatus === 'ok' ? 'text-green-600' : gpsStatus === 'denied' ? 'text-red-500' : 'text-amber-600'}>
-            {gpsStatus === 'ok' ? 'GPS ready' : gpsStatus === 'denied' ? 'Location unavailable — order will save without GPS' : 'Getting GPS…'}
+            {gpsStatus === 'ok'
+              ? `GPS ready · ${capturedCoords?.latitude?.toFixed(5)}, ${capturedCoords?.longitude?.toFixed(5)}`
+              : gpsStatus === 'denied'
+              ? 'Location unavailable — order will save without GPS'
+              : 'Getting GPS…'}
           </span>
           {gpsStatus === 'denied' && (
             <button type="button" onClick={retryGps} className="ml-1 underline text-blue-500 hover:text-blue-700">

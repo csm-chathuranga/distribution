@@ -72,6 +72,7 @@ router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
 router.post('/', authorize('sales.create'), async (req, res, next) => {
   try {
     const { lines, returns = [], ...data } = req.body;
+    console.log('[Order] received lat/lng:', data.latitude, data.longitude);
     data.created_by = req.user.id;
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
