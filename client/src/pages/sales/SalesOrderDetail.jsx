@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin, Pencil, X, ArrowLeft } from 'lucide-react';
+import { CheckCircle, User, Building2, Calendar, FileText, FilePlus, MapPin, Pencil, X, ArrowLeft, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useGetSalesOrderQuery, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation, useCancelSalesOrderMutation } from '../../api/salesApi';
@@ -146,6 +146,27 @@ export default function SalesOrderDetail() {
               <p className="text-xs text-gray-400 font-medium">Route</p>
               <p className="font-semibold text-gray-900">{order.Route.name}</p>
             </div>
+          </div>
+        )}
+
+        {order.latitude && order.longitude && (
+          <div className="flex items-center gap-3 text-sm">
+            <div className="p-2 rounded-lg bg-emerald-50"><MapPin size={15} className="text-emerald-600" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-400 font-medium">Order Location</p>
+              <p className="font-mono text-xs text-gray-600">
+                {parseFloat(order.latitude).toFixed(5)}, {parseFloat(order.longitude).toFixed(5)}
+              </p>
+            </div>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${order.latitude},${order.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-colors flex-shrink-0"
+            >
+              <Navigation size={12} />
+              Go
+            </a>
           </div>
         )}
 

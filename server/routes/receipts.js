@@ -1,33 +1,15 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { Receipt, Customer, Invoice, Cheque, ReceiptAllocation, JournalEntry, JournalLine, Account, AccountingPeriod, User, sequelize } = require('../models');
-
-// GET /api/receipts/advance/:customerId — total unallocated (advance) balance for a customer
-router.get('/advance/:customerId', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
-  try {
-    const receipts = await Receipt.findAll({
-      where: { customer_id: req.params.customerId, status: 'POSTED' },
-      include: [{ model: ReceiptAllocation, attributes: ['allocated_amount'] }],
-    });
-    const rows = receipts.map(r => {
-      const allocated = r.ReceiptAllocations.reduce((s, a) => s + parseFloat(a.allocated_amount), 0);
-      const unallocated = Math.max(0, parseFloat(r.amount) - allocated);
-      return { id: r.id, receipt_number: r.receipt_number, receipt_date: r.receipt_date, amount: parseFloat(r.amount), allocated, unallocated };
-    }).filter(r => r.unallocated > 0);
-    const total = rows.reduce((s, r) => s + r.unallocated, 0);
-    res.json({ total, receipts: rows });
-  } catch (err) { next(err); }
-});
-const crud = require('../controllers/crudFactory')(Receipt, {
-  include: [
-    { model: Customer, attributes: ['id', 'name'] },
-    { model: User, as: 'CreatedBy', attributes: ['id', 'name'] },
+const crud = require('../controllers/crudFactory')('Receipt', {
+  includeFn: (db) => [
+    { model: db.Customer, attributes: ['id', 'name'] },
+    { model: db.User, as: 'CreatedBy', attributes: ['id', 'name'] },
   ],
   order: [['receipt_date', 'DESC']],
 });
 
-const generateReceiptNumber = async () => {
+const generateReceiptNumber = async (Receipt) => {
   const now = new Date();
   const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
   const last = await Receipt.findOne({ where: { receipt_number: { [Op.like]: `RCT-${datePart}-%` } }, order: [['id', 'DESC']] });
@@ -35,10 +17,28 @@ const generateReceiptNumber = async () => {
   return `RCT-${datePart}-${String(seq).padStart(3, '0')}`;
 };
 
+router.get('/advance/:customerId', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
+  try {
+    const { Receipt, ReceiptAllocation } = req.db;
+    const receipts = await Receipt.findAll({
+      where:   { customer_id: req.params.customerId, status: 'POSTED' },
+      include: [{ model: ReceiptAllocation, attributes: ['allocated_amount'] }],
+    });
+    const rows = receipts.map(r => {
+      const allocated   = r.ReceiptAllocations.reduce((s, a) => s + parseFloat(a.allocated_amount), 0);
+      const unallocated = Math.max(0, parseFloat(r.amount) - allocated);
+      return { id: r.id, receipt_number: r.receipt_number, receipt_date: r.receipt_date, amount: parseFloat(r.amount), allocated, unallocated };
+    }).filter(r => r.unallocated > 0);
+    const total = rows.reduce((s, r) => s + r.unallocated, 0);
+    res.json({ total, receipts: rows });
+  } catch (err) { next(err); }
+});
+
 router.get('/', authorize.any('finance.receipts', 'sales.view_own'), crud.list);
-// GET /api/receipts/my — receipts created by the logged-in user, optionally filtered by date
+
 router.get('/my', authorize.any('finance.receipts', 'sales.create', 'sales.view_own'), async (req, res, next) => {
   try {
+    const { Receipt, Customer } = req.db;
     const { date_from, date_to } = req.query;
     const where = { created_by: req.user.id };
     if (date_from || date_to) {
@@ -46,14 +46,13 @@ router.get('/my', authorize.any('finance.receipts', 'sales.create', 'sales.view_
       if (date_from) where.receipt_date[Op.gte] = date_from;
       if (date_to)   where.receipt_date[Op.lte] = date_to;
     } else {
-      // Default: today
       const today = new Date().toISOString().slice(0, 10);
       where.receipt_date = { [Op.gte]: today, [Op.lte]: today };
     }
     const receipts = await Receipt.findAll({
       where,
       include: [{ model: Customer, attributes: ['id', 'name'] }],
-      order: [['receipt_date', 'DESC'], ['id', 'DESC']],
+      order:   [['receipt_date', 'DESC'], ['id', 'DESC']],
     });
     const totals = { CASH: 0, CHEQUE: 0, BANK_TRANSFER: 0, total: 0 };
     for (const r of receipts) {
@@ -67,6 +66,7 @@ router.get('/my', authorize.any('finance.receipts', 'sales.create', 'sales.view_
 
 router.get('/:id', authorize.any('finance.receipts', 'sales.view_own'), async (req, res, next) => {
   try {
+    const { Receipt, Customer, Invoice, ReceiptAllocation, Cheque } = req.db;
     const r = await Receipt.findByPk(req.params.id, {
       include: [{ model: Customer }, { model: Invoice, through: { model: ReceiptAllocation } }, { model: Cheque }],
     });
@@ -76,28 +76,24 @@ router.get('/:id', authorize.any('finance.receipts', 'sales.view_own'), async (r
 });
 
 router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_own'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Receipt, Customer, Invoice, Cheque, ReceiptAllocation, AccountingPeriod, Account, JournalEntry, JournalLine } = req.db;
     const { allocations, cheque, ...data } = req.body;
     data.created_by = req.user.id;
     data.branch_id  = data.branch_id  || req.user.branch_id;
     data.company_id = data.company_id || req.user.Branch?.company_id;
-    const customer = await Customer.findByPk(data.customer_id, {
-      transaction: t,
-      lock: t.LOCK.UPDATE,
-    });
-    if (!customer) {
-      await t.rollback();
-      return res.status(404).json({ message: 'Customer not found' });
-    }
+
+    const customer = await Customer.findByPk(data.customer_id, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!customer) { await t.rollback(); return res.status(404).json({ message: 'Customer not found' }); }
+
     const amountCents = Math.round(Number(data.amount) * 100);
     if (!Number.isFinite(amountCents) || amountCents <= 0) {
-      await t.rollback();
-      return res.status(400).json({ message: 'Receipt amount must be greater than zero' });
+      await t.rollback(); return res.status(400).json({ message: 'Receipt amount must be greater than zero' });
     }
-    // Check against live invoice balances (not denormalized outstanding_balance which can drift)
-    const { Invoice: Inv } = require('../models');
-    const liveOutstanding = await Inv.sum('balance_due', {
+
+    const liveOutstanding = await Invoice.sum('balance_due', {
       where: { customer_id: data.customer_id, status: ['POSTED', 'PARTIAL', 'OVERDUE', 'DELIVERED'] },
       transaction: t,
     });
@@ -106,7 +102,7 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
       await t.rollback();
       return res.status(400).json({ message: `Receipt amount cannot exceed the outstanding balance of LKR ${((liveOutstanding || 0).toFixed(2))}` });
     }
-    // Fall back to linked invoice's company/branch when user record lacks them
+
     if ((!data.company_id || !data.branch_id) && allocations?.length) {
       const refInv = await Invoice.findByPk(allocations[0].invoice_id, { attributes: ['company_id', 'branch_id'] });
       if (refInv) {
@@ -114,19 +110,18 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
         data.branch_id  = data.branch_id  || refInv.branch_id;
       }
     }
-    // Last resort: look up from the customer's most recent invoice
     if ((!data.company_id || !data.branch_id) && data.customer_id) {
       const custInv = await Invoice.findOne({
-        where: { customer_id: data.customer_id },
+        where:      { customer_id: data.customer_id },
         attributes: ['company_id', 'branch_id'],
-        order: [['id', 'DESC']],
+        order:      [['id', 'DESC']],
       });
       if (custInv) {
         data.company_id = data.company_id || custInv.company_id;
         data.branch_id  = data.branch_id  || custInv.branch_id;
       }
     }
-    if (!data.receipt_number) data.receipt_number = await generateReceiptNumber();
+    if (!data.receipt_number) data.receipt_number = await generateReceiptNumber(Receipt);
 
     const receipt = await Receipt.create(data, { transaction: t });
 
@@ -142,12 +137,11 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
       for (const a of allocations) {
         await Invoice.increment('paid_amount', { by: a.amount, where: { id: a.invoice_id }, transaction: t });
         await Invoice.decrement('balance_due', { by: a.amount, where: { id: a.invoice_id }, transaction: t });
-        // Update invoice status based on new balance
         const inv = await Invoice.findByPk(a.invoice_id, { transaction: t });
         if (inv) {
           const newBalance = parseFloat(inv.balance_due);
-          const newPaid   = parseFloat(inv.paid_amount);
-          const newStatus = newBalance <= 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : inv.status;
+          const newPaid    = parseFloat(inv.paid_amount);
+          const newStatus  = newBalance <= 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : inv.status;
           await inv.update({ status: newStatus }, { transaction: t });
         }
       }
@@ -155,11 +149,10 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
 
     await Customer.decrement('outstanding_balance', { by: data.amount, where: { id: data.customer_id }, transaction: t });
 
-    // Journal entry
     const now = new Date();
     const period = await AccountingPeriod.findOne({ where: { year: now.getFullYear(), month: now.getMonth() + 1, is_open: true }, transaction: t });
     if (period) {
-      const cashAcc = await Account.findOne({ where: { is_system: true, sub_type: data.payment_method === 'CHEQUE' ? 'CHEQUES_IN_HAND' : 'MAIN_BANK' }, transaction: t });
+      const cashAcc   = await Account.findOne({ where: { is_system: true, sub_type: data.payment_method === 'CHEQUE' ? 'CHEQUES_IN_HAND' : 'MAIN_BANK' }, transaction: t });
       const debtorAcc = await Account.findOne({ where: { is_system: true, sub_type: 'TRADE_DEBTORS' }, transaction: t });
       if (cashAcc && debtorAcc) {
         const je = await JournalEntry.create({
@@ -170,7 +163,7 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
           total_debit: data.amount, total_credit: data.amount, is_posted: true, created_by: req.user.id,
         }, { transaction: t });
         await JournalLine.bulkCreate([
-          { journal_id: je.id, account_id: cashAcc.id, debit: data.amount, credit: 0 },
+          { journal_id: je.id, account_id: cashAcc.id,   debit: data.amount, credit: 0 },
           { journal_id: je.id, account_id: debtorAcc.id, debit: 0, credit: data.amount },
         ], { transaction: t });
         await receipt.update({ journal_id: je.id }, { transaction: t });
@@ -182,18 +175,19 @@ router.post('/', authorize.any('finance.receipts', 'sales.create', 'sales.view_o
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// POST /api/receipts/:id/allocate — apply unallocated receipt amount to an invoice
 router.post('/:id/allocate', authorize.any('finance.receipts', 'sales.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Receipt, Invoice, ReceiptAllocation } = req.db;
     const { invoice_id, amount } = req.body;
     const receipt = await Receipt.findByPk(req.params.id, {
-      include: [{ model: ReceiptAllocation, attributes: ['allocated_amount'] }],
+      include:     [{ model: ReceiptAllocation, attributes: ['allocated_amount'] }],
       transaction: t,
     });
     if (!receipt) return res.status(404).json({ message: 'Receipt not found' });
 
-    const allocated  = receipt.ReceiptAllocations.reduce((s, a) => s + parseFloat(a.allocated_amount), 0);
+    const allocated   = receipt.ReceiptAllocations.reduce((s, a) => s + parseFloat(a.allocated_amount), 0);
     const unallocated = parseFloat(receipt.amount) - allocated;
     if (amount > unallocated + 0.001) {
       await t.rollback();

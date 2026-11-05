@@ -1,14 +1,9 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { SalesOrder, SalesOrderLine, Customer, Product, Warehouse, FreeItemAllocation, FreeItemUsage, Stock, StockMovement, OrderReturn, sequelize: db } = require('../models');
 const notify = require('../notify');
-const crud = require('../controllers/crudFactory')(SalesOrder, {
-  include: [{ model: Customer, attributes: ['id', 'name', 'code'] }, { model: Warehouse, attributes: ['id', 'name'] }],
-  order: [['order_date', 'DESC'], ['id', 'DESC']],
-});
 
-async function generateOrderNumber() {
+async function generateOrderNumber(SalesOrder) {
   const today = new Date();
   const datePart = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
   const like = `SO-${datePart}-%`;
@@ -17,8 +12,10 @@ async function generateOrderNumber() {
   return `SO-${datePart}-${String(seq).padStart(3, '0')}`;
 }
 
+// GET /api/sales-orders
 router.get('/', authorize('sales.view_own'), async (req, res, next) => {
   try {
+    const { SalesOrder, Customer, Warehouse } = req.db;
     const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('sales.approve');
     const { search, page = 1, limit = 20, date_from, date_to, status, sales_rep_id, ...filters } = req.query;
 
@@ -50,9 +47,11 @@ router.get('/', authorize('sales.view_own'), async (req, res, next) => {
     return res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
+
+// GET /api/sales-orders/:id
 router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
   try {
-    const { User, Product, SalesOrderLine, Route } = require('../models');
+    const { SalesOrder, SalesOrderLine, Customer, Warehouse, User, Product, Route, OrderReturn } = req.db;
     const order = await SalesOrder.findByPk(req.params.id, {
       include: [
         { model: Customer,       attributes: ['id', 'name', 'code', 'phone'] },
@@ -69,13 +68,21 @@ router.get('/:id', authorize('sales.view_own'), async (req, res, next) => {
     res.json(order);
   } catch (err) { next(err); }
 });
+
+// POST /api/sales-orders
 router.post('/', authorize('sales.create'), async (req, res, next) => {
   try {
+    const {
+      SalesOrder, SalesOrderLine, Customer, Stock, StockMovement,
+      FreeItemAllocation, FreeItemUsage, OrderReturn, sequelize: db,
+    } = req.db;
+
     const { lines, returns = [], ...data } = req.body;
     console.log('[Order] received lat/lng:', data.latitude, data.longitude);
     data.created_by = req.user.id;
     if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
     if (!data.branch_id)  data.branch_id  = req.user.branch_id ?? 1;
+
     if (data.client_request_id != null) {
       if (typeof data.client_request_id !== 'string' || !data.client_request_id.trim() || data.client_request_id.length > 64) {
         return res.status(400).json({ message: 'Invalid client request ID' });
@@ -89,13 +96,13 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
         return res.status(200).json(existing);
       }
     }
-    if (!data.order_number) data.order_number = await generateOrderNumber();
-    // Auto-confirm — no manual approval step needed
+
+    if (!data.order_number) data.order_number = await generateOrderNumber(SalesOrder);
     data.status      = 'CONFIRMED';
     data.approved_by = req.user.id;
     data.approved_at = new Date();
 
-    // Credit limit check — block order if customer is over their credit limit
+    // Credit limit check
     if (data.customer_id) {
       const customer = await Customer.findByPk(data.customer_id, { attributes: ['credit_limit', 'outstanding_balance', 'name'] });
       if (customer && parseFloat(customer.credit_limit) > 0) {
@@ -111,6 +118,7 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
     const t = await db.transaction();
     try {
       const order = await SalesOrder.create(data, { transaction: t });
+
       if (lines?.length) {
         await SalesOrderLine.bulkCreate(lines.map(l => ({ ...l, order_id: order.id })), { transaction: t });
 
@@ -122,10 +130,9 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
 
           const alloc = await FreeItemAllocation.findOne({
             where: { sales_rep_id: salesRepId, product_id: line.product_id },
-            transaction: t,
-            lock: true,
+            transaction: t, lock: true,
           });
-          if (!alloc) continue; // no allocation — free qty recorded on line but no quota to deduct
+          if (!alloc) continue;
 
           const remaining = parseFloat(alloc.allocated_quantity) - parseFloat(alloc.used_quantity);
           if (freeQty > remaining) {
@@ -133,7 +140,6 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
             return res.status(422).json({ message: `Free item quota exceeded for product ID ${line.product_id}. Only ${remaining} units remaining.` });
           }
 
-          // Deduct from warehouse stock
           const stock = await Stock.findOne({
             where: { warehouse_id: order.warehouse_id, product_id: line.product_id },
             transaction: t, lock: true,
@@ -151,7 +157,6 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
             created_by: req.user.id,
           }, { transaction: t });
 
-          // Record usage and update allocation balance
           await FreeItemUsage.create({
             allocation_id: alloc.id,
             customer_id: data.customer_id,
@@ -162,7 +167,7 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
           await alloc.increment('used_quantity', { by: freeQty, transaction: t });
         }
 
-        // Reserve billed quantities so free stock drops immediately on order creation
+        // Reserve billed quantities
         for (const line of lines) {
           const billedQty = parseFloat(line.quantity || 0);
           if (billedQty <= 0) continue;
@@ -181,12 +186,9 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
           await stock.increment('reserved_quantity', { by: billedQty, transaction: t });
         }
       }
-      // Save return lines
+
       if (returns.length) {
-        await OrderReturn.bulkCreate(
-          returns.map(r => ({ ...r, order_id: order.id })),
-          { transaction: t }
-        );
+        await OrderReturn.bulkCreate(returns.map(r => ({ ...r, order_id: order.id })), { transaction: t });
       }
 
       // Update customer's last known GPS location
@@ -218,29 +220,30 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
       }
       throw e;
     }
-
   } catch (err) { next(err); }
 });
-// Convert confirmed order → draft invoice
+
+// POST /api/sales-orders/:id/invoice  — convert confirmed order → invoice
 router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) => {
   try {
-    const { Invoice, InvoiceLine, SalesOrderLine, CustomerReturn, CustomerReturnLine, User } = require('../models');
-    const { Op } = require('sequelize');
+    const {
+      SalesOrder, SalesOrderLine, Invoice, InvoiceLine,
+      Customer, Stock, StockMovement, OrderReturn,
+      CustomerReturn, CustomerReturnLine, sequelize: db,
+    } = req.db;
 
     const order = await SalesOrder.findByPk(req.params.id, {
       include: [
         { model: SalesOrderLine, as: 'Lines' },
-        { model: OrderReturn, as: 'Returns', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+        { model: OrderReturn, as: 'Returns' },
       ],
     });
     if (!order) return res.status(404).json({ message: 'Order not found' });
     if (order.status !== 'CONFIRMED') return res.status(422).json({ message: 'Only confirmed orders can be invoiced' });
 
-    // Check if invoice already created for this order
     const existing = await Invoice.findOne({ where: { order_id: order.id } });
     if (existing) return res.status(422).json({ message: 'Invoice already exists for this order', invoice_id: existing.id });
 
-    // Generate invoice number
     const today = new Date();
     const dp = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
     const like = `INV-${dp}-%`;
@@ -248,19 +251,16 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
     const seq  = last ? parseInt(last.invoice_number.split('-').pop()) + 1 : 1;
     const invoiceNumber = `INV-${dp}-${String(seq).padStart(3,'0')}`;
 
-    // Customer credit days → due date
     const customer = await Customer.findByPk(order.customer_id, { attributes: ['credit_days'] });
     const dueDate  = customer?.credit_days > 0
       ? new Date(today.getTime() + customer.credit_days * 86400000).toISOString().slice(0,10)
       : null;
 
-    // Calculate return deductions (DEDUCT action only)
     const returns = order.Returns || [];
     const returnDeduction = returns
       .filter(r => r.action === 'DEDUCT')
       .reduce((s, r) => s + parseFloat(r.quantity) * parseFloat(r.unit_price), 0);
 
-    // Generate return number helper
     async function generateReturnNumber(t) {
       const dp2 = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
       const like2 = `RN-${dp2}-%`;
@@ -270,103 +270,59 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
     }
 
     const invoiceTotal = Math.max(0, parseFloat(order.total_amount) - returnDeduction);
-
     const t = await db.transaction();
     try {
       const invoice = await Invoice.create({
-        company_id:     order.company_id,
-        branch_id:      order.branch_id,
-        warehouse_id:   order.warehouse_id,
-        customer_id:    order.customer_id,
-        sales_rep_id:   order.sales_rep_id,
-        order_id:       order.id,
-        invoice_number: invoiceNumber,
-        invoice_date:   today.toISOString().slice(0,10),
-        due_date:       dueDate,
-        invoice_type:   'TAX_INVOICE',
-        status:         'POSTED',
-        subtotal:       invoiceTotal,
-        total_amount:   invoiceTotal,
-        balance_due:    invoiceTotal,
-        notes:          order.notes,
-        created_by:     req.user.id,
+        company_id: order.company_id, branch_id: order.branch_id, warehouse_id: order.warehouse_id,
+        customer_id: order.customer_id, sales_rep_id: order.sales_rep_id, order_id: order.id,
+        invoice_number: invoiceNumber, invoice_date: today.toISOString().slice(0,10), due_date: dueDate,
+        invoice_type: 'TAX_INVOICE', status: 'POSTED',
+        subtotal: invoiceTotal, total_amount: invoiceTotal, balance_due: invoiceTotal,
+        notes: order.notes, created_by: req.user.id,
       }, { transaction: t });
 
       const lines = (order.Lines || []).map(l => ({
-        invoice_id:    invoice.id,
-        product_id:    l.product_id,
-        order_line_id: l.id,
-        quantity:      l.quantity,
-        unit_price:    l.unit_price,
-        discount_rate: l.discount_rate || 0,
-        vat_rate:      0,
-        free_quantity:  l.free_quantity || 0,
-        line_subtotal: l.line_total,
-        vat_amount:    0,
-        line_total:    l.line_total,
+        invoice_id: invoice.id, product_id: l.product_id, order_line_id: l.id,
+        quantity: l.quantity, unit_price: l.unit_price, discount_rate: l.discount_rate || 0,
+        vat_rate: 0, free_quantity: l.free_quantity || 0,
+        line_subtotal: l.line_total, vat_amount: 0, line_total: l.line_total,
       }));
       if (lines.length) await InvoiceLine.bulkCreate(lines, { transaction: t });
 
-      // Create CustomerReturn records for each requested return + restock warehouse
       for (const r of returns) {
         const retNumber = await generateReturnNumber(t);
         const cr = await CustomerReturn.create({
-          return_number: retNumber,
-          company_id:    order.company_id,
-          branch_id:     order.branch_id,
-          warehouse_id:  order.warehouse_id,
-          customer_id:   order.customer_id,
-          sales_rep_id:  order.sales_rep_id,
-          invoice_id:    invoice.id,
-          return_date:   today.toISOString().slice(0,10),
-          status:        'CONFIRMED',
-          notes:         `Auto-created from order ${order.order_number}. Action: ${r.action}`,
-          created_by:    req.user.id,
-          confirmed_by:  req.user.id,
-          confirmed_at:  new Date(),
+          return_number: retNumber, company_id: order.company_id, branch_id: order.branch_id,
+          warehouse_id: order.warehouse_id, customer_id: order.customer_id,
+          sales_rep_id: order.sales_rep_id, invoice_id: invoice.id,
+          return_date: today.toISOString().slice(0,10), status: 'CONFIRMED',
+          notes: `Auto-created from order ${order.order_number}. Action: ${r.action}`,
+          created_by: req.user.id, confirmed_by: req.user.id, confirmed_at: new Date(),
         }, { transaction: t });
         await CustomerReturnLine.create({
-          return_id:  cr.id,
-          product_id: r.product_id,
-          quantity:   r.quantity,
-          unit_price: r.unit_price,
-          reason:     r.reason,
+          return_id: cr.id, product_id: r.product_id,
+          quantity: r.quantity, unit_price: r.unit_price, reason: r.reason,
         }, { transaction: t });
 
-        // Restock warehouse — damaged/expired go to separate counters, others back to sellable
         const stock = await Stock.findOne({
           where: { warehouse_id: order.warehouse_id, product_id: r.product_id },
           transaction: t, lock: true,
         });
         if (stock) {
           const qty = parseFloat(r.quantity);
-          let updateFields = {};
-          let newQty;
-          if (r.reason === 'DAMAGED') {
-            newQty = parseFloat(stock.damaged_quantity) + qty;
-            updateFields = { damaged_quantity: newQty };
-          } else if (r.reason === 'EXPIRED') {
-            newQty = parseFloat(stock.expired_quantity) + qty;
-            updateFields = { expired_quantity: newQty };
-          } else {
-            newQty = parseFloat(stock.quantity) + qty;
-            updateFields = { quantity: newQty };
-          }
+          let updateFields = {}, newQty;
+          if (r.reason === 'DAMAGED')      { newQty = parseFloat(stock.damaged_quantity) + qty;  updateFields = { damaged_quantity: newQty }; }
+          else if (r.reason === 'EXPIRED') { newQty = parseFloat(stock.expired_quantity) + qty;  updateFields = { expired_quantity: newQty }; }
+          else                             { newQty = parseFloat(stock.quantity) + qty;           updateFields = { quantity: newQty }; }
           await stock.update(updateFields, { transaction: t });
           await StockMovement.create({
-            warehouse_id:  order.warehouse_id,
-            product_id:    r.product_id,
-            movement_type: 'IN',
-            source_type:   'CUSTOMER_RETURN',
-            source_id:     cr.id,
-            quantity:      r.quantity,
-            balance_after: newQty,
-            created_by:    req.user.id,
+            warehouse_id: order.warehouse_id, product_id: r.product_id,
+            movement_type: 'IN', source_type: 'CUSTOMER_RETURN', source_id: cr.id,
+            quantity: r.quantity, balance_after: newQty, created_by: req.user.id,
           }, { transaction: t });
         }
       }
 
-      // Release reservations and deduct actual stock for each billed line
       for (const l of order.Lines) {
         const billedQty = parseFloat(l.quantity || 0);
         if (billedQty <= 0) continue;
@@ -375,19 +331,17 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
           transaction: t, lock: true,
         });
         if (!stock) continue;
-        const newQty      = parseFloat(stock.quantity) - billedQty;
+        const newQty = parseFloat(stock.quantity) - billedQty;
         const newReserved = Math.max(0, parseFloat(stock.reserved_quantity) - billedQty);
         await stock.update({ quantity: newQty, reserved_quantity: newReserved }, { transaction: t });
         await StockMovement.create({
           warehouse_id: order.warehouse_id, product_id: l.product_id,
           movement_type: 'OUT', source_type: 'INVOICE', source_id: invoice.id,
-          quantity: billedQty, balance_after: newQty, unit_cost: 0,
-          created_by: req.user.id,
+          quantity: billedQty, balance_after: newQty, unit_cost: 0, created_by: req.user.id,
         }, { transaction: t });
       }
 
       await order.update({ status: 'INVOICED' }, { transaction: t });
-      // Increment customer outstanding_balance for the invoiced amount
       await Customer.increment('outstanding_balance', { by: invoiceTotal, where: { id: order.customer_id }, transaction: t });
       await t.commit();
       res.status(201).json({ invoice_id: invoice.id, invoice_number: invoiceNumber });
@@ -395,8 +349,10 @@ router.post('/:id/invoice', authorize('sales.approve'), async (req, res, next) =
   } catch (err) { next(err); }
 });
 
+// PUT /api/sales-orders/:id
 router.put('/:id', authorize('sales.view_own'), async (req, res, next) => {
   try {
+    const { SalesOrder, SalesOrderLine, Stock, OrderReturn, sequelize: db } = req.db;
     const canApprove = req.permissions?.has('sales.approve');
     const order = await SalesOrder.findByPk(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -409,30 +365,20 @@ router.put('/:id', authorize('sales.view_own'), async (req, res, next) => {
 
     const t = await db.transaction();
     try {
-      // Release old stock reservations
       const oldLines = await SalesOrderLine.findAll({ where: { order_id: order.id } });
       for (const l of oldLines) {
         const qty = parseFloat(l.quantity || 0);
         if (qty <= 0) continue;
-        const stock = await Stock.findOne({
-          where: { warehouse_id: order.warehouse_id, product_id: l.product_id },
-          transaction: t, lock: true,
-        });
-        if (stock) {
-          await stock.update({ reserved_quantity: Math.max(0, parseFloat(stock.reserved_quantity) - qty) }, { transaction: t });
-        }
+        const stock = await Stock.findOne({ where: { warehouse_id: order.warehouse_id, product_id: l.product_id }, transaction: t, lock: true });
+        if (stock) await stock.update({ reserved_quantity: Math.max(0, parseFloat(stock.reserved_quantity) - qty) }, { transaction: t });
       }
 
-      // Replace lines
       await SalesOrderLine.destroy({ where: { order_id: order.id }, transaction: t });
 
       for (const line of lines) {
         const billedQty = parseFloat(line.quantity || 0);
         if (billedQty > 0) {
-          const stock = await Stock.findOne({
-            where: { warehouse_id: order.warehouse_id, product_id: line.product_id },
-            transaction: t, lock: true,
-          });
+          const stock = await Stock.findOne({ where: { warehouse_id: order.warehouse_id, product_id: line.product_id }, transaction: t, lock: true });
           if (stock) {
             const freeStock = parseFloat(stock.quantity) - parseFloat(stock.reserved_quantity);
             if (freeStock < billedQty) {
@@ -445,23 +391,11 @@ router.put('/:id', authorize('sales.view_own'), async (req, res, next) => {
       }
 
       await SalesOrderLine.bulkCreate(lines.map(l => ({ ...l, order_id: order.id })), { transaction: t });
-
-      // Replace returns
       await OrderReturn.destroy({ where: { order_id: order.id }, transaction: t });
-      if (returns.length) {
-        await OrderReturn.bulkCreate(returns.map(r => ({ ...r, order_id: order.id })), { transaction: t });
-      }
+      if (returns.length) await OrderReturn.bulkCreate(returns.map(r => ({ ...r, order_id: order.id })), { transaction: t });
 
-      const calcTotal = lines.reduce((s, l) => {
-        const qty = parseFloat(l.quantity || 0);
-        const price = parseFloat(l.unit_price || 0);
-        const disc = parseFloat(l.discount_rate || 0);
-        return s + qty * price * (1 - disc / 100);
-      }, 0);
-
-      const returnDeduction = returns
-        .filter(r => r.action === 'DEDUCT')
-        .reduce((s, r) => s + parseFloat(r.quantity || 0) * parseFloat(r.unit_price || 0), 0);
+      const calcTotal = lines.reduce((s, l) => s + parseFloat(l.quantity || 0) * parseFloat(l.unit_price || 0) * (1 - parseFloat(l.discount_rate || 0) / 100), 0);
+      const returnDeduction = returns.filter(r => r.action === 'DEDUCT').reduce((s, r) => s + parseFloat(r.quantity || 0) * parseFloat(r.unit_price || 0), 0);
       const netTotal = Math.max(0, (total_amount ?? calcTotal) - returnDeduction);
 
       await order.update({ notes: notes ?? order.notes, total_amount: netTotal, subtotal_amount: calcTotal }, { transaction: t });
@@ -471,12 +405,12 @@ router.put('/:id', authorize('sales.view_own'), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// DELETE /api/sales-orders/:id  (cancel)
 router.delete('/:id', authorize('sales.view_own'), async (req, res, next) => {
   try {
+    const { SalesOrder, SalesOrderLine, Stock, sequelize: db } = req.db;
     const canApprove = req.permissions?.has('sales.approve');
-    const order = await SalesOrder.findByPk(req.params.id, {
-      include: [{ model: SalesOrderLine, as: 'Lines' }],
-    });
+    const order = await SalesOrder.findByPk(req.params.id, { include: [{ model: SalesOrderLine, as: 'Lines' }] });
     if (!order) return res.status(404).json({ message: 'Order not found' });
     if (order.status !== 'CONFIRMED') return res.status(422).json({ message: 'Only confirmed orders can be cancelled' });
     if (!canApprove && String(order.created_by) !== String(req.user.id))
@@ -487,13 +421,8 @@ router.delete('/:id', authorize('sales.view_own'), async (req, res, next) => {
       for (const l of (order.Lines || [])) {
         const qty = parseFloat(l.quantity || 0);
         if (qty <= 0) continue;
-        const stock = await Stock.findOne({
-          where: { warehouse_id: order.warehouse_id, product_id: l.product_id },
-          transaction: t, lock: true,
-        });
-        if (stock) {
-          await stock.update({ reserved_quantity: Math.max(0, parseFloat(stock.reserved_quantity) - qty) }, { transaction: t });
-        }
+        const stock = await Stock.findOne({ where: { warehouse_id: order.warehouse_id, product_id: l.product_id }, transaction: t, lock: true });
+        if (stock) await stock.update({ reserved_quantity: Math.max(0, parseFloat(stock.reserved_quantity) - qty) }, { transaction: t });
       }
       await order.update({ status: 'CANCELLED' }, { transaction: t });
       await t.commit();
@@ -502,8 +431,10 @@ router.delete('/:id', authorize('sales.view_own'), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// PUT /api/sales-orders/:id/confirm
 router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { SalesOrder } = req.db;
     const order = await SalesOrder.findByPk(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
     await order.update({ status: 'CONFIRMED', approved_by: req.user.id, approved_at: new Date() });
@@ -511,8 +442,7 @@ router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) =>
     if (order.created_by) {
       notify({
         userId: order.created_by,
-        type: 'ORDER_APPROVED',
-        title: 'Order Approved',
+        type: 'ORDER_APPROVED', title: 'Order Approved',
         body: `Your order ${order.order_number} has been approved`,
         link: `/sales-orders/${order.id}`,
       });

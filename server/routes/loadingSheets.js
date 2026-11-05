@@ -1,31 +1,32 @@
 const router = require('express').Router();
-const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, SalesOrder, OrderReturn, DriverDeduction, sequelize } = require('../models');
-
 const notify = require('../notify');
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 
-const include = [
-  { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'short_code', 'selling_price', 'cost_price', 'case_size'] }] },
-  { model: Warehouse, attributes: ['id', 'name'] },
-  { model: Route, attributes: ['id', 'name'] },
-  { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
-  { model: User, as: 'Driver', attributes: ['id', 'name'] },
-  { model: Vehicle, attributes: ['id', 'registration_number', 'make', 'model'] },
-  { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'paid_amount', 'balance_due', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes', 'order_id'],
-    include: [
-      { model: Customer, attributes: ['id', 'name', 'address'] },
-      { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'free_quantity', 'unit_price', 'line_total'],
-        include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
-      { model: SalesOrder, as: 'Order', attributes: ['id', 'latitude', 'longitude'],
-        include: [{ model: OrderReturn, as: 'Returns', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] }] },
-    ],
-  },
-];
+function getInclude(db) {
+  const { LoadingSheetLine, Product, Warehouse, Route, User, Vehicle, Invoice, InvoiceLine, Customer, SalesOrder, OrderReturn } = db;
+  return [
+    { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'short_code', 'selling_price', 'cost_price', 'case_size'] }] },
+    { model: Warehouse, attributes: ['id', 'name'] },
+    { model: Route,     attributes: ['id', 'name'] },
+    { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+    { model: User, as: 'Driver',   attributes: ['id', 'name'] },
+    { model: Vehicle,   attributes: ['id', 'registration_number', 'make', 'model'] },
+    { model: Invoice, as: 'Invoices', attributes: ['id', 'invoice_number', 'total_amount', 'paid_amount', 'balance_due', 'status', 'invoice_date', 'customer_id', 'delivered_at', 'notes', 'order_id'],
+      include: [
+        { model: Customer, attributes: ['id', 'name', 'address'] },
+        { model: InvoiceLine, as: 'Lines', attributes: ['id', 'product_id', 'quantity', 'free_quantity', 'unit_price', 'line_total'],
+          include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+        { model: SalesOrder, as: 'Order', attributes: ['id', 'latitude', 'longitude'],
+          include: [{ model: OrderReturn, as: 'Returns', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] }] },
+      ],
+    },
+  ];
+}
 
-// GET /api/loading-sheets
 router.get('/', async (req, res, next) => {
   try {
+    const { LoadingSheet, User, Route, Vehicle } = req.db;
     const { status, from, to, route_id, sales_rep_id, page = 1, limit = 20 } = req.query;
     const where = {};
     if (status)       where.status       = status;
@@ -34,31 +35,29 @@ router.get('/', async (req, res, next) => {
     if (from || to) {
       where.sheet_date = {};
       if (from) where.sheet_date[Op.gte] = from;
-      if (to) where.sheet_date[Op.lte] = to;
+      if (to)   where.sheet_date[Op.lte] = to;
     }
     const { count, rows } = await LoadingSheet.findAndCountAll({
-      where, include: [
+      where,
+      include: [
         { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
-        { model: Route, attributes: ['id', 'name'] },
+        { model: Route,   attributes: ['id', 'name'] },
         { model: Vehicle, attributes: ['id', 'registration_number'] },
       ],
-      limit: parseInt(limit),
+      limit:  parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['sheet_date', 'DESC']],
+      order:  [['sheet_date', 'DESC']],
     });
     res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
 
-// GET /api/loading-sheets/active — current user's LOADED loading sheet (sales rep OR driver)
 router.get('/active', async (req, res, next) => {
   try {
+    const { LoadingSheet } = req.db;
     const sheet = await LoadingSheet.findOne({
-      where: {
-        status: 'LOADED',
-        [Op.or]: [{ sales_rep_id: req.user.id }, { driver_id: req.user.id }],
-      },
-      order: [['sheet_date', 'DESC']],
+      where: { status: 'LOADED', [Op.or]: [{ sales_rep_id: req.user.id }, { driver_id: req.user.id }] },
+      order:      [['sheet_date', 'DESC']],
       attributes: ['id', 'sheet_number', 'status', 'sheet_date', 'warehouse_id'],
     });
     if (!sheet) return res.status(404).json({ message: 'No active loading sheet' });
@@ -66,17 +65,16 @@ router.get('/active', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/loading-sheets/available-invoices — POSTED invoices with no sheet (for new sheet creation)
 router.get('/available-invoices', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { Invoice, Customer, Route, InvoiceLine, Product } = req.db;
     const where = { status: 'POSTED', loading_sheet_id: null };
     if (req.user.branch_id) where.branch_id = req.user.branch_id;
     const invoices = await Invoice.findAll({
       where,
       include: [
         { model: Customer, attributes: ['id', 'name', 'code'], include: [{ model: Route, attributes: ['id', 'name'] }] },
-        { model: InvoiceLine, as: 'Lines',
-          include: [{ model: Product, attributes: ['id', 'name', 'sku', 'cost_price'] }] },
+        { model: InvoiceLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'cost_price'] }] },
       ],
       order: [['invoice_date', 'DESC'], ['id', 'DESC']],
       limit: 200,
@@ -85,41 +83,40 @@ router.get('/available-invoices', authorize('sales.approve'), async (req, res, n
   } catch (err) { next(err); }
 });
 
-// GET /api/loading-sheets/:id
 router.get('/:id', async (req, res, next) => {
   try {
-    const sheet = await LoadingSheet.findByPk(req.params.id, { include });
+    const { LoadingSheet } = req.db;
+    const sheet = await LoadingSheet.findByPk(req.params.id, { include: getInclude(req.db) });
     if (!sheet) return res.status(404).json({ message: 'Loading sheet not found' });
     res.json(sheet);
   } catch (err) { next(err); }
 });
 
-// GET /api/loading-sheets/:id/route-sheet — sheet + route customers + all products for route print
 router.get('/:id/route-sheet', async (req, res, next) => {
   try {
-    const { Product: Prod, Category } = require('../models');
-    const sheet = await LoadingSheet.findByPk(req.params.id, { include });
+    const { LoadingSheet, Customer, Product, Category } = req.db;
+    const sheet = await LoadingSheet.findByPk(req.params.id, { include: getInclude(req.db) });
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     const customers = sheet.route_id
       ? await Customer.findAll({
-          where: { route_id: sheet.route_id, is_active: true },
+          where:      { route_id: sheet.route_id, is_active: true },
           attributes: ['id', 'name', 'code', 'address', 'visit_order'],
-          order: [['visit_order', 'ASC'], ['name', 'ASC']],
+          order:      [['visit_order', 'ASC'], ['name', 'ASC']],
         })
       : [];
-    const products = await Prod.findAll({
-      where: { is_active: true },
+    const products = await Product.findAll({
+      where:      { is_active: true },
       attributes: ['id', 'name', 'sku', 'short_code', 'case_size'],
-      include: [{ model: Category, attributes: ['id', 'name'] }],
-      order: [['name', 'ASC']],
+      include:    [{ model: Category, attributes: ['id', 'name'] }],
+      order:      [['name', 'ASC']],
     });
     res.json({ sheet, customers, products });
   } catch (err) { next(err); }
 });
 
-// GET /api/loading-sheets/:id/van-stock — remaining stock per product for a LOADED sheet
 router.get('/:id/van-stock', async (req, res, next) => {
   try {
+    const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Invoice, InvoiceLine } = req.db;
     const sheet = await LoadingSheet.findByPk(req.params.id, {
       include: [
         { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'vat_rate', 'case_size'] }] },
@@ -131,7 +128,6 @@ router.get('/:id/van-stock', async (req, res, next) => {
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'LOADED') return res.status(400).json({ message: 'Sheet must be LOADED' });
 
-    // Build sold qty map from actual invoice lines (exclude CANCELLED invoices)
     const soldMap = {};
     for (const inv of (sheet.Invoices || [])) {
       if (inv.status === 'CANCELLED') continue;
@@ -144,12 +140,8 @@ router.get('/:id/van-stock', async (req, res, next) => {
       const loaded = parseFloat(line.loaded_quantity);
       const sold   = soldMap[line.product_id] || 0;
       return {
-        line_id: line.id,
-        product_id: line.product_id,
-        product: line.Product,
-        loaded,
-        sold,
-        remaining: Math.max(0, loaded - sold),
+        line_id: line.id, product_id: line.product_id, product: line.Product,
+        loaded, sold, remaining: Math.max(0, loaded - sold),
         unit_cost: parseFloat(line.unit_cost),
       };
     });
@@ -157,25 +149,28 @@ router.get('/:id/van-stock', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/loading-sheets — create in DRAFT status
 router.post('/', authorize('sales.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { LoadingSheet, LoadingSheetLine } = req.db;
     const { lines, ...sheetData } = req.body;
     if (!Array.isArray(lines) || lines.length === 0) {
       await t.rollback();
       return res.status(400).json({ message: 'At least one product line is required' });
     }
-    const year = new Date().getFullYear();
+    const year  = new Date().getFullYear();
     const count = await LoadingSheet.count();
-    const sheet_number = `LS-${year}-${String(count + 1).padStart(5, '0')}`;
-    const totalLoaded = lines.reduce((s, l) => s + Number(l.loaded_quantity) * Number(l.unit_cost || 0), 0);
-    const sheet = await LoadingSheet.create({ ...sheetData, sheet_number, total_loaded_value: totalLoaded, branch_id: req.user.branch_id, created_by: req.user.id }, { transaction: t });
+    const sheet_number  = `LS-${year}-${String(count + 1).padStart(5, '0')}`;
+    const totalLoaded   = lines.reduce((s, l) => s + Number(l.loaded_quantity) * Number(l.unit_cost || 0), 0);
+    const sheet = await LoadingSheet.create({
+      ...sheetData, sheet_number, total_loaded_value: totalLoaded,
+      branch_id: req.user.branch_id, created_by: req.user.id,
+    }, { transaction: t });
     await LoadingSheetLine.bulkCreate(lines.map(l => ({ ...l, sheet_id: sheet.id })), { transaction: t });
     await t.commit();
-    const created = await LoadingSheet.findByPk(sheet.id, { include });
+    const created = await LoadingSheet.findByPk(sheet.id, { include: getInclude(req.db) });
     res.status(201).json(created);
-    // Notify the assigned driver that a loading sheet has been created for them
     if (sheetData.driver_id) {
       notify({ userId: sheetData.driver_id, type: 'SHEET_CREATED', title: 'Loading Sheet Assigned', body: `${sheet_number} has been assigned to you — awaiting loading`, link: `/loading-sheets/${sheet.id}` });
     }
@@ -185,24 +180,24 @@ router.post('/', authorize('sales.create'), async (req, res, next) => {
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// GET /api/loading-sheets/:id/available-invoices — POSTED invoices not yet on any sheet
 router.get('/:id/available-invoices', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { LoadingSheet, Invoice, Customer, Route } = req.db;
     const sheet = await LoadingSheet.findByPk(req.params.id, { attributes: ['id', 'branch_id'] });
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     const invoices = await Invoice.findAll({
-      where: { status: 'POSTED', loading_sheet_id: null, branch_id: sheet.branch_id },
+      where:   { status: 'POSTED', loading_sheet_id: null, branch_id: sheet.branch_id },
       include: [{ model: Customer, attributes: ['id', 'name', 'code'], include: [{ model: Route, attributes: ['id', 'name'] }] }],
-      order: [['invoice_date', 'DESC'], ['id', 'DESC']],
-      limit: 200,
+      order:   [['invoice_date', 'DESC'], ['id', 'DESC']],
+      limit:   200,
     });
     res.json(invoices);
   } catch (err) { next(err); }
 });
 
-// PUT /api/loading-sheets/:id/invoices — assign invoice_ids to this sheet
 router.put('/:id/invoices', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { LoadingSheet, Invoice } = req.db;
     const { invoice_ids } = req.body;
     if (!Array.isArray(invoice_ids) || !invoice_ids.length) return res.status(400).json({ message: 'invoice_ids required' });
     const sheet = await LoadingSheet.findByPk(req.params.id);
@@ -216,9 +211,9 @@ router.put('/:id/invoices', authorize('sales.approve'), async (req, res, next) =
   } catch (err) { next(err); }
 });
 
-// DELETE /api/loading-sheets/:id/invoices/:invoiceId — unlink invoice from sheet
 router.delete('/:id/invoices/:invoiceId', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { Invoice } = req.db;
     await Invoice.update(
       { loading_sheet_id: null },
       { where: { id: req.params.invoiceId, loading_sheet_id: req.params.id } }
@@ -227,25 +222,26 @@ router.delete('/:id/invoices/:invoiceId', authorize('sales.approve'), async (req
   } catch (err) { next(err); }
 });
 
-// PATCH /api/loading-sheets/:id — update driver/sales_rep on non-closed sheets
 router.patch('/:id', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { LoadingSheet } = req.db;
     const sheet = await LoadingSheet.findByPk(req.params.id);
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status === 'CLOSED') return res.status(422).json({ message: 'Cannot edit a closed sheet' });
     const { driver_id, sales_rep_id } = req.body;
     const updates = {};
-    if (driver_id !== undefined) updates.driver_id = driver_id || null;
+    if (driver_id    !== undefined) updates.driver_id    = driver_id    || null;
     if (sales_rep_id !== undefined) updates.sales_rep_id = sales_rep_id || null;
     await sheet.update(updates);
-    res.json(await LoadingSheet.findByPk(sheet.id, { include }));
+    res.json(await LoadingSheet.findByPk(sheet.id, { include: getInclude(req.db) }));
   } catch (err) { next(err); }
 });
 
-// PUT /api/loading-sheets/:id/load — deduct stock from warehouse, mark LOADED
 router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { LoadingSheet, LoadingSheetLine, Product, Invoice, InvoiceLine, Stock, StockMovement } = req.db;
     const sheet = await LoadingSheet.findByPk(req.params.id, {
       include: [{ model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] }],
       transaction: t, lock: true,
@@ -253,10 +249,9 @@ router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'DRAFT') return res.status(400).json({ message: 'Already loaded' });
 
-    // Build map of stock already deducted by invoices on this sheet (to avoid double-deduction)
     const alreadyDeductedMap = {};
     const sheetInvoices = await Invoice.findAll({
-      where: { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] },
+      where:   { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] },
       include: [{ model: InvoiceLine, as: 'Lines', attributes: ['product_id', 'quantity'] }],
       transaction: t,
     });
@@ -272,10 +267,10 @@ router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
       const alreadyDone  = alreadyDeductedMap[String(line.product_id)] || 0;
       const stillToDeduct = Math.max(0, loadQty - alreadyDone);
 
-      const stock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t, lock: true });
-      const totalQty    = stock ? parseFloat(stock.quantity) : 0;
+      const stock      = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t, lock: true });
+      const totalQty   = stock ? parseFloat(stock.quantity) : 0;
       const reservedQty = stock ? parseFloat(stock.reserved_quantity || 0) : 0;
-      const available   = totalQty - reservedQty;
+      const available  = totalQty - reservedQty;
 
       if (stillToDeduct > 0 && available < stillToDeduct) {
         await t.rollback();
@@ -295,30 +290,33 @@ router.put('/:id/load', authorize('sales.create'), async (req, res, next) => {
     }
     await sheet.update({ status: 'LOADED' }, { transaction: t });
     await t.commit();
-    const loaded = await LoadingSheet.findByPk(sheet.id, { include });
-    if (sheet.driver_id)   notify({ userId: sheet.driver_id,   type: 'SHEET_LOADED', title: 'Loading Sheet Ready', body: `${loaded.sheet_number} has been loaded and is ready`, link: `/loading-sheets/${sheet.id}` });
+    const loaded = await LoadingSheet.findByPk(sheet.id, { include: getInclude(req.db) });
+    if (sheet.driver_id)    notify({ userId: sheet.driver_id,   type: 'SHEET_LOADED', title: 'Loading Sheet Ready', body: `${loaded.sheet_number} has been loaded and is ready`, link: `/loading-sheets/${sheet.id}` });
     if (sheet.sales_rep_id) notify({ userId: sheet.sales_rep_id, type: 'SHEET_LOADED', title: 'Loading Sheet Ready', body: `${loaded.sheet_number} has been loaded and is ready`, link: `/loading-sheets/${sheet.id}` });
     res.json(loaded);
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// PUT /api/loading-sheets/:id/close — record returns, damage, loss and reconcile
 router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { LoadingSheet, LoadingSheetLine, Product, Invoice, InvoiceLine, Stock, StockMovement, AccountingPeriod, Account, JournalEntry, JournalLine, DriverDeduction } = req.db;
     const { returns = [], cash_collected = 0 } = req.body;
-    const sheet = await LoadingSheet.findByPk(req.params.id, { include: [{ model: LoadingSheetLine, as: 'Lines', include: [{ model: Product }] }], transaction: t, lock: true });
+    const sheet = await LoadingSheet.findByPk(req.params.id, {
+      include: [{ model: LoadingSheetLine, as: 'Lines', include: [{ model: Product }] }],
+      transaction: t, lock: true,
+    });
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'LOADED') return res.status(400).json({ message: 'Sheet must be LOADED to close' });
 
     const invoiceCount = await Invoice.count({ where: { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] }, transaction: t });
-    const hasInvoices = invoiceCount > 0;
+    const hasInvoices  = invoiceCount > 0;
 
-    // Build product_id → total invoiced quantity from actual invoice lines
     const invoicedQtyMap = {};
     if (hasInvoices) {
       const sheetInvoices = await Invoice.findAll({
-        where: { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] },
+        where:   { loading_sheet_id: sheet.id, status: ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'] },
         include: [{ model: InvoiceLine, as: 'Lines', attributes: ['product_id', 'quantity'] }],
         transaction: t,
       });
@@ -330,15 +328,14 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
       });
     }
 
-    // Build maps from the returns payload
-    const returnMap   = {};
-    const damagedMap  = {};
-    const lostMap     = {};
-    const notesMap    = {};
+    const returnMap  = {};
+    const damagedMap = {};
+    const lostMap    = {};
+    const notesMap   = {};
     returns.forEach(r => {
-      returnMap[r.line_id]  = Number(r.returned_quantity  || 0);
-      damagedMap[r.line_id] = Number(r.damaged_quantity   || 0);
-      lostMap[r.line_id]    = Number(r.lost_quantity      || 0);
+      returnMap[r.line_id]  = Number(r.returned_quantity || 0);
+      damagedMap[r.line_id] = Number(r.damaged_quantity  || 0);
+      lostMap[r.line_id]    = Number(r.lost_quantity     || 0);
       notesMap[r.line_id]   = r.damage_notes || null;
     });
 
@@ -362,7 +359,6 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
 
       const stock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t });
       if (stock) {
-        // Return good stock to warehouse
         if (returnedQty > 0) {
           const newQty = parseFloat(stock.quantity) + returnedQty;
           await stock.update({ quantity: newQty }, { transaction: t });
@@ -374,9 +370,8 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
           }, { transaction: t });
         }
 
-        // Damaged/lost: stock already deducted at load — record audit-only adjustment movement
         const curStock = await Stock.findOne({ where: { warehouse_id: sheet.warehouse_id, product_id: line.product_id }, transaction: t });
-        const curQty = parseFloat(curStock?.quantity || 0);
+        const curQty   = parseFloat(curStock?.quantity || 0);
         if (damagedQty > 0) {
           await StockMovement.create({
             warehouse_id: sheet.warehouse_id, product_id: line.product_id,
@@ -407,7 +402,6 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
       totalSales += soldQty * (parseFloat(line.unit_cost) || 0);
     }
 
-    // Journal write-off for damaged + lost stock
     const totalDamageLoss = returns.reduce((sum, r) => {
       const line = sheet.Lines.find(l => l.id === r.line_id);
       const cost = parseFloat(line?.unit_cost || 0);
@@ -418,7 +412,7 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
       const [period, lossAcc, stockAcc] = await Promise.all([
         AccountingPeriod.findOne({ where: { is_open: true }, transaction: t }),
         Account.findOne({ where: { is_system: true, sub_type: 'VAN_LOSS' }, transaction: t }),
-        Account.findOne({ where: { is_system: true, sub_type: 'STOCK' }, transaction: t }),
+        Account.findOne({ where: { is_system: true, sub_type: 'STOCK'    }, transaction: t }),
       ]);
       if (period && lossAcc && stockAcc) {
         const entryCount = await JournalEntry.count({ transaction: t });
@@ -440,13 +434,13 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
 
     await sheet.update({ status: 'CLOSED', total_sales_amount: totalSales, cash_collected: parseFloat(cash_collected) || 0 }, { transaction: t });
     await t.commit();
-    res.json(await LoadingSheet.findByPk(sheet.id, { include }));
+    res.json(await LoadingSheet.findByPk(sheet.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// DELETE /api/loading-sheets/:id — only allowed for DRAFT (no stock movements yet)
 router.delete('/:id', authorize('sales.create'), async (req, res, next) => {
   try {
+    const { LoadingSheet, LoadingSheetLine } = req.db;
     const sheet = await LoadingSheet.findByPk(req.params.id, { include: [{ model: LoadingSheetLine, as: 'Lines' }] });
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     if (sheet.status !== 'DRAFT') return res.status(400).json({ message: 'Only DRAFT loading sheets can be deleted' });

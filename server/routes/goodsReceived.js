@@ -1,10 +1,10 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { GoodsReceived, GoodsReceivedLine, Supplier, Product, User, Warehouse, Stock, StockMovement, JournalEntry, JournalLine, Account, AccountingPeriod, FreeItemAllocation, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 router.get('/', authorize('purchase.view'), async (req, res, next) => {
   try {
+    const { GoodsReceived, Supplier, Warehouse, User } = req.db;
     const { warehouse_id, free_sales_rep_id, status, date_from, date_to, page = 1, limit = 20 } = req.query;
     const where = {};
     if (warehouse_id)      where.warehouse_id      = warehouse_id;
@@ -23,8 +23,8 @@ router.get('/', authorize('purchase.view'), async (req, res, next) => {
         { model: Warehouse, attributes: ['id', 'name'] },
         { model: User, as: 'FreeRep', foreignKey: 'free_sales_rep_id', attributes: ['id', 'name'] },
       ],
-      order: [['grn_date', 'DESC']],
-      limit: Number(limit),
+      order:  [['grn_date', 'DESC']],
+      limit:  Number(limit),
       offset,
     });
     res.json({ data: rows, total: count });
@@ -33,6 +33,7 @@ router.get('/', authorize('purchase.view'), async (req, res, next) => {
 
 router.get('/:id', authorize('purchase.view'), async (req, res, next) => {
   try {
+    const { GoodsReceived, GoodsReceivedLine, Supplier, Product, User } = req.db;
     const grn = await GoodsReceived.findByPk(req.params.id, {
       include: [
         { model: Supplier },
@@ -46,8 +47,10 @@ router.get('/:id', authorize('purchase.view'), async (req, res, next) => {
 });
 
 router.post('/', authorize('purchase.receive'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { GoodsReceived, GoodsReceivedLine } = req.db;
     const { lines, ...data } = req.body;
     data.created_by = req.user.id;
     if (!data.grn_number) {
@@ -56,13 +59,13 @@ router.post('/', authorize('purchase.receive'), async (req, res, next) => {
       data.grn_number = `GRN-${yr}-${String(count + 1).padStart(5, '0')}`;
     }
     const mappedLines = (lines || []).map(l => ({
-      product_id: l.product_id,
-      quantity: l.quantity_received ?? l.quantity,
+      product_id:    l.product_id,
+      quantity:      l.quantity_received ?? l.quantity,
       free_issue_qty: parseFloat(l.free_issue_qty || 0),
-      unit_cost: l.unit_cost,
+      unit_cost:     l.unit_cost,
       discount_rate: l.discount_rate ?? 0,
-      vat_rate: l.vat_rate ?? 0,
-      line_total: (l.quantity_received ?? l.quantity ?? 0) * (l.unit_cost ?? 0),
+      vat_rate:      l.vat_rate ?? 0,
+      line_total:    (l.quantity_received ?? l.quantity ?? 0) * (l.unit_cost ?? 0),
     }));
     data.total_amount = mappedLines.reduce((s, l) => s + l.line_total, 0);
     const grn = await GoodsReceived.create(data, { transaction: t });
@@ -73,8 +76,10 @@ router.post('/', authorize('purchase.receive'), async (req, res, next) => {
 });
 
 router.delete('/:id', authorize('purchase.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { GoodsReceived, GoodsReceivedLine } = req.db;
     const grn = await GoodsReceived.findByPk(req.params.id, { transaction: t });
     if (!grn) return res.status(404).json({ message: 'Not found' });
     if (grn.status !== 'DRAFT') return res.status(400).json({ message: 'Only DRAFT GRNs can be deleted' });
@@ -86,8 +91,10 @@ router.delete('/:id', authorize('purchase.create'), async (req, res, next) => {
 });
 
 router.post('/:id/post', authorize('purchase.approve'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { GoodsReceived, GoodsReceivedLine, Stock, StockMovement, FreeItemAllocation } = req.db;
     const grn = await GoodsReceived.findByPk(req.params.id, {
       include: [{ model: GoodsReceivedLine, as: 'Lines' }], transaction: t,
     });
@@ -95,29 +102,29 @@ router.post('/:id/post', authorize('purchase.approve'), async (req, res, next) =
 
     for (const line of grn.Lines) {
       const [stock] = await Stock.findOrCreate({
-        where: { warehouse_id: grn.warehouse_id, product_id: line.product_id },
-        defaults: { quantity: 0, reserved_quantity: 0 }, transaction: t,
+        where:    { warehouse_id: grn.warehouse_id, product_id: line.product_id },
+        defaults: { quantity: 0, reserved_quantity: 0 },
+        transaction: t,
       });
       const newQty = parseFloat(stock.quantity) + parseFloat(line.quantity);
       await stock.update({ quantity: newQty }, { transaction: t });
       await StockMovement.create({
-        warehouse_id: grn.warehouse_id, product_id: line.product_id,
+        warehouse_id:  grn.warehouse_id, product_id: line.product_id,
         movement_type: 'IN', source_type: 'GRN', source_id: grn.id,
         quantity: line.quantity, balance_after: newQty, unit_cost: line.unit_cost,
         created_by: req.user.id,
       }, { transaction: t });
     }
 
-    // Topup free allocations if a sales rep is assigned
     if (grn.free_sales_rep_id) {
       for (const line of grn.Lines) {
         const freeQty = parseFloat(line.free_issue_qty || 0);
         if (freeQty <= 0) continue;
         const [alloc] = await FreeItemAllocation.findOrCreate({
-          where: { sales_rep_id: grn.free_sales_rep_id, product_id: line.product_id },
+          where:    { sales_rep_id: grn.free_sales_rep_id, product_id: line.product_id },
           defaults: {
             company_id: grn.company_id, branch_id: grn.branch_id,
-            warehouse_id: grn.warehouse_id,
+            warehouse_id:       grn.warehouse_id,
             allocated_quantity: 0, used_quantity: 0,
             notes: `GRN ${grn.grn_number}`, created_by: req.user.id,
           },

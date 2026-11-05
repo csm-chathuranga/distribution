@@ -1,33 +1,31 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const {
-  CustomerReturn, CustomerReturnLine,
-  Customer, Product, Invoice, InvoiceLine, Warehouse,
-  Stock, StockMovement, sequelize,
-} = require('../models');
 const notify = require('../notify');
 
-const include = [
-  { model: Customer,  attributes: ['id', 'name', 'code'] },
-  { model: Warehouse, attributes: ['id', 'name'] },
-  { model: Invoice, as: 'OriginalInvoice', attributes: ['id', 'invoice_number'] },
-  { model: Invoice, as: 'CreditNote',      attributes: ['id', 'invoice_number'] },
-  { model: CustomerReturnLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
-];
+function getInclude(db) {
+  const { Customer, Warehouse, Invoice, CustomerReturnLine, Product } = db;
+  return [
+    { model: Customer,  attributes: ['id', 'name', 'code'] },
+    { model: Warehouse, attributes: ['id', 'name'] },
+    { model: Invoice, as: 'OriginalInvoice', attributes: ['id', 'invoice_number'] },
+    { model: Invoice, as: 'CreditNote',      attributes: ['id', 'invoice_number'] },
+    { model: CustomerReturnLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+  ];
+}
 
-async function generateReturnNumber() {
+const generateReturnNumber = async (CustomerReturn) => {
   const today = new Date();
   const datePart = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
   const like = `RN-${datePart}-%`;
   const last = await CustomerReturn.findOne({ where: { return_number: { [Op.like]: like } }, order: [['id', 'DESC']] });
   const seq = last ? parseInt(last.return_number.split('-').pop()) + 1 : 1;
   return `RN-${datePart}-${String(seq).padStart(3, '0')}`;
-}
+};
 
-// List
 router.get('/', authorize.any('sales.view_own', 'sales.view_all', 'sales.return'), async (req, res, next) => {
   try {
+    const { CustomerReturn, Customer } = req.db;
     const { status, customer_id, from, to, page = 1, limit = 20 } = req.query;
     const where = {};
     if (status)      where.status = status;
@@ -40,49 +38,48 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all', 'sales.return'
     const { count, rows } = await CustomerReturn.findAndCountAll({
       where,
       include: [{ model: Customer, attributes: ['id', 'name', 'code'] }],
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['return_date', 'DESC'], ['id', 'DESC']],
+      limit:   parseInt(limit),
+      offset:  (parseInt(page) - 1) * parseInt(limit),
+      order:   [['return_date', 'DESC'], ['id', 'DESC']],
     });
     res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
 
-// Get single
 router.get('/:id', authorize.any('sales.view_own', 'sales.view_all', 'sales.return'), async (req, res, next) => {
   try {
-    const ret = await CustomerReturn.findByPk(req.params.id, { include });
+    const { CustomerReturn } = req.db;
+    const ret = await CustomerReturn.findByPk(req.params.id, { include: getInclude(req.db) });
     if (!ret) return res.status(404).json({ message: 'Return note not found' });
     res.json(ret);
   } catch (err) { next(err); }
 });
 
-// Create
 router.post('/', authorize.any('sales.create', 'sales.return', 'sales.view_own'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { CustomerReturn, CustomerReturnLine } = req.db;
     const { lines, ...data } = req.body;
     data.created_by  = req.user.id;
-    if (!data.branch_id)  data.branch_id  = req.user.branch_id;
-    if (!data.company_id) data.company_id = req.user.Branch?.company_id ?? 1;
-    if (!data.return_number) data.return_number = await generateReturnNumber();
+    if (!data.branch_id)   data.branch_id  = req.user.branch_id;
+    if (!data.company_id)  data.company_id = req.user.Branch?.company_id ?? 1;
+    if (!data.return_number) data.return_number = await generateReturnNumber(CustomerReturn);
 
     const ret = await CustomerReturn.create(data, { transaction: t });
     if (lines?.length) {
-      await CustomerReturnLine.bulkCreate(
-        lines.map(l => ({ ...l, return_id: ret.id })),
-        { transaction: t }
-      );
+      await CustomerReturnLine.bulkCreate(lines.map(l => ({ ...l, return_id: ret.id })), { transaction: t });
     }
     await t.commit();
-    res.status(201).json(await CustomerReturn.findByPk(ret.id, { include }));
+    res.status(201).json(await CustomerReturn.findByPk(ret.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// Confirm — restocks the warehouse and auto-creates a credit note
 router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { CustomerReturn, CustomerReturnLine, Stock, StockMovement } = req.db;
     const ret = await CustomerReturn.findByPk(req.params.id, {
       include: [{ model: CustomerReturnLine, as: 'Lines' }],
       transaction: t,
@@ -90,8 +87,6 @@ router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) =>
     if (!ret) return res.status(404).json({ message: 'Return note not found' });
     if (ret.status !== 'DRAFT') return res.status(400).json({ message: `Return already ${ret.status.toLowerCase()}` });
 
-    // 1. Restock warehouse — damaged/expired go to separate counters, others back to sellable
-    const DAMAGED_REASONS = ['DAMAGED', 'EXPIRED'];
     for (const line of ret.Lines) {
       const isDamaged = line.reason === 'DAMAGED';
       const isExpired = line.reason === 'EXPIRED';
@@ -127,25 +122,19 @@ router.put('/:id/confirm', authorize('sales.approve'), async (req, res, next) =>
       }
     }
 
-    // 2. Update status
-    await ret.update({
-      status:       'CONFIRMED',
-      confirmed_by: req.user.id,
-      confirmed_at: new Date(),
-    }, { transaction: t });
-
+    await ret.update({ status: 'CONFIRMED', confirmed_by: req.user.id, confirmed_at: new Date() }, { transaction: t });
     await t.commit();
 
     notify({ roleName: 'manager', type: 'CUSTOMER_RETURN_CONFIRMED', title: 'Return Confirmed',
       body: `Return note ${ret.return_number} confirmed`, link: `/customer-returns/${ret.id}` });
 
-    res.json(await CustomerReturn.findByPk(ret.id, { include }));
+    res.json(await CustomerReturn.findByPk(ret.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// Cancel
 router.put('/:id/cancel', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { CustomerReturn } = req.db;
     const ret = await CustomerReturn.findByPk(req.params.id);
     if (!ret) return res.status(404).json({ message: 'Return note not found' });
     if (ret.status !== 'DRAFT') return res.status(400).json({ message: 'Only DRAFT returns can be cancelled' });

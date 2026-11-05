@@ -1,22 +1,23 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { JournalEntry, JournalLine, Account, AccountingPeriod, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 router.get('/', authorize('finance.view'), async (req, res, next) => {
   try {
+    const { JournalEntry, JournalLine, Account } = req.db;
     const { from, to, source_type, page = 1, limit = 20 } = req.query;
     const where = {};
     if (source_type) where.source_type = source_type;
     if (from || to) {
       where.entry_date = {};
       if (from) where.entry_date[Op.gte] = from;
-      if (to) where.entry_date[Op.lte] = to;
+      if (to)   where.entry_date[Op.lte] = to;
     }
     const { count, rows } = await JournalEntry.findAndCountAll({
-      where, limit: parseInt(limit),
+      where,
+      limit:  parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['entry_date', 'DESC']],
+      order:  [['entry_date', 'DESC']],
       include: [{ model: JournalLine, as: 'Lines', include: [{ model: Account, attributes: ['id', 'code', 'name'] }] }],
     });
     res.json({ data: rows, total: count });
@@ -25,6 +26,7 @@ router.get('/', authorize('finance.view'), async (req, res, next) => {
 
 router.get('/:id', authorize('finance.view'), async (req, res, next) => {
   try {
+    const { JournalEntry, JournalLine, Account } = req.db;
     const je = await JournalEntry.findByPk(req.params.id, {
       include: [{ model: JournalLine, as: 'Lines', include: [{ model: Account, attributes: ['id', 'code', 'name'] }] }],
     });
@@ -34,19 +36,21 @@ router.get('/:id', authorize('finance.view'), async (req, res, next) => {
 });
 
 router.post('/', authorize('finance.journals'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { JournalEntry, JournalLine } = req.db;
     const { lines, ...data } = req.body;
-    data.created_by = req.user.id;
+    data.created_by  = req.user.id;
     data.source_type = 'MANUAL';
 
-    const totalDebit = lines.reduce((s, l) => s + parseFloat(l.debit || 0), 0);
+    const totalDebit  = lines.reduce((s, l) => s + parseFloat(l.debit  || 0), 0);
     const totalCredit = lines.reduce((s, l) => s + parseFloat(l.credit || 0), 0);
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       return res.status(400).json({ message: 'Journal must balance (debit = credit)' });
     }
 
-    data.total_debit = totalDebit;
+    data.total_debit  = totalDebit;
     data.total_credit = totalCredit;
 
     const je = await JournalEntry.create(data, { transaction: t });

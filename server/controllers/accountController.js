@@ -1,8 +1,8 @@
-const { Account, JournalEntry, JournalLine, AccountingPeriod, sequelize } = require('../models');
 const { Op, QueryTypes } = require('sequelize');
 
 exports.list = async (req, res, next) => {
   try {
+    const { Account } = req.db;
     const { type, is_active, search } = req.query;
     const where = { company_id: req.user.company_id || 1 };
     if (type) where.type = type;
@@ -20,6 +20,7 @@ exports.list = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
+    const { Account } = req.db;
     const account = await Account.findByPk(req.params.id, {
       include: [{ model: Account, as: 'Children' }],
     });
@@ -30,6 +31,7 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
+    const { Account } = req.db;
     const account = await Account.create(req.body);
     res.status(201).json(account);
   } catch (err) { next(err); }
@@ -37,6 +39,7 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
+    const { Account } = req.db;
     const account = await Account.findByPk(req.params.id);
     if (!account) return res.status(404).json({ message: 'Account not found' });
     if (account.is_system && req.body.code) {
@@ -49,18 +52,19 @@ exports.update = async (req, res, next) => {
 
 exports.ledger = async (req, res, next) => {
   try {
+    const { Account, JournalLine, JournalEntry } = req.db;
     const { from, to } = req.query;
     const where = { account_id: req.params.id };
     if (from || to) {
       where['$JournalEntry.entry_date$'] = {};
       if (from) where['$JournalEntry.entry_date$'][Op.gte] = from;
-      if (to) where['$JournalEntry.entry_date$'][Op.lte] = to;
+      if (to)   where['$JournalEntry.entry_date$'][Op.lte] = to;
     }
 
     const lines = await JournalLine.findAll({
       where,
-      include: [{ model: require('../models').JournalEntry, attributes: ['entry_number', 'entry_date', 'description'] }],
-      order: [[require('../models').JournalEntry, 'entry_date', 'ASC']],
+      include: [{ model: JournalEntry, attributes: ['entry_number', 'entry_date', 'description'] }],
+      order: [[JournalEntry, 'entry_date', 'ASC']],
     });
 
     let balance = 0;
@@ -73,8 +77,10 @@ exports.ledger = async (req, res, next) => {
 };
 
 exports.openingBalance = async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Account, JournalEntry, JournalLine, AccountingPeriod } = req.db;
     const { entries, date, notes } = req.body;
     if (!entries || !Array.isArray(entries) || entries.length === 0) {
       await t.rollback();
@@ -93,8 +99,8 @@ exports.openingBalance = async (req, res, next) => {
       return res.status(400).json({ message: 'No open accounting period found' });
     }
 
-    const entryNum = `OB-${Date.now()}`;
-    const totalDebit = entries.reduce((s, e) => s + parseFloat(e.debit || 0), 0);
+    const entryNum    = `OB-${Date.now()}`;
+    const totalDebit  = entries.reduce((s, e) => s + parseFloat(e.debit  || 0), 0);
     const totalCredit = entries.reduce((s, e) => s + parseFloat(e.credit || 0), 0);
 
     const journal = await JournalEntry.create({
@@ -116,7 +122,7 @@ exports.openingBalance = async (req, res, next) => {
       .map(e => ({
         journal_id: journal.id,
         account_id: e.account_id,
-        debit: parseFloat(e.debit || 0),
+        debit:  parseFloat(e.debit  || 0),
         credit: parseFloat(e.credit || 0),
         description: 'Opening balance',
       }));
@@ -135,6 +141,7 @@ exports.openingBalance = async (req, res, next) => {
 
 exports.trialBalance = async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { period_id } = req.query;
     const result = await sequelize.query(`
       SELECT a.code, a.name, a.type,

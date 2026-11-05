@@ -1,29 +1,31 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { FreeItemAllocation, FreeItemUsage, Product, User, Warehouse, Customer, Invoice, Stock, StockMovement, sequelize } = require('../models');
 
-const include = [
-  { model: Product,   attributes: ['id', 'name', 'sku', 'case_size', 'selling_price'] },
-  { model: Warehouse, attributes: ['id', 'name'] },
-  { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
-];
+function getInclude(db) {
+  const { Product, Warehouse, User } = db;
+  return [
+    { model: Product,   attributes: ['id', 'name', 'sku', 'case_size', 'selling_price'] },
+    { model: Warehouse, attributes: ['id', 'name'] },
+    { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+  ];
+}
 
-const companyId = (req) => req.user.Branch?.company_id ?? 1;
+const companyId  = (req) => req.user.Branch?.company_id ?? 1;
 const canApprove = (req) => req.permissions?.has('sales.approve');
 
-// GET /api/free-allocations — admin sees all, sales rep sees own
 router.get('/', async (req, res, next) => {
   try {
+    const { FreeItemAllocation } = req.db;
     const where = { company_id: companyId(req) };
     if (!canApprove(req)) where.sales_rep_id = req.user.id;
-    const rows = await FreeItemAllocation.findAll({ where, include, order: [['updatedAt', 'DESC']] });
+    const rows = await FreeItemAllocation.findAll({ where, include: getInclude(req.db), order: [['updatedAt', 'DESC']] });
     res.json(rows);
   } catch (err) { next(err); }
 });
 
-// POST /api/free-allocations — create allocation (admin/manager)
 router.post('/', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { FreeItemAllocation } = req.db;
     const { sales_rep_id, product_id, warehouse_id, quantity, notes } = req.body;
     if (!sales_rep_id || !product_id || !warehouse_id || !quantity || quantity <= 0) {
       return res.status(400).json({ message: 'sales_rep_id, product_id, warehouse_id and quantity are required' });
@@ -31,11 +33,11 @@ router.post('/', authorize('sales.approve'), async (req, res, next) => {
     const [alloc, created] = await FreeItemAllocation.findOrCreate({
       where: { sales_rep_id, product_id },
       defaults: {
-        company_id: companyId(req),
-        branch_id:  req.user.branch_id,
+        company_id:         companyId(req),
+        branch_id:          req.user.branch_id,
         warehouse_id,
         allocated_quantity: quantity,
-        used_quantity: 0,
+        used_quantity:      0,
         notes,
         created_by: req.user.id,
       },
@@ -44,27 +46,28 @@ router.post('/', authorize('sales.approve'), async (req, res, next) => {
       await alloc.increment('allocated_quantity', { by: parseFloat(quantity) });
       if (notes) await alloc.update({ notes });
     }
-    res.status(201).json(await FreeItemAllocation.findByPk(alloc.id, { include }));
+    res.status(201).json(await FreeItemAllocation.findByPk(alloc.id, { include: getInclude(req.db) }));
   } catch (err) { next(err); }
 });
 
-// PUT /api/free-allocations/:id/topup — add more quantity (admin/manager)
 router.put('/:id/topup', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { FreeItemAllocation } = req.db;
     const { quantity, notes } = req.body;
     if (!quantity || quantity <= 0) return res.status(400).json({ message: 'quantity must be > 0' });
     const alloc = await FreeItemAllocation.findByPk(req.params.id);
     if (!alloc) return res.status(404).json({ message: 'Allocation not found' });
     await alloc.increment('allocated_quantity', { by: parseFloat(quantity) });
     if (notes) await alloc.update({ notes });
-    res.json(await FreeItemAllocation.findByPk(alloc.id, { include }));
+    res.json(await FreeItemAllocation.findByPk(alloc.id, { include: getInclude(req.db) }));
   } catch (err) { next(err); }
 });
 
-// POST /api/free-allocations/:id/distribute — sales rep gives items to customer
 router.post('/:id/distribute', authorize('sales.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { FreeItemAllocation, FreeItemUsage, Stock, StockMovement } = req.db;
     const { customer_id, invoice_id, quantity, notes } = req.body;
     if (!quantity || quantity <= 0) {
       await t.rollback();
@@ -107,15 +110,15 @@ router.post('/:id/distribute', authorize('sales.create'), async (req, res, next)
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// GET /api/free-allocations/:id/history — usage history for an allocation
 router.get('/:id/history', async (req, res, next) => {
   try {
+    const { FreeItemAllocation, FreeItemUsage, Customer, User, Invoice } = req.db;
     const alloc = await FreeItemAllocation.findByPk(req.params.id);
     if (!alloc) return res.status(404).json({ message: 'Not found' });
     if (!canApprove(req) && alloc.sales_rep_id !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
 
     const usages = await FreeItemUsage.findAll({
-      where: { allocation_id: alloc.id },
+      where:   { allocation_id: alloc.id },
       include: [
         { model: Customer, attributes: ['id', 'name', 'code'] },
         { model: User, as: 'GivenBy', attributes: ['id', 'name'] },

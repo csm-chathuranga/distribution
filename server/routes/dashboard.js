@@ -1,9 +1,9 @@
 const router = require('express').Router();
-const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 
 router.get('/', async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const [sales, collections, stock, topProducts, statusDist, monthlyTrend] = await Promise.all([
       sequelize.query(`
         SELECT
@@ -76,9 +76,9 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/dashboard/trend?days=30
 router.get('/trend', async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const days = Math.min(parseInt(req.query.days) || 30, 90);
     const rows = await sequelize.query(`
       SELECT

@@ -1,10 +1,10 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 
 router.get('/sales-summary', authorize('reports.sales'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { from, to } = req.query;
     const result = await sequelize.query(`
       SELECT DATE(i.invoice_date) AS date,
@@ -27,6 +27,7 @@ router.get('/sales-summary', authorize('reports.sales'), async (req, res, next) 
 
 router.get('/aged-debtors', authorize('reports.finance'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const result = await sequelize.query(`
       SELECT c.id, c.name, c.code, c.credit_days,
         SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) <= 0 THEN i.balance_due ELSE 0 END) AS current_amount,
@@ -47,6 +48,7 @@ router.get('/aged-debtors', authorize('reports.finance'), async (req, res, next)
 
 router.get('/stock-movement', authorize('reports.inventory'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { warehouse_id, product_id, from, to } = req.query;
     const result = await sequelize.query(`
       SELECT sm.created_at, sm.movement_type, sm.quantity, sm.balance_after, sm.unit_cost,
@@ -68,6 +70,7 @@ router.get('/stock-movement', authorize('reports.inventory'), async (req, res, n
 
 router.get('/profit-loss', authorize('reports.finance'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { period_id } = req.query;
     const result = await sequelize.query(`
       SELECT a.type, a.name, a.code,
@@ -86,6 +89,7 @@ router.get('/profit-loss', authorize('reports.finance'), async (req, res, next) 
 
 router.get('/low-stock', authorize('reports.inventory'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const result = await sequelize.query(`
       SELECT p.id, p.sku, p.name, p.reorder_point, s.quantity, w.name AS warehouse
       FROM stock s
@@ -100,6 +104,7 @@ router.get('/low-stock', authorize('reports.inventory'), async (req, res, next) 
 
 router.get('/vat-summary', authorize('reports.finance'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { from, to } = req.query;
     const dateFilter = (col) =>
       (from ? `AND ${col} >= :from` : '') + (to ? ` AND ${col} <= :to` : '');
@@ -128,10 +133,10 @@ router.get('/vat-summary', authorize('reports.finance'), async (req, res, next) 
       const inp = inputRows.find(r => r.month === month) || {};
       return {
         month,
-        subtotal: parseFloat(out.subtotal || 0),
+        subtotal:   parseFloat(out.subtotal   || 0),
         output_vat: parseFloat(out.output_vat || 0),
-        input_vat: parseFloat(inp.input_vat || 0),
-        net_vat: parseFloat(out.output_vat || 0) - parseFloat(inp.input_vat || 0),
+        input_vat:  parseFloat(inp.input_vat  || 0),
+        net_vat:    parseFloat(out.output_vat || 0) - parseFloat(inp.input_vat || 0),
       };
     });
     res.json(result);
@@ -140,6 +145,7 @@ router.get('/vat-summary', authorize('reports.finance'), async (req, res, next) 
 
 router.get('/customer-statement/:customerId', authorize('reports.finance'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { customerId } = req.params;
     const { from, to } = req.query;
     const [invoices, receipts] = await Promise.all([
@@ -174,6 +180,7 @@ router.get('/customer-statement/:customerId', authorize('reports.finance'), asyn
 
 router.get('/product-profitability', authorize('reports.finance'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { from, to } = req.query;
     const result = await sequelize.query(`
       SELECT p.id, p.sku, p.name,
@@ -198,6 +205,7 @@ router.get('/product-profitability', authorize('reports.finance'), async (req, r
 
 router.get('/reorder-suggestions', authorize('reports.inventory'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const result = await sequelize.query(`
       SELECT p.id AS product_id, p.sku, p.name, p.reorder_point, p.reorder_quantity, p.cost_price,
         s.quantity AS current_stock, w.id AS warehouse_id, w.name AS warehouse,
@@ -223,6 +231,7 @@ router.get('/reorder-suggestions', authorize('reports.inventory'), async (req, r
 
 router.get('/sales-rep-kpi', authorize('reports.sales'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { year, month } = req.query;
     const currentDate = new Date();
     const y = year || currentDate.getFullYear();
@@ -246,9 +255,9 @@ router.get('/sales-rep-kpi', authorize('reports.sales'), async (req, res, next) 
   } catch (err) { next(err); }
 });
 
-// ── Stock × Price Matrix ─────────────────────────────────────────
 router.get('/stock-matrix', authorize('reports.inventory'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const rows = await sequelize.query(`
       SELECT p.id AS product_id, p.sku, p.name, p.selling_price, p.cost_price,
              p.reorder_point, p.reorder_quantity, p.is_active,
@@ -261,7 +270,6 @@ router.get('/stock-matrix', authorize('reports.inventory'), async (req, res, nex
       ORDER BY p.name ASC, w.name ASC
     `, { type: QueryTypes.SELECT });
 
-    // Pivot: group by product, warehouses as columns
     const warehouseMap = {};
     const productMap = {};
     rows.forEach(r => {
@@ -283,9 +291,9 @@ router.get('/stock-matrix', authorize('reports.inventory'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
-// ── Fast / Slow Movers ───────────────────────────────────────────
 router.get('/fast-movers', authorize('reports.sales'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { days = 30, limit = 20 } = req.query;
     const rows = await sequelize.query(`
       SELECT p.id, p.sku, p.name,
@@ -309,9 +317,9 @@ router.get('/fast-movers', authorize('reports.sales'), async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-// ── Best Routes ──────────────────────────────────────────────────
 router.get('/best-routes', authorize('reports.sales'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { days = 30 } = req.query;
     const rows = await sequelize.query(`
       SELECT r.id, r.name AS route_name,
@@ -336,9 +344,9 @@ router.get('/best-routes', authorize('reports.sales'), async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-// ── Customer Ranking ─────────────────────────────────────────────
 router.get('/customer-ranking', authorize('reports.sales'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { days = 90 } = req.query;
     const rows = await sequelize.query(`
       SELECT c.id, c.name, c.code, c.customer_type, c.credit_limit,
@@ -361,9 +369,9 @@ router.get('/customer-ranking', authorize('reports.sales'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
-// ── Daily Collections ────────────────────────────────────────────
 router.get('/daily-collections', async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const canViewAll = req.user?.permissions?.some(p => ['sales.view_all','reports.sales'].includes(p));
     const { date, sales_rep_id } = req.query;
     const targetDate = date || new Date().toISOString().slice(0, 10);
@@ -399,7 +407,6 @@ router.get('/daily-collections', async (req, res, next) => {
       ORDER BY uc.name, r.id DESC
     `, { type: QueryTypes.SELECT, replacements: { date: targetDate, repId } });
 
-    // Deduplicate by receipt_id for summary (one receipt may have multiple allocation rows)
     const uniqueReceipts = [...new Map(rows.map(r => [r.receipt_id, r])).values()];
     const totalCollected = uniqueReceipts.reduce((s, r) => s + parseFloat(r.collected_amount), 0);
 
@@ -419,6 +426,7 @@ router.get('/daily-collections', async (req, res, next) => {
 
 router.get('/aged-creditors', authorize('reports.finance'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const result = await sequelize.query(`
       SELECT
         s.id, s.name, s.code, s.credit_days,
@@ -447,9 +455,9 @@ router.get('/aged-creditors', authorize('reports.finance'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
-// GET /api/reports/van-damage-loss — damaged/lost items from loading sheets + manually reported
 router.get('/van-damage-loss', authorize('reports.inventory'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const { from, to } = req.query;
     const rows = await sequelize.query(`
       SELECT

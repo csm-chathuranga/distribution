@@ -1,40 +1,43 @@
-const { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, User, SalesOrder, OrderReturn, Route, sequelize } = require('../models');
 const notify = require('../notify');
 const { Op } = require('sequelize');
 
-const include = [
-  { model: Customer, attributes: ['id', 'name', 'code', 'customer_type'], include: [{ model: Route, attributes: ['id', 'name'] }] },
-  { model: InvoiceLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
-  { model: LoadingSheet, as: 'VanSheet', attributes: ['id', 'sheet_number'] },
-  { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
-  { model: SalesOrder, as: 'Order', attributes: ['id', 'order_number'],
-    include: [{ model: OrderReturn, as: 'Returns',
-      include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] }] },
-];
+function getInclude(db) {
+  const { Customer, Route, InvoiceLine, Product, LoadingSheet, User, SalesOrder, OrderReturn } = db;
+  return [
+    { model: Customer, attributes: ['id', 'name', 'code', 'customer_type'], include: [{ model: Route, attributes: ['id', 'name'] }] },
+    { model: InvoiceLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+    { model: LoadingSheet, as: 'VanSheet', attributes: ['id', 'sheet_number'] },
+    { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+    { model: SalesOrder, as: 'Order', attributes: ['id', 'order_number'],
+      include: [{ model: OrderReturn, as: 'Returns',
+        include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] }] },
+  ];
+}
 
 exports.list = async (req, res, next) => {
   try {
+    const { Invoice, Customer } = req.db;
     const { status, customer_id, from, to, page = 1, limit = 20 } = req.query;
     const where = {};
-    if (status) where.status = status;
+    if (status)      where.status      = status;
     if (customer_id) where.customer_id = customer_id;
     if (from || to) {
       where.invoice_date = {};
       if (from) where.invoice_date[Op.gte] = from;
-      if (to) where.invoice_date[Op.lte] = to;
+      if (to)   where.invoice_date[Op.lte] = to;
     }
     const ownOnly = req.permissions?.has('sales.view_own') && !req.permissions?.has('sales.view_all');
     if (ownOnly) where[Op.or] = [
       { sales_rep_id: req.user.id },
-      { created_by: req.user.id },
+      { created_by:   req.user.id },
     ];
 
     const { count, rows } = await Invoice.findAndCountAll({
       where,
       include: [{ model: Customer, attributes: ['id', 'name', 'code'] }],
-      limit: parseInt(limit),
+      limit:  parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['invoice_date', 'DESC']],
+      order:  [['invoice_date', 'DESC']],
     });
     res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
@@ -42,7 +45,8 @@ exports.list = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const invoice = await Invoice.findByPk(req.params.id, { include });
+    const { Invoice } = req.db;
+    const invoice = await Invoice.findByPk(req.params.id, { include: getInclude(req.db) });
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
     const ownOnly = req.permissions?.has('sales.view_own') && !req.permissions?.has('sales.view_all');
     if (ownOnly && invoice.sales_rep_id !== req.user.id && invoice.created_by !== req.user.id) {
@@ -52,7 +56,7 @@ exports.get = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-const generateInvoiceNumber = async (type = 'TAX_INVOICE') => {
+const generateInvoiceNumber = async (Invoice, type = 'TAX_INVOICE') => {
   const prefix = type === 'CREDIT_NOTE' ? 'CN' : type === 'PROFORMA' ? 'PRO' : 'INV';
   const today = new Date();
   const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
@@ -62,14 +66,11 @@ const generateInvoiceNumber = async (type = 'TAX_INVOICE') => {
   return `${prefix}-${datePart}-${String(seq).padStart(3, '0')}`;
 };
 
-// Core post logic — runs inside an existing transaction.
-// Handles journal entries, stock movements, and customer balance.
-async function performPost(invoice, userId, t) {
+async function performPost(invoice, userId, t, db) {
+  const { Account, AccountingPeriod, JournalEntry, JournalLine, Stock, StockMovement, LoadingSheetLine, OrderReturn, Customer } = db;
   const now = new Date();
   const isCreditNote = invoice.invoice_type === 'CREDIT_NOTE';
 
-  // Find open accounting period, or auto-create one for the current month.
-  // If the period is intentionally closed by admin, skip journals but still post.
   let period = await AccountingPeriod.findOne({
     where: { year: now.getFullYear(), month: now.getMonth() + 1, is_open: true },
     transaction: t,
@@ -78,15 +79,12 @@ async function performPost(invoice, userId, t) {
     try {
       period = await AccountingPeriod.create({
         company_id: invoice.company_id,
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
-        is_open: true,
+        year: now.getFullYear(), month: now.getMonth() + 1, is_open: true,
         name: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
       }, { transaction: t });
     } catch { period = null; }
   }
 
-  // System accounts
   const [debtorAcc, revenueAcc, vatAcc, cogsAcc, stockAcc] = await Promise.all([
     Account.findOne({ where: { is_system: true, sub_type: 'TRADE_DEBTORS'  }, transaction: t }),
     Account.findOne({ where: { is_system: true, sub_type: 'SALES_REVENUE'  }, transaction: t }),
@@ -95,7 +93,6 @@ async function performPost(invoice, userId, t) {
     Account.findOne({ where: { is_system: true, sub_type: 'STOCK'          }, transaction: t }),
   ]);
 
-  // AR / Revenue journal
   let journal = null;
   if (period && debtorAcc && revenueAcc) {
     const entryNum = `${isCreditNote ? 'CN' : 'INV'}-JE-${invoice.invoice_number}`;
@@ -114,32 +111,24 @@ async function performPost(invoice, userId, t) {
     ];
 
     journal = await JournalEntry.create({
-      company_id:   invoice.company_id,
-      branch_id:    invoice.branch_id,
-      period_id:    period.id,
-      entry_number: entryNum,
-      entry_date:   invoice.invoice_date,
-      source_type:  'INVOICE',
-      source_id:    invoice.id,
-      description:  `${isCreditNote ? 'Credit Note' : 'Invoice'} ${invoice.invoice_number}`,
-      total_debit:  invoice.total_amount,
-      total_credit: invoice.total_amount,
-      is_posted:    true,
-      created_by:   userId,
+      company_id: invoice.company_id, branch_id: invoice.branch_id, period_id: period.id,
+      entry_number: entryNum, entry_date: invoice.invoice_date,
+      source_type: 'INVOICE', source_id: invoice.id,
+      description: `${isCreditNote ? 'Credit Note' : 'Invoice'} ${invoice.invoice_number}`,
+      total_debit: invoice.total_amount, total_credit: invoice.total_amount,
+      is_posted: true, created_by: userId,
     }, { transaction: t });
 
     await JournalLine.bulkCreate(journalLines.map(l => ({ ...l, journal_id: journal.id })), { transaction: t });
   }
 
-  // Stock + COGS per line
   for (const line of invoice.Lines) {
-    const billedQty = parseFloat(line.quantity);
-    const freeQty   = parseFloat(line.free_quantity || 0);
-    const totalShipQty = billedQty + freeQty;   // total physical units leaving warehouse
-    const costTotal = (line.cost_price || 0) * totalShipQty;
+    const billedQty     = parseFloat(line.quantity);
+    const freeQty       = parseFloat(line.free_quantity || 0);
+    const totalShipQty  = billedQty + freeQty;
+    const costTotal     = (line.cost_price || 0) * totalShipQty;
 
     if (invoice.loading_sheet_id) {
-      // Van sales: stock already deducted at Load Van; accumulate sold_quantity on sheet line
       const sheetLine = await LoadingSheetLine.findOne({
         where: { sheet_id: invoice.loading_sheet_id, product_id: line.product_id },
         transaction: t, lock: true,
@@ -149,15 +138,13 @@ async function performPost(invoice, userId, t) {
         await sheetLine.update({ sold_quantity: newSold }, { transaction: t });
       }
     } else {
-      // Regular invoice: deduct total shipped qty (billed + free) from warehouse
       const stock = await Stock.findOne({
         where: { warehouse_id: invoice.warehouse_id, product_id: line.product_id },
         transaction: t, lock: true,
       });
       if (stock) {
-        const deductQty = isCreditNote ? -totalShipQty : totalShipQty;
-        const newQty = parseFloat(stock.quantity) - deductQty;
-        // Release any reservation made at order creation (billedQty); clamp to 0 for direct invoices
+        const deductQty  = isCreditNote ? -totalShipQty : totalShipQty;
+        const newQty     = parseFloat(stock.quantity) - deductQty;
         const newReserved = Math.max(0, parseFloat(stock.reserved_quantity || 0) - billedQty);
         await stock.update({ quantity: newQty, reserved_quantity: newReserved }, { transaction: t });
         await StockMovement.create({
@@ -169,7 +156,6 @@ async function performPost(invoice, userId, t) {
       }
     }
 
-    // COGS journal (only when journal was created and cost is known)
     if (journal && cogsAcc && stockAcc && costTotal > 0) {
       await JournalLine.bulkCreate(isCreditNote ? [
         { journal_id: journal.id, account_id: stockAcc.id, debit_amount: costTotal, credit_amount: 0, narration: 'Stock restored — credit note' },
@@ -181,8 +167,6 @@ async function performPost(invoice, userId, t) {
     }
   }
 
-  // Return damaged/rejected stock to warehouse for DEDUCT returns (non-van only)
-  // Van returns are reconciled at day-end close via LoadingSheet
   if (!invoice.loading_sheet_id && invoice.order_id) {
     const rets = await OrderReturn.findAll({
       where: { order_id: invoice.order_id, action: 'DEDUCT' },
@@ -221,21 +205,22 @@ async function performPost(invoice, userId, t) {
 }
 
 exports.create = async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Invoice, InvoiceLine, Product, FreeItemAllocation, FreeItemUsage } = req.db;
     const { lines, free_items = [], ...invoiceData } = req.body;
     invoiceData.created_by   = req.user.id;
     invoiceData.sales_rep_id = req.user.id;
     if (!invoiceData.branch_id)  invoiceData.branch_id  = req.user.branch_id;
     if (!invoiceData.company_id) invoiceData.company_id = req.user.Branch?.company_id;
     if (!invoiceData.invoice_number) {
-      invoiceData.invoice_number = await generateInvoiceNumber(invoiceData.invoice_type);
+      invoiceData.invoice_number = await generateInvoiceNumber(Invoice, invoiceData.invoice_type);
     }
 
-    // Validate and inject free item lines
     if (free_items.length > 0) {
       const allocIds = free_items.map(f => f.allocation_id);
-      const allocs = await FreeItemAllocation.findAll({ where: { id: allocIds }, transaction: t, lock: true });
+      const allocs   = await FreeItemAllocation.findAll({ where: { id: allocIds }, transaction: t, lock: true });
       for (const fi of free_items) {
         const alloc = allocs.find(a => a.id === Number(fi.allocation_id));
         if (!alloc) throw Object.assign(new Error(`Free allocation #${fi.allocation_id} not found`), { status: 400 });
@@ -250,7 +235,6 @@ exports.create = async (req, res, next) => {
       }
     }
 
-    // Auto-fill cost_price from product catalogue for COGS accuracy
     const productIds = [...new Set(lines.map(l => l.product_id).filter(Boolean))];
     const dbProducts = await Product.findAll({ where: { id: productIds }, attributes: ['id', 'cost_price'], transaction: t });
     const costMap = {};
@@ -261,33 +245,30 @@ exports.create = async (req, res, next) => {
       const lineSub = l.quantity * l.unit_price * (1 - (l.discount_rate || 0) / 100);
       const lineVat = lineSub * ((l.vat_rate || 0) / 100);
       subtotal += lineSub;
-      vat += lineVat;
+      vat      += lineVat;
       const cost_price = l.cost_price ?? costMap[l.product_id] ?? 0;
       return { ...l, cost_price, line_subtotal: lineSub, vat_amount: lineVat, line_total: lineSub + lineVat };
     });
 
-    invoiceData.subtotal    = subtotal;
-    invoiceData.vat_amount  = vat;
-    invoiceData.total_amount = subtotal + vat;
-    invoiceData.balance_due  = invoiceData.total_amount;
+    invoiceData.subtotal      = subtotal;
+    invoiceData.vat_amount    = vat;
+    invoiceData.total_amount  = subtotal + vat;
+    invoiceData.balance_due   = invoiceData.total_amount;
 
     const invoice = await Invoice.create(invoiceData, { transaction: t });
     await InvoiceLine.bulkCreate(processedLines.map(l => ({ ...l, invoice_id: invoice.id })), { transaction: t });
 
-    // Auto-post — fetch with Lines so performPost can read them
     const fresh = await Invoice.findByPk(invoice.id, {
       include: [{ model: InvoiceLine, as: 'Lines' }],
       transaction: t,
     });
-    await performPost(fresh, req.user.id, t);
+    await performPost(fresh, req.user.id, t, req.db);
 
-    // Deduct free item quotas now that invoice is confirmed
     for (const fi of free_items) {
       await FreeItemAllocation.increment('used_quantity', { by: parseFloat(fi.quantity), where: { id: fi.allocation_id }, transaction: t });
       await FreeItemUsage.create({ allocation_id: fi.allocation_id, customer_id: invoiceData.customer_id, invoice_id: invoice.id, quantity: fi.quantity, notes: 'Via invoice', given_by: req.user.id }, { transaction: t });
     }
 
-    // Deduct free_quantity on regular lines from the rep's allocation (if one exists)
     for (const line of fresh.Lines) {
       const freeQty = parseFloat(line.free_quantity || 0);
       if (freeQty <= 0) continue;
@@ -298,12 +279,9 @@ exports.create = async (req, res, next) => {
       if (!alloc) continue;
       await alloc.increment('used_quantity', { by: freeQty, transaction: t });
       await FreeItemUsage.create({
-        allocation_id: alloc.id,
-        customer_id:   invoiceData.customer_id,
-        invoice_id:    invoice.id,
-        quantity:      freeQty,
-        notes:         'Free qty on invoice line',
-        given_by:      req.user.id,
+        allocation_id: alloc.id, customer_id: invoiceData.customer_id,
+        invoice_id: invoice.id, quantity: freeQty,
+        notes: 'Free qty on invoice line', given_by: req.user.id,
       }, { transaction: t });
     }
 
@@ -314,14 +292,15 @@ exports.create = async (req, res, next) => {
     notify({ roleName: 'super_admin', type: 'INVOICE_POSTED', title: 'Invoice Posted', body: `${invoiceData.invoice_number} created by ${actorName}`, link: `/invoices/${invoice.id}` });
     notify({ roleName: 'manager',     type: 'INVOICE_POSTED', title: 'Invoice Posted', body: `${invoiceData.invoice_number} created by ${actorName}`, link: `/invoices/${invoice.id}` });
 
-    res.status(201).json(await Invoice.findByPk(invoice.id, { include }));
+    res.status(201).json(await Invoice.findByPk(invoice.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 };
 
-// Manual post — kept as a fallback but rarely needed now that create() auto-posts
 exports.post = async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Invoice, InvoiceLine } = req.db;
     const invoice = await Invoice.findByPk(req.params.id, {
       include: [{ model: InvoiceLine, as: 'Lines' }],
       transaction: t,
@@ -329,19 +308,19 @@ exports.post = async (req, res, next) => {
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
     if (invoice.status !== 'DRAFT') return res.status(400).json({ message: 'Invoice already posted' });
 
-    await performPost(invoice, req.user.id, t);
+    await performPost(invoice, req.user.id, t, req.db);
     await t.commit();
 
     const isCreditNote = invoice.invoice_type === 'CREDIT_NOTE';
-    const notifType  = isCreditNote ? 'CREDIT_NOTE_POSTED' : 'INVOICE_POSTED';
-    const notifTitle = isCreditNote ? 'Credit Note Posted'  : 'Invoice Posted';
-    const postedBy   = req.user.name || `User #${req.user.id}`;
-    const notifBody  = `${invoice.invoice_number} posted by ${postedBy}`;
+    const notifType    = isCreditNote ? 'CREDIT_NOTE_POSTED' : 'INVOICE_POSTED';
+    const notifTitle   = isCreditNote ? 'Credit Note Posted'  : 'Invoice Posted';
+    const postedBy     = req.user.name || `User #${req.user.id}`;
+    const notifBody    = `${invoice.invoice_number} posted by ${postedBy}`;
     notify({ roleName: 'finance',     type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
     notify({ roleName: 'cashier',     type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
     notify({ roleName: 'admin',       type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
     notify({ roleName: 'super_admin', type: notifType, title: notifTitle, body: notifBody, link: `/invoices/${invoice.id}` });
 
-    res.json(await Invoice.findByPk(invoice.id, { include }));
+    res.json(await Invoice.findByPk(invoice.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 };

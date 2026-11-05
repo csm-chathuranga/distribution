@@ -409,4 +409,35 @@ alloc.increment('allocated_quantity', { by: freeQty, transaction: t })
 
 ---
 
-*Last updated: 2026-10-22*
+---
+
+## Multi-Tenant Architecture (2026-11-06)
+
+**Problem solved:** `test-dist.lumac.cc` was writing to `distribution_db` instead of `distribution_stage` because all models were resolved once at module load via `require('../models')`.
+
+**Solution:** Every route file and controller now resolves models per-request from `req.db` (the tenant-specific Sequelize models set by `server/middleware/tenant.js`).
+
+**Tenant routing:**
+| Hostname | Database |
+|----------|----------|
+| `localhost` | `distribution_db` |
+| `rathnayaka.lumac.cc` | `distribution_db` |
+| `test-dist.lumac.cc` | `distribution_stage` |
+
+**Files changed (all 5 controllers + all route files with model references):**
+
+| Type | Files |
+|------|-------|
+| Factories | `server/controllers/crudFactory.js` — now accepts string model name, resolved from `req.db` per request; `includeFn: (db) => [...]` for tenant-aware includes |
+| Controllers | `authController.js`, `userController.js`, `roleController.js`, `accountController.js`, `invoiceController.js` |
+| Routes | `vehicles`, `categories`, `periods`, `notifications`, `suppliers`, `branches`, `routes_api`, `warehouses`, `users`, `auth`, `index`, `dashboard`, `reports`, `salesOrders`, `customers`, `products`, `stock`, `journals`, `receipts`, `cheques`, `expenses`, `purchaseOrders`, `goodsReceived`, `payments`, `stockAdjustments`, `stockTransfers`, `priceLists`, `customerReturns`, `supplierReturns`, `freeAllocations`, `deliveries`, `commission`, `invoices`, `loadingSheets` |
+
+**Pattern applied:**
+- Route-level: `const { ModelA, ModelB, sequelize } = req.db;` as first line inside each handler
+- crudFactory-based: `crudFactory('ModelName', { includeFn: (db) => [...], ... })`
+- Transactions: `const { sequelize } = req.db; const t = await sequelize.transaction();`
+- `performPost()` in invoiceController: now accepts `db` parameter, destructures models from it
+
+**Not changed:** `server/middleware/auth.js` (needs default connection to verify JWT before `req.db` is set), seeders (use default connection intentionally).
+
+*Last updated: 2026-11-06*

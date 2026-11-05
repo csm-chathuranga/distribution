@@ -1,15 +1,14 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { Stock, StockMovement, Product, Category, Unit, Warehouse, sequelize } = require('../models');
 
 const SCOPED_ROLES = ['sales_rep', 'driver'];
 
 router.get('/on-hand', authorize.any('inventory.view', 'sales.create'), async (req, res, next) => {
   try {
+    const { Stock, StockMovement, Product, Category, Unit, Warehouse } = req.db;
     const { warehouse_id, search } = req.query;
     const where = {};
-    // Scoped roles are locked to their assigned warehouse regardless of query param
     if (SCOPED_ROLES.includes(req.user?.Role?.name) && req.user?.assigned_warehouse) {
       where.warehouse_id = req.user.assigned_warehouse.id;
     } else if (warehouse_id) {
@@ -44,24 +43,24 @@ router.get('/on-hand', authorize.any('inventory.view', 'sales.create'), async (r
     });
 
     const data = rows.map(s => ({
-      id:            s.id,
-      warehouse_id:  s.warehouse_id,
-      warehouse:     s.Warehouse?.name,
-      product_id:    s.product_id,
-      sku:           s.Product?.sku,
-      product:       s.Product?.name,
-      category:      s.Product?.Category?.name,
-      unit:          s.Product?.BaseUnit?.abbreviation || s.Product?.BaseUnit?.name,
-      quantity:      parseFloat(s.quantity || 0),
-      reserved:      parseFloat(s.reserved_quantity || 0),
-      available:     parseFloat(s.quantity || 0) - parseFloat(s.reserved_quantity || 0),
-      case_size:     s.Product?.case_size ? parseInt(s.Product.case_size) : null,
-      cost_price:    parseFloat(s.Product?.cost_price || 0),
-      stock_value:   parseFloat(s.quantity || 0) * parseFloat(s.Product?.cost_price || 0),
-      low_stock:     parseFloat(s.quantity || 0) === 0,
+      id:           s.id,
+      warehouse_id: s.warehouse_id,
+      warehouse:    s.Warehouse?.name,
+      product_id:   s.product_id,
+      sku:          s.Product?.sku,
+      product:      s.Product?.name,
+      category:     s.Product?.Category?.name,
+      unit:         s.Product?.BaseUnit?.abbreviation || s.Product?.BaseUnit?.name,
+      quantity:     parseFloat(s.quantity || 0),
+      reserved:     parseFloat(s.reserved_quantity || 0),
+      available:    parseFloat(s.quantity || 0) - parseFloat(s.reserved_quantity || 0),
+      case_size:    s.Product?.case_size ? parseInt(s.Product.case_size) : null,
+      cost_price:   parseFloat(s.Product?.cost_price || 0),
+      stock_value:  parseFloat(s.quantity || 0) * parseFloat(s.Product?.cost_price || 0),
+      low_stock:    parseFloat(s.quantity || 0) === 0,
     }));
 
-    const total_value = data.reduce((s, r) => s + r.stock_value, 0);
+    const total_value     = data.reduce((s, r) => s + r.stock_value, 0);
     const low_stock_count = data.filter(r => r.low_stock).length;
 
     res.json({ data, total: data.length, total_value, low_stock_count });
@@ -69,8 +68,10 @@ router.get('/on-hand', authorize.any('inventory.view', 'sales.create'), async (r
 });
 
 router.post('/opening', authorize('inventory.adjust'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Stock, StockMovement } = req.db;
     const { warehouse_id, items } = req.body;
     if (!warehouse_id || !Array.isArray(items) || items.length === 0) {
       await t.rollback();
@@ -78,7 +79,7 @@ router.post('/opening', authorize('inventory.adjust'), async (req, res, next) =>
     }
 
     for (const item of items) {
-      const qty = parseFloat(item.quantity || 0);
+      const qty  = parseFloat(item.quantity || 0);
       const cost = parseFloat(item.unit_cost || 0);
       if (qty < 0) continue;
 
@@ -89,14 +90,14 @@ router.post('/opening', authorize('inventory.adjust'), async (req, res, next) =>
 
       await StockMovement.create({
         warehouse_id,
-        product_id: item.product_id,
+        product_id:    item.product_id,
         movement_type: 'ADJUSTMENT',
-        source_type: 'OPENING',
-        quantity: qty,
+        source_type:   'OPENING',
+        quantity:      qty,
         balance_after: qty,
-        unit_cost: cost,
-        notes: 'Opening stock entry',
-        created_by: req.user.id,
+        unit_cost:     cost,
+        notes:         'Opening stock entry',
+        created_by:    req.user.id,
       }, { transaction: t });
     }
 
@@ -105,12 +106,12 @@ router.post('/opening', authorize('inventory.adjust'), async (req, res, next) =>
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// POST /stock/damage-report — sales rep records damaged/expired stock
-// Directly deducts from stock and creates StockMovement records
 router.post('/damage-report', authorize('sales.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
-    const { lines } = req.body; // [{ product_id, quantity, reason, notes }]
+    const { Stock, StockMovement } = req.db;
+    const { lines } = req.body;
     if (!Array.isArray(lines) || lines.length === 0) {
       await t.rollback();
       return res.status(400).json({ message: 'lines[] required' });
@@ -128,7 +129,7 @@ router.post('/damage-report', authorize('sales.create'), async (req, res, next) 
       if (!line.product_id || qty <= 0) continue;
 
       const [stock] = await Stock.findOrCreate({
-        where: { warehouse_id: warehouseId, product_id: line.product_id },
+        where:    { warehouse_id: warehouseId, product_id: line.product_id },
         defaults: { quantity: 0, reserved_quantity: 0 },
         transaction: t,
       });
@@ -155,9 +156,9 @@ router.post('/damage-report', authorize('sales.create'), async (req, res, next) 
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// GET /stock/damage-report — list damage/expiry reports for the current user
 router.get('/damage-report', authorize('sales.create'), async (req, res, next) => {
   try {
+    const { StockMovement, Product } = req.db;
     const warehouseId = req.user.assigned_warehouse?.id;
     const where = {
       movement_type: 'OUT',
@@ -169,8 +170,8 @@ router.get('/damage-report', authorize('sales.create'), async (req, res, next) =
     const rows = await StockMovement.findAll({
       where,
       include: [{ model: Product, attributes: ['id', 'name', 'sku'] }],
-      order: [['createdAt', 'DESC']],
-      limit: 50,
+      order:   [['createdAt', 'DESC']],
+      limit:   50,
     });
     res.json(rows);
   } catch (err) { next(err); }

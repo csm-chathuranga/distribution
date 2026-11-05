@@ -1,46 +1,53 @@
 const router = require('express').Router();
-const { SupplierReturn, SupplierReturnLine, Supplier, GoodsReceived, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 
-const include = [
-  { model: Supplier, attributes: ['id', 'name', 'code'] },
-  { model: GoodsReceived, attributes: ['id', 'grn_number'] },
-  { model: SupplierReturnLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
-];
+function getInclude(db) {
+  const { Supplier, GoodsReceived, SupplierReturnLine, Product } = db;
+  return [
+    { model: Supplier,      attributes: ['id', 'name', 'code'] },
+    { model: GoodsReceived, attributes: ['id', 'grn_number'] },
+    { model: SupplierReturnLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku'] }] },
+  ];
+}
 
-// GET /api/supplier-returns
 router.get('/', async (req, res, next) => {
   try {
+    const { SupplierReturn, Supplier, GoodsReceived } = req.db;
     const { status, page = 1, limit = 20 } = req.query;
     const where = {};
     if (status) where.status = status;
     const { count, rows } = await SupplierReturn.findAndCountAll({
-      where, include: [{ model: Supplier, attributes: ['id', 'name'] }, { model: GoodsReceived, attributes: ['id', 'grn_number'] }],
-      limit: parseInt(limit),
+      where,
+      include: [
+        { model: Supplier,      attributes: ['id', 'name'] },
+        { model: GoodsReceived, attributes: ['id', 'grn_number'] },
+      ],
+      limit:  parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['return_date', 'DESC']],
+      order:  [['return_date', 'DESC']],
     });
     res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
 
-// GET /api/supplier-returns/:id
 router.get('/:id', async (req, res, next) => {
   try {
-    const ret = await SupplierReturn.findByPk(req.params.id, { include });
+    const { SupplierReturn } = req.db;
+    const ret = await SupplierReturn.findByPk(req.params.id, { include: getInclude(req.db) });
     if (!ret) return res.status(404).json({ message: 'Not found' });
     res.json(ret);
   } catch (err) { next(err); }
 });
 
-// POST /api/supplier-returns
 router.post('/', authorize('purchase.create'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { SupplierReturn, SupplierReturnLine } = req.db;
     const { lines, ...retData } = req.body;
     const total = lines.reduce((s, l) => s + Number(l.quantity) * Number(l.unit_cost), 0);
-    const year = new Date().getFullYear();
+    const year  = new Date().getFullYear();
     const count = await SupplierReturn.count();
     const return_number = `SR-${year}-${String(count + 1).padStart(5, '0')}`;
     const ret = await SupplierReturn.create({
@@ -53,14 +60,15 @@ router.post('/', authorize('purchase.create'), async (req, res, next) => {
       { transaction: t }
     );
     await t.commit();
-    res.status(201).json(await SupplierReturn.findByPk(ret.id, { include }));
+    res.status(201).json(await SupplierReturn.findByPk(ret.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// PUT /api/supplier-returns/:id/post
 router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { SupplierReturn, SupplierReturnLine, Supplier, GoodsReceived, AccountingPeriod, Account, JournalEntry, JournalLine, Stock, StockMovement } = req.db;
     const ret = await SupplierReturn.findByPk(req.params.id, {
       include: [{ model: SupplierReturnLine, as: 'Lines' }, { model: Supplier }],
       transaction: t,
@@ -77,7 +85,7 @@ router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) =>
       try {
         period = await AccountingPeriod.create({
           company_id: ret.company_id,
-          year: now.getFullYear(),
+          year:  now.getFullYear(),
           month: now.getMonth() + 1,
           is_open: true,
           name: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
@@ -85,7 +93,6 @@ router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) =>
       } catch { period = null; }
     }
 
-    // System accounts: DR Creditors (Supplier), CR Stock
     const creditorAcc = await Account.findOne({ where: { is_system: true, sub_type: 'TRADE_CREDITORS' }, transaction: t });
     const stockAcc    = await Account.findOne({ where: { is_system: true, sub_type: 'STOCK'           }, transaction: t });
 
@@ -94,23 +101,20 @@ router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) =>
       journal = await JournalEntry.create({
         company_id: ret.company_id, branch_id: ret.branch_id, period_id: period.id,
         entry_number: `SR-JE-${ret.return_number}`,
-        entry_date: ret.return_date,
-        source_type: 'SUPPLIER_RETURN', source_id: ret.id,
-        description: `Supplier Return ${ret.return_number} — ${ret.Supplier?.name}`,
+        entry_date:   ret.return_date,
+        source_type:  'SUPPLIER_RETURN', source_id: ret.id,
+        description:  `Supplier Return ${ret.return_number} — ${ret.Supplier?.name}`,
         total_debit: ret.total_amount, total_credit: ret.total_amount, is_posted: true,
         created_by: req.user.id,
       }, { transaction: t });
 
-      // DR Creditors (reduces what we owe the supplier), CR Stock (reduces stock value)
       await JournalLine.bulkCreate([
         { journal_id: journal.id, account_id: creditorAcc.id, debit_amount: ret.total_amount, credit_amount: 0, narration: 'Supplier credit for returned goods' },
         { journal_id: journal.id, account_id: stockAcc.id,    debit_amount: 0, credit_amount: ret.total_amount, narration: 'Stock value reduced on return' },
       ], { transaction: t });
     }
 
-    // Deduct stock for each returned line
     for (const line of ret.Lines) {
-      // Find the GRN warehouse to deduct from
       let warehouseId = ret.Supplier?.default_warehouse_id;
       if (ret.goods_received_id) {
         const grn = await GoodsReceived.findByPk(ret.goods_received_id, { transaction: t });
@@ -133,7 +137,7 @@ router.put('/:id/post', authorize('purchase.approve'), async (req, res, next) =>
 
     await ret.update({ status: 'POSTED', journal_entry_id: journal?.id ?? null }, { transaction: t });
     await t.commit();
-    res.json(await SupplierReturn.findByPk(ret.id, { include }));
+    res.json(await SupplierReturn.findByPk(ret.id, { include: getInclude(req.db) }));
   } catch (err) { await t.rollback(); next(err); }
 });
 

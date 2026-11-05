@@ -1,11 +1,10 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { StockTransfer, StockTransferLine, Warehouse, Product, Stock, StockMovement, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 function pad(n) { return String(n).padStart(3, '0'); }
 
-async function nextTrfNumber(t) {
+async function nextTrfNumber(StockTransfer, sequelize, t) {
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const count = await StockTransfer.count({
     where: sequelize.where(sequelize.fn('DATE', sequelize.col('created_at')), new Date().toISOString().slice(0, 10)),
@@ -16,6 +15,7 @@ async function nextTrfNumber(t) {
 
 router.get('/', authorize('inventory.view'), async (req, res, next) => {
   try {
+    const { StockTransfer, Warehouse } = req.db;
     const { page = 1, limit = 20, search = '' } = req.query;
     const offset = (page - 1) * limit;
     const where = search ? { transfer_number: { [Op.like]: `%${search}%` } } : {};
@@ -23,10 +23,10 @@ router.get('/', authorize('inventory.view'), async (req, res, next) => {
       where,
       include: [
         { model: Warehouse, as: 'FromWarehouse', attributes: ['id', 'name'] },
-        { model: Warehouse, as: 'ToWarehouse', attributes: ['id', 'name'] },
+        { model: Warehouse, as: 'ToWarehouse',   attributes: ['id', 'name'] },
       ],
-      order: [['created_at', 'DESC']],
-      limit: Number(limit),
+      order:  [['created_at', 'DESC']],
+      limit:  Number(limit),
       offset: Number(offset),
     });
     res.json({ data: rows, total: count });
@@ -35,10 +35,11 @@ router.get('/', authorize('inventory.view'), async (req, res, next) => {
 
 router.get('/:id', authorize('inventory.view'), async (req, res, next) => {
   try {
+    const { StockTransfer, StockTransferLine, Warehouse, Product } = req.db;
     const trf = await StockTransfer.findByPk(req.params.id, {
       include: [
         { model: Warehouse, as: 'FromWarehouse', attributes: ['id', 'name'] },
-        { model: Warehouse, as: 'ToWarehouse', attributes: ['id', 'name'] },
+        { model: Warehouse, as: 'ToWarehouse',   attributes: ['id', 'name'] },
         { model: StockTransferLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'sku', 'name', 'case_size'] }] },
       ],
     });
@@ -48,16 +49,18 @@ router.get('/:id', authorize('inventory.view'), async (req, res, next) => {
 });
 
 router.post('/', authorize('inventory.view'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { StockTransfer, StockTransferLine } = req.db;
     const { lines, ...data } = req.body;
     if (data.from_warehouse_id === data.to_warehouse_id) {
       return res.status(400).json({ message: 'Source and destination warehouses must be different' });
     }
-    data.created_by = req.user.id;
-    data.company_id = req.user.Branch?.company_id ?? req.user.company_id ?? 1;
-    data.branch_id  = req.user.branch_id ?? 1;
-    data.transfer_number = await nextTrfNumber(t);
+    data.created_by      = req.user.id;
+    data.company_id      = req.user.Branch?.company_id ?? req.user.company_id ?? 1;
+    data.branch_id       = req.user.branch_id ?? 1;
+    data.transfer_number = await nextTrfNumber(StockTransfer, sequelize, t);
     const trf = await StockTransfer.create(data, { transaction: t });
     if (lines?.length) {
       await StockTransferLine.bulkCreate(lines.map(l => ({ ...l, transfer_id: trf.id })), { transaction: t });
@@ -68,8 +71,10 @@ router.post('/', authorize('inventory.view'), async (req, res, next) => {
 });
 
 router.put('/:id/dispatch', authorize('inventory.transfer'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { StockTransfer, StockTransferLine, Stock, StockMovement } = req.db;
     const trf = await StockTransfer.findByPk(req.params.id, {
       include: [{ model: StockTransferLine, as: 'Lines' }],
       transaction: t,
@@ -87,15 +92,15 @@ router.put('/:id/dispatch', authorize('inventory.transfer'), async (req, res, ne
       await stock.update({ quantity: newQty }, { transaction: t });
       await line.update({ dispatched_quantity: line.requested_quantity }, { transaction: t });
       await StockMovement.create({
-        warehouse_id: trf.from_warehouse_id,
-        product_id: line.product_id,
+        warehouse_id:  trf.from_warehouse_id,
+        product_id:    line.product_id,
         movement_type: 'TRANSFER_OUT',
-        source_type: 'STOCK_TRANSFER',
-        source_id: trf.id,
-        quantity: line.requested_quantity,
+        source_type:   'STOCK_TRANSFER',
+        source_id:     trf.id,
+        quantity:      line.requested_quantity,
         balance_after: newQty,
-        unit_cost: 0,
-        created_by: req.user.id,
+        unit_cost:     0,
+        created_by:    req.user.id,
       }, { transaction: t });
     }
 
@@ -106,8 +111,10 @@ router.put('/:id/dispatch', authorize('inventory.transfer'), async (req, res, ne
 });
 
 router.put('/:id/receive', authorize('inventory.transfer'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { StockTransfer, StockTransferLine, Stock, StockMovement } = req.db;
     const trf = await StockTransfer.findByPk(req.params.id, {
       include: [{ model: StockTransferLine, as: 'Lines' }],
       transaction: t,
@@ -117,7 +124,7 @@ router.put('/:id/receive', authorize('inventory.transfer'), async (req, res, nex
 
     for (const line of trf.Lines) {
       const [stock] = await Stock.findOrCreate({
-        where: { warehouse_id: trf.to_warehouse_id, product_id: line.product_id },
+        where:    { warehouse_id: trf.to_warehouse_id, product_id: line.product_id },
         defaults: { quantity: 0, reserved_quantity: 0 },
         transaction: t,
       });
@@ -125,15 +132,15 @@ router.put('/:id/receive', authorize('inventory.transfer'), async (req, res, nex
       await stock.update({ quantity: newQty }, { transaction: t });
       await line.update({ received_quantity: line.dispatched_quantity }, { transaction: t });
       await StockMovement.create({
-        warehouse_id: trf.to_warehouse_id,
-        product_id: line.product_id,
+        warehouse_id:  trf.to_warehouse_id,
+        product_id:    line.product_id,
         movement_type: 'TRANSFER_IN',
-        source_type: 'STOCK_TRANSFER',
-        source_id: trf.id,
-        quantity: line.dispatched_quantity,
+        source_type:   'STOCK_TRANSFER',
+        source_id:     trf.id,
+        quantity:      line.dispatched_quantity,
         balance_after: newQty,
-        unit_cost: 0,
-        created_by: req.user.id,
+        unit_cost:     0,
+        created_by:    req.user.id,
       }, { transaction: t });
     }
 

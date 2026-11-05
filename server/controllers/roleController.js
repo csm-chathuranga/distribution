@@ -1,7 +1,6 @@
-const { Role, Permission, RolePermission } = require('../models');
-
 exports.list = async (req, res, next) => {
   try {
+    const { Role, Permission } = req.db;
     const roles = await Role.findAll({
       include: [{ model: Permission, through: { attributes: [] } }],
       order: [['name', 'ASC']],
@@ -12,6 +11,7 @@ exports.list = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
+    const { Role, Permission } = req.db;
     const role = await Role.findByPk(req.params.id, {
       include: [{ model: Permission, through: { attributes: [] } }],
     });
@@ -22,6 +22,7 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
+    const { Role } = req.db;
     const { permissions, ...data } = req.body;
     const role = await Role.create(data);
     if (permissions?.length) await role.setPermissions(permissions);
@@ -31,6 +32,7 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
+    const { Role } = req.db;
     const role = await Role.findByPk(req.params.id);
     if (!role) return res.status(404).json({ message: 'Role not found' });
     if (role.is_system) return res.status(400).json({ message: 'Cannot modify system role' });
@@ -43,6 +45,7 @@ exports.update = async (req, res, next) => {
 
 exports.setPermissions = async (req, res, next) => {
   try {
+    const { Role } = req.db;
     const role = await Role.findByPk(req.params.id);
     if (!role) return res.status(404).json({ message: 'Role not found' });
     await role.setPermissions(req.body.permission_ids || []);
@@ -52,6 +55,7 @@ exports.setPermissions = async (req, res, next) => {
 
 exports.allPermissions = async (req, res, next) => {
   try {
+    const { Permission } = req.db;
     const perms = await Permission.findAll({ order: [['module', 'ASC'], ['action', 'ASC']] });
     res.json(perms);
   } catch (err) { next(err); }

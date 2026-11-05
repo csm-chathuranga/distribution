@@ -2,12 +2,8 @@ const router = require('express').Router();
 const { Op, QueryTypes } = require('sequelize');
 const authorize = require('../middleware/authorize');
 const notify = require('../notify');
-const {
-  sequelize, Payment, PaymentAllocation, GoodsReceived,
-  Supplier, Account, JournalEntry, JournalLine, AccountingPeriod,
-} = require('../models');
 
-const generatePaymentNumber = async () => {
+const generatePaymentNumber = async (Payment) => {
   const today = new Date();
   const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
   const like = `PAY-${datePart}-%`;
@@ -16,9 +12,9 @@ const generatePaymentNumber = async () => {
   return `PAY-${datePart}-${String(seq).padStart(3, '0')}`;
 };
 
-// GET / — paginated list with supplier
 router.get('/', authorize('finance.payments'), async (req, res, next) => {
   try {
+    const { Payment, Supplier } = req.db;
     const { supplier_id, from, to, page = 1, limit = 20 } = req.query;
     const where = {};
     if (supplier_id) where.supplier_id = supplier_id;
@@ -30,17 +26,17 @@ router.get('/', authorize('finance.payments'), async (req, res, next) => {
     const { count, rows } = await Payment.findAndCountAll({
       where,
       include: [{ model: Supplier, attributes: ['id', 'name', 'code'] }],
-      order: [['payment_date', 'DESC'], ['id', 'DESC']],
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
+      order:   [['payment_date', 'DESC'], ['id', 'DESC']],
+      limit:   parseInt(limit),
+      offset:  (parseInt(page) - 1) * parseInt(limit),
     });
     res.json({ data: rows, total: count, page: parseInt(page), pages: Math.ceil(count / limit) });
   } catch (err) { next(err); }
 });
 
-// GET /open-grns/:supplier_id — unpaid/partial GRNs for a supplier
 router.get('/open-grns/:supplier_id', authorize('finance.payments'), async (req, res, next) => {
   try {
+    const { sequelize } = req.db;
     const result = await sequelize.query(`
       SELECT g.id, g.grn_number, g.grn_date, g.supplier_invoice_number,
              g.total_amount,
@@ -57,9 +53,9 @@ router.get('/open-grns/:supplier_id', authorize('finance.payments'), async (req,
   } catch (err) { next(err); }
 });
 
-// GET /:id — full detail with allocations
 router.get('/:id', authorize('finance.payments'), async (req, res, next) => {
   try {
+    const { Payment, Supplier, GoodsReceived, PaymentAllocation } = req.db;
     const payment = await Payment.findByPk(req.params.id, {
       include: [
         { model: Supplier, attributes: ['id', 'name', 'code'] },
@@ -75,10 +71,11 @@ router.get('/:id', authorize('finance.payments'), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST / — create payment + allocations + journal entry
 router.post('/', authorize('finance.payments'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Payment, PaymentAllocation, Supplier, AccountingPeriod, JournalEntry, JournalLine } = req.db;
     const { supplier_id, payment_date, payment_method, reference, notes, bank_account_id, allocations } = req.body;
 
     if (!allocations || allocations.length === 0) {
@@ -92,62 +89,53 @@ router.post('/', authorize('finance.payments'), async (req, res, next) => {
       return res.status(422).json({ message: 'Total payment amount must be greater than zero' });
     }
 
-    const payment_number = await generatePaymentNumber();
+    const payment_number = await generatePaymentNumber(Payment);
     const supplier = await Supplier.findByPk(supplier_id, { transaction: t });
 
-    // Journal entry when both accounts are supplied
     let journal_id = null;
     if (bank_account_id && supplier?.account_id) {
       const period = await AccountingPeriod.findOne({ where: { is_open: true }, transaction: t });
       const je = await JournalEntry.create({
-        company_id: req.user?.Branch?.company_id,
-        branch_id: req.user.branch_id,
-        period_id: period?.id || null,
+        company_id:   req.user?.Branch?.company_id,
+        branch_id:    req.user.branch_id,
+        period_id:    period?.id || null,
         entry_number: `JE-${payment_number}`,
-        entry_date: payment_date,
-        description: `Supplier payment ${payment_number} — ${supplier.name}`,
-        reference: reference || payment_number,
-        status: 'POSTED',
-        created_by: req.user.id,
-        posted_by: req.user.id,
-        posted_at: new Date(),
+        entry_date:   payment_date,
+        description:  `Supplier payment ${payment_number} — ${supplier.name}`,
+        reference:    reference || payment_number,
+        status:       'POSTED',
+        created_by:   req.user.id,
+        posted_by:    req.user.id,
+        posted_at:    new Date(),
       }, { transaction: t });
 
       await JournalLine.bulkCreate([
-        {
-          journal_id: je.id, account_id: supplier.account_id,
-          description: `Payment to ${supplier.name}`,
-          debit: totalAmount, credit: 0,
-        },
-        {
-          journal_id: je.id, account_id: bank_account_id,
-          description: `Payment to ${supplier.name}`,
-          debit: 0, credit: totalAmount,
-        },
+        { journal_id: je.id, account_id: supplier.account_id, description: `Payment to ${supplier.name}`, debit: totalAmount, credit: 0 },
+        { journal_id: je.id, account_id: bank_account_id,     description: `Payment to ${supplier.name}`, debit: 0, credit: totalAmount },
       ], { transaction: t });
 
       journal_id = je.id;
     }
 
     const payment = await Payment.create({
-      company_id: req.user?.Branch?.company_id,
-      branch_id: req.user.branch_id,
+      company_id:     req.user?.Branch?.company_id,
+      branch_id:      req.user.branch_id,
       supplier_id,
       payment_number,
       payment_date,
       payment_method,
-      amount: totalAmount,
+      amount:    totalAmount,
       reference: reference || null,
-      notes: notes || null,
+      notes:     notes || null,
       journal_id,
-      status: 'POSTED',
+      status:     'POSTED',
       created_by: req.user.id,
     }, { transaction: t });
 
     await PaymentAllocation.bulkCreate(
       allocations.map(a => ({
-        payment_id: payment.id,
-        grn_id: a.grn_id,
+        payment_id:       payment.id,
+        grn_id:           a.grn_id,
         allocated_amount: parseFloat(a.amount_allocated),
       })),
       { transaction: t }
@@ -159,10 +147,11 @@ router.post('/', authorize('finance.payments'), async (req, res, next) => {
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// POST /:id/cancel — cancel (reverses allocations, marks CANCELLED)
 router.post('/:id/cancel', authorize('finance.payments'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
+    const { Payment, PaymentAllocation } = req.db;
     const payment = await Payment.findByPk(req.params.id, { transaction: t });
     if (!payment) return res.status(404).json({ message: 'Payment not found' });
     if (payment.status === 'CANCELLED') {

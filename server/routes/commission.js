@@ -1,18 +1,20 @@
 const router = require('express').Router();
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const authorize = require('../middleware/authorize');
-const { SalesCommission, Invoice, InvoiceLine, User, Branch, sequelize } = require('../models');
 
-const COMMISSION_RATE = 5.00; // %
+const COMMISSION_RATE = 5.00;
 
-const include = [
-  { model: User, as: 'SalesRep', attributes: ['id', 'name', 'email'] },
-  { model: Branch, attributes: ['id', 'name'] },
-];
+function getInclude(db) {
+  const { User, Branch } = db;
+  return [
+    { model: User, as: 'SalesRep', attributes: ['id', 'name', 'email'] },
+    { model: Branch, attributes: ['id', 'name'] },
+  ];
+}
 
-// GET /api/commission — list commissions (all or filtered by rep / status)
 router.get('/', authorize.any('sales.view_all', 'finance.view'), async (req, res, next) => {
   try {
+    const { SalesCommission } = req.db;
     const { sales_rep_id, status, year, month, page = 1, limit = 50 } = req.query;
     const where = {};
     if (sales_rep_id) where.sales_rep_id = sales_rep_id;
@@ -20,45 +22,42 @@ router.get('/', authorize.any('sales.view_all', 'finance.view'), async (req, res
     if (year)         where.sale_year    = year;
     if (month)        where.sale_month   = month;
 
-    // Sales reps can only see their own
     const isSalesRep = req.permissions?.has('sales.view_own') && !req.permissions?.has('sales.view_all');
     if (isSalesRep) where.sales_rep_id = req.user.id;
 
     const { count, rows } = await SalesCommission.findAndCountAll({
-      where, include,
-      order: [['sale_year', 'DESC'], ['sale_month', 'DESC']],
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
+      where,
+      include: getInclude(req.db),
+      order:   [['sale_year', 'DESC'], ['sale_month', 'DESC']],
+      limit:   parseInt(limit),
+      offset:  (parseInt(page) - 1) * parseInt(limit),
     });
     res.json({ data: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) { next(err); }
 });
 
-// GET /api/commission/:id
 router.get('/:id', authorize.any('sales.view_all', 'finance.view'), async (req, res, next) => {
   try {
-    const rec = await SalesCommission.findByPk(req.params.id, { include });
+    const { SalesCommission } = req.db;
+    const rec = await SalesCommission.findByPk(req.params.id, { include: getInclude(req.db) });
     if (!rec) return res.status(404).json({ message: 'Commission record not found' });
     res.json(rec);
   } catch (err) { next(err); }
 });
 
-// POST /api/commission/generate — calculate & create commission records for a given month
-// Idempotent: if a record already exists for rep+month it is recalculated only if still PENDING
 router.post('/generate', authorize('sales.approve'), async (req, res, next) => {
+  const { sequelize } = req.db;
   const t = await sequelize.transaction();
   try {
-    const { year, month } = req.body;   // year: 2026, month: 9
+    const { SalesCommission } = req.db;
+    const { year, month } = req.body;
     if (!year || !month) return res.status(400).json({ message: 'year and month required' });
 
     const y = parseInt(year);
     const m = parseInt(month);
-
-    // due_date = first day of next month (e.g., Oct sales → due Nov 1)
-    const dueDate = new Date(y, m, 1);   // month is 0-indexed in JS, so m (not m-1) gives next month
+    const dueDate    = new Date(y, m, 1);
     const dueDateStr = dueDate.toISOString().slice(0, 10);
 
-    // Sum cash invoices per sales rep for this month
     const rows = await sequelize.query(`
       SELECT
         i.sales_rep_id,
@@ -74,7 +73,7 @@ router.post('/generate', authorize('sales.approve'), async (req, res, next) => {
         AND YEAR(i.invoice_date)  = :year
         AND MONTH(i.invoice_date) = :month
       GROUP BY i.sales_rep_id, i.branch_id
-    `, { replacements: { year: y, month: m }, type: sequelize.QueryTypes.SELECT, transaction: t });
+    `, { replacements: { year: y, month: m }, type: QueryTypes.SELECT, transaction: t });
 
     const created = [];
     for (const row of rows) {
@@ -87,14 +86,13 @@ router.post('/generate', authorize('sales.approve'), async (req, res, next) => {
       });
 
       if (existing) {
-        // Only recalculate if still pending
         if (existing.status === 'PENDING') {
           await existing.update({
-            cash_revenue: row.cash_revenue,
-            cogs:         row.cogs,
-            net_profit:   netProfit,
+            cash_revenue:      row.cash_revenue,
+            cogs:              row.cogs,
+            net_profit:        netProfit,
             commission_amount: commissionAmt,
-            due_date: dueDateStr,
+            due_date:          dueDateStr,
           }, { transaction: t });
           created.push(existing);
         }
@@ -122,20 +120,20 @@ router.post('/generate', authorize('sales.approve'), async (req, res, next) => {
   } catch (err) { await t.rollback(); next(err); }
 });
 
-// PUT /api/commission/:id/approve
 router.put('/:id/approve', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { SalesCommission } = req.db;
     const rec = await SalesCommission.findByPk(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Not found' });
     if (rec.status !== 'PENDING') return res.status(400).json({ message: `Cannot approve a ${rec.status} commission` });
     await rec.update({ status: 'APPROVED', approved_by: req.user.id, approved_at: new Date() });
-    res.json(await SalesCommission.findByPk(rec.id, { include }));
+    res.json(await SalesCommission.findByPk(rec.id, { include: getInclude(req.db) }));
   } catch (err) { next(err); }
 });
 
-// PUT /api/commission/:id/pay
 router.put('/:id/pay', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { SalesCommission } = req.db;
     const { paid_date, payment_notes } = req.body;
     const rec = await SalesCommission.findByPk(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Not found' });
@@ -145,13 +143,13 @@ router.put('/:id/pay', authorize('sales.approve'), async (req, res, next) => {
       paid_date:     paid_date || new Date().toISOString().slice(0, 10),
       payment_notes: payment_notes || null,
     });
-    res.json(await SalesCommission.findByPk(rec.id, { include }));
+    res.json(await SalesCommission.findByPk(rec.id, { include: getInclude(req.db) }));
   } catch (err) { next(err); }
 });
 
-// PUT /api/commission/:id/cancel
 router.put('/:id/cancel', authorize('sales.approve'), async (req, res, next) => {
   try {
+    const { SalesCommission } = req.db;
     const rec = await SalesCommission.findByPk(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Not found' });
     if (rec.status === 'PAID') return res.status(400).json({ message: 'Cannot cancel a paid commission' });

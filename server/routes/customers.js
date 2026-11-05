@@ -1,21 +1,19 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { Customer, Route, Branch, Account, Invoice, Receipt, SalesOrder, sequelize } = require('../models');
 const { Op } = require('sequelize');
-const crud = require('../controllers/crudFactory')(Customer, {
+const crud = require('../controllers/crudFactory')('Customer', {
   searchFields: ['name', 'code', 'phone'],
-  include: [
-    { model: Route, attributes: ['id', 'name'] },
-    { model: Branch, attributes: ['id', 'name'] },
-    { model: Account, attributes: ['id', 'code', 'name'] },
+  includeFn: (db) => [
+    { model: db.Route,   attributes: ['id', 'name'] },
+    { model: db.Branch,  attributes: ['id', 'name'] },
+    { model: db.Account, attributes: ['id', 'code', 'name'] },
   ],
   order: [['name', 'ASC']],
 });
 
-// GET /api/customers/outstanding — top customers with outstanding_balance > 0, sorted desc
 router.get('/outstanding', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
   try {
-    const { User } = require('../models');
+    const { Customer, Route, User } = req.db;
     const limit = parseInt(req.query.limit) || 10;
     const customers = await Customer.findAll({
       where: { outstanding_balance: { [Op.gt]: 0 } },
@@ -33,10 +31,11 @@ router.get('/outstanding', authorize.any('sales.view_own', 'sales.view_all'), as
 
 router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
   try {
+    const { Customer, Route, Branch, Account, Invoice, Receipt, SalesOrder, sequelize } = req.db;
     const customer = await Customer.findByPk(req.params.id, {
       include: [
-        { model: Route, attributes: ['id', 'name'] },
-        { model: Branch, attributes: ['id', 'name'] },
+        { model: Route,   attributes: ['id', 'name'] },
+        { model: Branch,  attributes: ['id', 'name'] },
         { model: Account, attributes: ['id', 'code', 'name'] },
       ],
     });
@@ -62,8 +61,8 @@ router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), as
       `, { replacements: { cid: req.params.id }, type: sequelize.QueryTypes.SELECT }),
     ]);
     invoiceStats.total_outstanding = customer.outstanding_balance;
-    invoiceStats.total_paid = receiptStats.total_collected;
-    invoiceStats.receipt_count = receiptStats.receipt_count;
+    invoiceStats.total_paid        = receiptStats.total_collected;
+    invoiceStats.receipt_count     = receiptStats.receipt_count;
 
     const recentInvoices = await Invoice.findAll({
       where: { customer_id: req.params.id },
@@ -86,18 +85,13 @@ router.get('/:id/profile', authorize.any('sales.view_own', 'sales.view_all'), as
       attributes: ['id', 'order_number', 'order_date', 'status', 'total_amount'],
     });
 
-    res.json({
-      customer,
-      stats: invoiceStats,
-      recentInvoices,
-      recentReceipts,
-      recentOrders,
-    });
+    res.json({ customer, stats: invoiceStats, recentInvoices, recentReceipts, recentOrders });
   } catch (err) { next(err); }
 });
 
 router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, res, next) => {
   try {
+    const { Customer, Route, Branch, Account, sequelize } = req.db;
     const { search, page = 1, limit = 50, route_id, sales_rep_id } = req.query;
     const where = {};
     if (route_id) where.route_id = route_id;
@@ -120,7 +114,7 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
       where,
       include: [
         routeInclude,
-        { model: Branch, attributes: ['id', 'name'] },
+        { model: Branch,  attributes: ['id', 'name'] },
         { model: Account, attributes: ['id', 'code', 'name'] },
       ],
       attributes: {
@@ -132,23 +126,26 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
         ],
       },
       order: [['name', 'ASC']],
-      limit: parseInt(limit),
+      limit:  parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
     });
     res.json({ data: rows, total: count });
   } catch (err) { next(err); }
 });
+
 router.get('/:id', authorize.any('sales.view_own', 'sales.view_all'), crud.get);
+
 router.post('/', authorize('sales.create'), async (req, res, next) => {
   try {
+    const { Customer } = req.db;
     const data = { ...req.body };
-    // Resolve company_id — user's branch → fallback to 1 (single-company system)
     data.company_id = data.company_id || req.user?.Branch?.company_id || 1;
     if (!data.branch_id && req.user?.branch_id) data.branch_id = req.user.branch_id;
     const customer = await Customer.create(data);
     res.status(201).json(customer);
   } catch (err) { next(err); }
 });
+
 router.put('/:id', authorize('sales.create'), crud.update);
 
 module.exports = router;
