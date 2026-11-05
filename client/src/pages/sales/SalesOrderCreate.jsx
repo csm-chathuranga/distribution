@@ -38,22 +38,18 @@ async function captureOrderLocation() {
     if (permissions.location !== 'granted') {
       throw new Error('Location permission was not granted');
     }
-    // Try high-accuracy first; fall back to low-accuracy if it times out
-    try {
-      const position = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 30000,
-      });
-      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
-    } catch {
-      const position = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 60000,
-      });
-      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    const nativeAttempts = [
+      { enableHighAccuracy: true,  timeout: 20000, maximumAge: 30000   },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000   },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: Infinity },
+    ];
+    for (const opts of nativeAttempts) {
+      try {
+        const position = await Geolocation.getCurrentPosition(opts);
+        return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+      } catch (_) {}
     }
+    throw new Error('Position unavailable');
   }
 
   if (!navigator.geolocation) throw new Error('Geolocation is unavailable on this device');
@@ -62,14 +58,20 @@ async function captureOrderLocation() {
     navigator.geolocation.getCurrentPosition(resolve, reject, opts)
   );
 
-  // Try high-accuracy; fall back to low-accuracy network-based location
-  try {
-    const position = await getPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 30000 });
-    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
-  } catch {
-    const position = await getPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
-    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+  const attempts = [
+    { enableHighAccuracy: true,  timeout: 20000, maximumAge: 30000   },
+    { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000   },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: Infinity }, // any cached position
+  ];
+  for (const opts of attempts) {
+    try {
+      const position = await getPosition(opts);
+      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    } catch (err) {
+      if (err?.code === 1) throw err; // PERMISSION_DENIED — stop retrying
+    }
   }
+  throw new Error('Position unavailable');
 }
 
 const headerSchema = yup.object({
@@ -114,11 +116,13 @@ export default function SalesOrderCreate() {
   // Pre-capture GPS on mount so it's ready when user submits
   const locationRef = useRef(null);
   const [gpsStatus, setGpsStatus] = useState('pending'); // 'pending' | 'ok' | 'denied'
-  useEffect(() => {
+  const retryGps = () => {
+    setGpsStatus('pending');
     captureOrderLocation()
       .then(coords => { locationRef.current = coords; setGpsStatus('ok'); })
       .catch(() => setGpsStatus('denied'));
-  }, []);
+  };
+  useEffect(() => { retryGps(); }, []);
 
   // Auto-set warehouse and route when admin picks a sales rep
   useEffect(() => {
@@ -826,10 +830,15 @@ export default function SalesOrderCreate() {
       {/* Sticky submit */}
       <div className="fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3" style={{ bottom: 88 }}>
         <div className="flex items-center gap-1.5 mb-2 text-xs">
-          <span className={`w-2 h-2 rounded-full ${gpsStatus === 'ok' ? 'bg-green-500' : gpsStatus === 'denied' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${gpsStatus === 'ok' ? 'bg-green-500' : gpsStatus === 'denied' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
           <span className={gpsStatus === 'ok' ? 'text-green-600' : gpsStatus === 'denied' ? 'text-red-500' : 'text-amber-600'}>
-            {gpsStatus === 'ok' ? 'GPS ready' : gpsStatus === 'denied' ? 'GPS unavailable — enable location in browser settings' : 'Getting GPS…'}
+            {gpsStatus === 'ok' ? 'GPS ready' : gpsStatus === 'denied' ? 'Location unavailable — order will save without GPS' : 'Getting GPS…'}
           </span>
+          {gpsStatus === 'denied' && (
+            <button type="button" onClick={retryGps} className="ml-1 underline text-blue-500 hover:text-blue-700">
+              Retry
+            </button>
+          )}
         </div>
         <button
           type="button"
