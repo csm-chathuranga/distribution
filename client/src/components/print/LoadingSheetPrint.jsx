@@ -3,8 +3,9 @@ import { fmtCurrency, fmtDate } from '../../utils/format';
 const tableStyle = { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' };
 const cellStyle = {
   border: '1px solid #555',
-  padding: '3px 4px',
+  padding: '5px 6px',
   verticalAlign: 'middle',
+  fontSize: '10px',
 };
 const labelStyle = { ...cellStyle, fontWeight: '700', background: '#f3f4f6' };
 
@@ -41,20 +42,20 @@ export default function LoadingSheetPrint({ sheet, company }) {
     <div style={{
       width: '100%',
       fontFamily: 'Arial, sans-serif',
-      fontSize: '8.5px',
-      lineHeight: 1.2,
+      fontSize: '10px',
+      lineHeight: 1.3,
       color: '#111',
       background: '#fff',
       padding: '5mm',
     }}>
       <header style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <div style={{ fontSize: '14px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
-        {company?.address && <div style={{ fontSize: '8px' }}>{company.address}</div>}
-        {company?.phone && <div style={{ fontSize: '8px' }}>Tel: {company.phone}</div>}
-        <div style={{ fontSize: '11px', fontWeight: '700', marginTop: '4px' }}>LOADING SHEET / STOCK REGISTER</div>
+        <div style={{ fontSize: '17px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
+        {company?.address && <div style={{ fontSize: '10px' }}>{company.address}</div>}
+        {company?.phone && <div style={{ fontSize: '10px' }}>Tel: {company.phone}</div>}
+        <div style={{ fontSize: '13px', fontWeight: '700', marginTop: '4px' }}>LOADING SHEET / STOCK REGISTER</div>
       </header>
 
-      <table style={{ ...tableStyle, marginBottom: '8px', fontSize: '8px' }}>
+      <table style={{ ...tableStyle, marginBottom: '8px', fontSize: '10px' }}>
         <tbody>
           <tr>
             <td style={{ ...labelStyle, width: '12%' }}>Sheet No.</td>
@@ -80,7 +81,7 @@ export default function LoadingSheetPrint({ sheet, company }) {
       </table>
 
       {/* 12 columns: #, Product, SKU, Qty, Cases, Sold, Returned, Damaged, Lost, Balance, Unit Cost, Value */}
-      <table style={{ ...tableStyle, fontSize: '8px' }}>
+      <table style={{ ...tableStyle, fontSize: '10px' }}>
         <colgroup>
           <col style={{ width: '3%' }} />
           <col style={{ width: '22%' }} />
@@ -97,7 +98,7 @@ export default function LoadingSheetPrint({ sheet, company }) {
         </colgroup>
         <thead>
           <tr style={{ textAlign: 'center', background: '#f3f4f6' }}>
-            {['#', 'Product', 'SKU', 'Cases', 'Qty', 'Sold', 'Returned', 'Damaged', 'Lost', 'Balance', 'Unit Cost', 'Value'].map(title => (
+            {['#', 'Product', 'Code', 'Cases', 'Qty', 'Sold', 'Returned', 'Damaged', 'Lost', 'Balance', 'Unit Cost', 'Value'].map(title => (
               <th key={title} style={{ ...cellStyle, fontWeight: '700' }}>{title}</th>
             ))}
           </tr>
@@ -117,7 +118,7 @@ export default function LoadingSheetPrint({ sheet, company }) {
               <tr key={line.id || index}>
                 <td style={{ ...cellStyle, textAlign: 'center' }}>{index + 1}</td>
                 <td style={{ ...cellStyle, textAlign: 'left', overflowWrap: 'anywhere' }}>{line.Product?.name || '—'}</td>
-                <td style={{ ...cellStyle, textAlign: 'left' }}>{line.Product?.sku || '—'}</td>
+                <td style={{ ...cellStyle, textAlign: 'left' }}>{line.Product?.short_code || line.Product?.sku || '—'}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', fontWeight: '700', fontSize: '9.5px' }}>{fmtCases(loaded, caseSize)}</td>
                 <td style={{ ...cellStyle, textAlign: 'center' }}>{qty(loaded)}</td>
                 <td style={{ ...cellStyle, textAlign: 'center', color: '#d97706' }}>{isClosed ? qty(sold) : ''}</td>

@@ -13,7 +13,9 @@ const sizeLabel = (ml) => {
   return `${ml}ml`;
 };
 
-const shortCode = (sku, name) => {
+const shortCode = (product) => {
+  if (product.short_code) return product.short_code;
+  const { sku, name } = product;
   if (sku) return sku.length <= 6 ? sku : sku.slice(-4);
   const m = name.match(/([A-Z]{2,4})/);
   return m ? m[1] : name.slice(0, 3).toUpperCase();
@@ -22,18 +24,17 @@ const shortCode = (sku, name) => {
 const fmtCases = (q, caseSize) => {
   if (!caseSize || caseSize <= 1 || !q) return '';
   const cs = Math.floor(q / caseSize);
-  if (cs === 0) return '';
   const units = q % caseSize;
-  return units > 0 ? `${cs}cs+${units}` : `${cs}cs`;
+  if (cs === 0) return `${units}u`;
+  return units > 0 ? `${cs}cs+${units}u` : `${cs}cs`;
 };
 
 const B = '1px solid #555';
-const cell = { border: B, padding: '2px 2px', verticalAlign: 'middle', textAlign: 'center', fontSize: '7.5px', whiteSpace: 'nowrap' };
-const hCell = { ...cell, fontWeight: '700', background: '#e5e7eb', fontSize: '7.5px' };
-const szCell = { ...hCell, background: '#b6c3d4', fontSize: '8px', padding: '3px 2px' };
-const outletCell = { ...cell, textAlign: 'left', fontSize: '7.5px', maxWidth: '26mm', overflowWrap: 'anywhere', whiteSpace: 'normal', padding: '2px 3px' };
-const noCell = { ...cell, width: '7mm', fontSize: '7.5px' };
-const valCell = { ...cell, textAlign: 'right', fontSize: '7px', minWidth: '12mm' };
+const cell = { border: B, padding: '2px 3px', verticalAlign: 'middle', textAlign: 'center', fontSize: '9px', whiteSpace: 'nowrap' };
+const hCell = { ...cell, fontWeight: '700', background: '#e5e7eb', fontSize: '9px' };
+const szCell = { ...hCell, background: '#b6c3d4', fontSize: '9.5px', padding: '3px 2px' };
+const outletCell = { ...cell, textAlign: 'left', fontSize: '9px', maxWidth: '26mm', overflowWrap: 'anywhere', whiteSpace: 'normal', padding: '2px 3px' };
+const noCell = { ...cell, width: '20mm', fontSize: '8px', textAlign: 'left', padding: '2px 3px' };
 
 export default function LoadingSheetRoutePrint({ sheet, customers = [], products = [], company }) {
   if (!sheet) return null;
@@ -65,10 +66,14 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
   const invoiceFree = {};
   const invoiceTotal = {};
 
+  const invoicedCustomerIds = new Set();
+  const invoiceNumberMap = {};
   (sheet.Invoices || [])
     .filter(inv => ['POSTED', 'DELIVERED', 'PAID', 'PARTIAL'].includes(inv.status))
     .forEach(inv => {
       const cid = inv.customer_id;
+      invoicedCustomerIds.add(cid);
+      invoiceNumberMap[cid] = inv.invoice_number;
       if (!invoiceSold[cid]) invoiceSold[cid] = {};
       if (!invoiceFree[cid]) invoiceFree[cid] = {};
       (inv.Lines || []).forEach(il => {
@@ -91,7 +96,6 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
 
   const footerRows = [
     { label: 'Loaded',  key: 'loaded_quantity',    always: true },
-    { label: 'Cases',   key: null,                  always: true,  isCases: true },
     { label: 'Free',    key: null,                  always: true,  isFree: true },
     { label: 'Sold',    key: 'sold_quantity',        always: false },
     { label: 'Return',  key: 'returned_quantity',    always: false },
@@ -100,16 +104,16 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
   ];
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '8px', color: '#000', background: '#fff', padding: '4mm 5mm', width: '100%' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#000', background: '#fff', padding: '4mm 5mm', width: '100%' }}>
 
       {/* Company header */}
       <div style={{ textAlign: 'center', marginBottom: '5px' }}>
-        <div style={{ fontSize: '13px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
-        <div style={{ fontSize: '10px', fontWeight: '700', marginTop: '1px' }}>ROUTE SALES SHEET</div>
+        <div style={{ fontSize: '15px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
+        <div style={{ fontSize: '11px', fontWeight: '700', marginTop: '1px' }}>ROUTE SALES SHEET</div>
       </div>
 
       {/* Info table */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px', fontSize: '7.5px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px', fontSize: '9px' }}>
         <tbody>
           <tr>
             <td style={{ ...hCell, whiteSpace: 'nowrap' }}>Date</td>
@@ -139,149 +143,124 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
       {/* Main table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
         <colgroup>
-          <col style={{ width: '7mm' }} />
+          <col style={{ width: '20mm' }} />
           <col style={{ width: '26mm' }} />
           {sortedProducts.map(p => (
             <col key={p.id} style={{ width: `${Math.max(13, Math.floor(260 / sortedProducts.length))}px` }} />
           ))}
-          <col style={{ width: '14mm' }} />
         </colgroup>
 
         <thead>
           {/* Row 1: size group headers */}
           <tr>
-            <td style={{ ...hCell, padding: '3px 2px' }} rowSpan={3}>#</td>
-            <td style={{ ...hCell, padding: '3px 2px' }} rowSpan={3}>Name of Outlet</td>
+            <td style={{ ...hCell, padding: '3px 2px' }} rowSpan={2}>Invoice</td>
+            <td style={{ ...hCell, padding: '3px 2px' }} rowSpan={2}>Name of Outlet</td>
             {sizeGroups.map(([ml, prods]) => (
               <td key={ml} colSpan={prods.length} style={{ ...szCell }}>{sizeLabel(ml)}</td>
             ))}
-            <td style={{ ...hCell, padding: '3px 2px' }} rowSpan={3}>Value</td>
           </tr>
 
-          {/* Row 2: short SKU sub-columns */}
+          {/* Row 2: short code sub-columns */}
           <tr>
             {sortedProducts.map(p => {
               const isLoaded = loadedMap[p.id] > 0;
               return (
-                <td key={p.id} style={{ ...hCell, fontSize: '7px', background: isLoaded ? '#93c5fd' : '#d1d5db', padding: '2px 1px' }}>
-                  {shortCode(p.sku, p.name)}
+                <td key={p.id} style={{ ...hCell, fontSize: '8.5px', background: isLoaded ? '#93c5fd' : '#d1d5db', padding: '2px 1px' }}>
+                  {shortCode(p)}
                 </td>
               );
             })}
           </tr>
 
-          {/* Row 3: loaded qty + free qty as "Ld / Fr" */}
-          <tr>
-            {sortedProducts.map(p => {
-              const loaded = loadedMap[p.id] || 0;
-              const free = freeTotalByProduct[p.id] || 0;
-              const bg = loaded > 0 ? '#dbeafe' : '#f3f4f6';
-              const col = loaded > 0 ? '#1d4ed8' : '#9ca3af';
-              return (
-                <td key={p.id} style={{ ...cell, fontWeight: '700', fontSize: '7px', background: bg, color: col, padding: '2px 1px', lineHeight: '1.3' }}>
-                  {loaded > 0 ? loaded : '—'}
-                  {free > 0 && <div style={{ color: '#059669', fontSize: '6.5px', fontWeight: '600' }}>+{free}F</div>}
-                </td>
-              );
-            })}
-          </tr>
         </thead>
 
         <tbody>
-          {customers.map((cust, idx) => (
+          {customers.filter(c => invoicedCustomerIds.has(c.id)).map((cust, idx) => (
             <tr key={cust.id} style={{ height: '11px' }}>
-              <td style={noCell}>{idx + 1}</td>
+              <td style={noCell}>{invoiceNumberMap[cust.id] || '—'}</td>
               <td style={outletCell}>{cust.name}</td>
               {sortedProducts.map(p => {
-                const sold = isClosed ? (invoiceSold[cust.id]?.[p.id] || 0) : 0;
-                const free = isClosed ? (invoiceFree[cust.id]?.[p.id] || 0) : 0;
+                const sold = invoiceSold[cust.id]?.[p.id] || 0;
+                const free = invoiceFree[cust.id]?.[p.id] || 0;
                 const isLoaded = loadedMap[p.id] > 0;
                 return (
                   <td key={p.id} style={{ ...cell, background: isLoaded ? '#fff' : '#f9fafb', padding: '2px 1px', lineHeight: '1.3' }}>
                     {sold > 0 ? sold : ''}
-                    {free > 0 && <div style={{ color: '#059669', fontSize: '6.5px', fontWeight: '600' }}>+{free}F</div>}
+                    {free > 0 && <div style={{ color: '#059669', fontSize: '8px', fontWeight: '600' }}>+{free}F</div>}
                   </td>
                 );
               })}
-              <td style={valCell}>
-                {isClosed && invoiceTotal[cust.id] ? invoiceTotal[cust.id].toFixed(2) : ''}
-              </td>
-            </tr>
-          ))}
-
-          {/* Blank rows — always show at least 3 empty rows */}
-          {Array.from({ length: Math.max(0, 3 - customers.length) }).map((_, i) => (
-            <tr key={`pad${i}`} style={{ height: '11px' }}>
-              <td style={noCell}></td>
-              <td style={outletCell}></td>
-              {sortedProducts.map(p => (
-                <td key={p.id} style={{ ...cell, background: loadedMap[p.id] > 0 ? '#fff' : '#f9fafb' }}></td>
-              ))}
-              <td style={valCell}></td>
             </tr>
           ))}
         </tbody>
 
         <tfoot>
-          {footerRows.map(({ label, key, always, isFree, isCases }) => (
+          {footerRows.filter(({ always }) => always || isClosed).map(({ label, key, always, isFree }) => (
             <tr key={label}>
-              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '7px' }}>{label}</td>
+              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px' }}>{label}</td>
               {sortedProducts.map(p => {
                 let val = '';
-                if (isCases) {
-                  const loaded = loadedMap[p.id] || 0;
-                  const caseSize = p.case_size ? parseInt(p.case_size) : null;
-                  val = fmtCases(loaded, caseSize);
-                } else if (isFree) {
+                if (isFree) {
                   val = freeTotalByProduct[p.id] || '';
                 } else {
                   const line = (sheet.Lines || []).find(l => l.product_id === p.id);
                   val = line && (always || isClosed) ? (parseFloat(line[key]) || 0) || '' : '';
                 }
                 const isLoaded = loadedMap[p.id] > 0;
-                const color = label === 'Loaded' ? '#1d4ed8' : label === 'Cases' ? '#6d28d9' : label === 'Free' ? '#059669' : '#000';
+                const color = label === 'Loaded' ? '#1d4ed8' : label === 'Free' ? '#059669' : '#000';
                 return (
-                  <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '7px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color }}>
+                  <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '8.5px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color }}>
                     {val}
                   </td>
                 );
               })}
-              <td style={valCell}></td>
             </tr>
           ))}
 
-          {/* Balance row */}
+          {/* Cases row — one merged cell per size group: total units / case size = cases */}
           <tr>
-            <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '7px' }}>Balance</td>
-            {sortedProducts.map(p => {
-              const l = (sheet.Lines || []).find(ln => ln.product_id === p.id);
-              const freeGiven = freeTotalByProduct[p.id] || 0;
-              const val = l ? Math.max(0,
-                (parseFloat(l.loaded_quantity) || 0) + freeGiven
-                - (parseFloat(l.sold_quantity) || 0)
-                - (parseFloat(l.returned_quantity) || 0)
-                - (parseFloat(l.damaged_quantity) || 0)
-                - (parseFloat(l.lost_quantity) || 0)
-                - freeGiven
-              ) : '';
+            <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px' }}>Cases</td>
+            {sizeGroups.map(([ml, prods]) => {
+              const totalLoaded = prods.reduce((s, p) => s + (loadedMap[p.id] || 0), 0);
+              const totalFree = prods.reduce((s, p) => s + (freeTotalByProduct[p.id] || 0), 0);
+              const totalUnits = totalLoaded + totalFree;
+              const firstCaseSize = prods.find(p => p.case_size && parseInt(p.case_size) > 1)?.case_size;
+              const csNum = firstCaseSize ? parseInt(firstCaseSize) : null;
+              const fullCases = csNum ? Math.floor(totalUnits / csNum) : 0;
+              const rem = csNum ? totalUnits % csNum : 0;
+              const casesLabel = csNum
+                ? (fullCases > 0 ? `${fullCases}cs${rem > 0 ? `+${rem}u` : ''}` : `${rem}u`)
+                : (totalUnits > 0 ? `${totalUnits}u` : '');
               return (
-                <td key={p.id} style={{ ...cell, fontWeight: '700', fontSize: '7px', background: loadedMap[p.id] > 0 ? '#f0f9ff' : '#f9fafb' }}>
-                  {val !== '' ? val : ''}
+                <td key={ml} colSpan={prods.length} style={{ ...cell, fontWeight: '700', background: '#ede9fe', color: '#6d28d9', textAlign: 'center', lineHeight: '1.4' }}>
+                  <div style={{ fontSize: '9.5px' }}>{casesLabel}</div>
+                  {csNum && <div style={{ fontSize: '7.5px', color: '#7c3aed', fontWeight: '400' }}>{totalUnits}u ÷ {csNum}</div>}
                 </td>
               );
             })}
-            <td style={valCell}></td>
           </tr>
 
-          {/* Grand total */}
+          {/* Balance row — only when closed */}
           {isClosed && (
             <tr>
-              <td colSpan={2 + sortedProducts.length} style={{ ...hCell, textAlign: 'right', fontSize: '7.5px' }}>
-                Total Value
-              </td>
-              <td style={{ ...valCell, fontWeight: '700', fontSize: '7.5px' }}>
-                {Object.values(invoiceTotal).reduce((s, v) => s + v, 0).toFixed(2)}
-              </td>
+              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px' }}>Balance</td>
+              {sortedProducts.map(p => {
+                const l = (sheet.Lines || []).find(ln => ln.product_id === p.id);
+                const freeGiven = freeTotalByProduct[p.id] || 0;
+                const val = l ? Math.max(0,
+                  (parseFloat(l.loaded_quantity) || 0) + freeGiven
+                  - (parseFloat(l.sold_quantity) || 0)
+                  - (parseFloat(l.returned_quantity) || 0)
+                  - (parseFloat(l.damaged_quantity) || 0)
+                  - (parseFloat(l.lost_quantity) || 0)
+                  - freeGiven
+                ) : '';
+                return (
+                  <td key={p.id} style={{ ...cell, fontWeight: '700', fontSize: '8.5px', background: loadedMap[p.id] > 0 ? '#f0f9ff' : '#f9fafb' }}>
+                    {val !== '' ? val : ''}
+                  </td>
+                );
+              })}
             </tr>
           )}
         </tfoot>

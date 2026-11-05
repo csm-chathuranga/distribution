@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, FileText, CheckSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useCreateLoadingSheetMutation, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation } from '../../api/salesApi';
+import { useCreateLoadingSheetMutation, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation, useGetLoadingSheetsQuery } from '../../api/salesApi';
 import { useGetProductsQuery } from '../../api/productsApi';
 import { useGetWarehousesQuery } from '../../api/warehousesApi';
 import { useGetRoutesQuery } from '../../api/customersApi';
@@ -82,14 +82,12 @@ export default function LoadingSheetCreate() {
 
   const { data: productsData }  = useGetProductsQuery({ limit: 500 });
   const { data: warehousesData } = useGetWarehousesQuery({});
-  const { data: routesData }    = useGetRoutesQuery({});
   const { data: drivers = [] }  = useGetUsersForSelectQuery('driver');
   const { data: salesReps = [] } = useGetUsersForSelectQuery('sales_rep');
   const { data: vehiclesData }  = useGetVehiclesQuery({});
 
   const products   = productsData?.data || [];
   const warehouses = warehousesData?.data || [];
-  const routes     = routesData?.data || [];
   const vehicles   = (vehiclesData?.data || []).filter(v => v.status === 'active');
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
@@ -98,9 +96,28 @@ export default function LoadingSheetCreate() {
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control, name: 'lines' });
-  const lines       = watch('lines');
-  const warehouseId = watch('warehouse_id');
+  const lines           = watch('lines');
+  const warehouseId     = watch('warehouse_id');
+  const selectedRepId   = watch('sales_rep_id');
   const selectedRouteId = watch('route_id');
+
+  const { data: routesData } = useGetRoutesQuery(selectedRepId ? { sales_rep_id: selectedRepId } : {});
+  const routes = routesData?.data || [];
+
+  const { data: lastSheetData } = useGetLoadingSheetsQuery(
+    { sales_rep_id: selectedRepId, limit: 1 },
+    { skip: !selectedRepId },
+  );
+
+  // When sales rep changes: clear route and auto-set warehouse from their last loading sheet
+  useEffect(() => {
+    setValue('route_id', '');
+    const lastSheet = lastSheetData?.data?.[0];
+    if (lastSheet?.warehouse_id) {
+      setValue('warehouse_id', lastSheet.warehouse_id);
+    }
+  }, [selectedRepId, lastSheetData, setValue]);
+
   const filteredInvoices = selectedRouteId
     ? availableInvoices.filter(inv => inv.Customer?.Route?.id === Number(selectedRouteId))
     : availableInvoices;
@@ -155,6 +172,30 @@ export default function LoadingSheetCreate() {
         {/* Header info */}
         <div className="card">
           <div className="card-body grid grid-cols-2 gap-4">
+            <FormField label="Sales Rep" error={errors.sales_rep_id?.message} required>
+              <select {...register('sales_rep_id')} className="input">
+                <option value="">-- Select Sales Rep --</option>
+                {salesReps.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Driver" error={errors.driver_id?.message} required>
+              <select {...register('driver_id')} className="input">
+                <option value="">-- Select Driver --</option>
+                {drivers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Route" error={errors.route_id?.message} required>
+              <select {...register('route_id')} className="input" disabled={!selectedRepId}>
+                <option value="">{selectedRepId ? '-- Select Route --' : '-- Select Sales Rep first --'}</option>
+                {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Warehouse" error={errors.warehouse_id?.message} required>
+              <select {...register('warehouse_id')} className="input">
+                <option value="">-- Select Warehouse --</option>
+                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+            </FormField>
             <FormField label="Date" error={errors.sheet_date?.message} required>
               <input type="date" {...register('sheet_date')} className="input" />
             </FormField>
@@ -166,30 +207,6 @@ export default function LoadingSheetCreate() {
                     {v.registration_number}{v.make ? ` — ${v.make} ${v.model || ''}`.trimEnd() : ''}
                   </option>
                 ))}
-              </select>
-            </FormField>
-            <FormField label="Route" error={errors.route_id?.message} required>
-              <select {...register('route_id')} className="input">
-                <option value="">-- Select Route --</option>
-                {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Warehouse" error={errors.warehouse_id?.message} required>
-              <select {...register('warehouse_id')} className="input">
-                <option value="">-- Select Warehouse --</option>
-                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Sales Rep" error={errors.sales_rep_id?.message} required>
-              <select {...register('sales_rep_id')} className="input">
-                <option value="">-- Select Sales Rep --</option>
-                {salesReps.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Driver" error={errors.driver_id?.message} required>
-              <select {...register('driver_id')} className="input">
-                <option value="">-- Select Driver --</option>
-                {drivers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
             </FormField>
           </div>

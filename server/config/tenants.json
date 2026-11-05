@@ -1,0 +1,12 @@
+{
+  "_comment": "Map each hostname (without port) to its database name. Credentials fall back to env vars.",
+  "localhost": {
+    "db_name": "distribution_db"
+  },
+  "rathnayaka.lumac.cc": {
+    "db_name": "distribution_db"
+  },
+  "test-dist.lumac.cc": {
+    "db_name": "distribution_db"
+  }
+}

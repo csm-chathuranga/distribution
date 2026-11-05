@@ -8,6 +8,7 @@ import { useCreateProductMutation, useUpdateProductMutation, useGetCategoriesQue
 
 const schema = yup.object({
   sku: yup.string().required('SKU is required').max(100, 'Max 100 chars'),
+  short_code: yup.string().nullable().max(10, 'Max 10 chars'),
   name: yup.string().required('Product name is required').max(255),
   category_id: yup.number().nullable().transform(v => v === '' ? null : Number(v)),
   base_unit_id: yup.number().nullable().transform(v => v === '' ? null : Number(v)),
@@ -38,6 +39,7 @@ export default function ProductForm({ onClose, editing, companyId }) {
     resolver: yupResolver(schema),
     defaultValues: editing ? {
       sku: editing.sku || '',
+      short_code: editing.short_code || '',
       name: editing.name || '',
       barcode: editing.barcode || '',
       category_id: editing.category_id || '',
@@ -68,8 +70,9 @@ export default function ProductForm({ onClose, editing, companyId }) {
   return (
     <Modal open={true} onClose={onClose} title={editing ? 'Edit Product' : 'New Product'} size="lg">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <TextField label="SKU" required placeholder="e.g. PROD-001" error={errors.sku?.message} {...register('sku')} />
+          <TextField label="Short Code" placeholder="e.g. CB1L" hint="Max 10 chars — used on route sheet" error={errors.short_code?.message} {...register('short_code')} />
           <TextField label="Barcode" placeholder="Scan or type" error={errors.barcode?.message} {...register('barcode')} />
         </div>
 

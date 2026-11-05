@@ -150,6 +150,7 @@ export default function Sidebar() {
             <p className="sidebar-section-label">Van Sales</p>
             <NavItem to="/loading-sheets" icon={Navigation} label="Loading Sheets" />
             <NavItem to="/free-items" icon={Gift} label="Free Items" />
+            <NavItem to="/driver-deductions" icon={AlertTriangle} label="Driver Deductions" />
             <NavItem to="/tracking" icon={MapPin} label="Rep Tracking" />
             <NavItem to="/reports/daily-collections" icon={Zap} label="Daily Collections" />
           </>

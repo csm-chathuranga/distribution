@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
     category_id: DataTypes.INTEGER,
     base_unit_id: DataTypes.INTEGER,
     sku: { type: DataTypes.STRING(100), allowNull: false },
+    short_code: { type: DataTypes.STRING(10), allowNull: true },
     name: { type: DataTypes.STRING(255), allowNull: false },
     description: DataTypes.TEXT,
     barcode: DataTypes.STRING(100),

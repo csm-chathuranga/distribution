@@ -90,6 +90,7 @@ import LoadingSheetCreate from './pages/vanSales/LoadingSheetCreate';
 import LoadingSheetDetail from './pages/vanSales/LoadingSheetDetail';
 import VanStock from './pages/vanSales/VanStock';
 import FreeItems from './pages/vanSales/FreeItems';
+import DriverDeductions from './pages/vanSales/DriverDeductions';
 import SalesReturns from './pages/vanSales/SalesReturns';
 import DriverDeliveries from './pages/vanSales/DriverDeliveries';
 import DriverPayments from './pages/vanSales/DriverPayments';
@@ -203,6 +204,7 @@ export default function App() {
           <Route path="loading-sheets/new" element={<ProtectedRoute permission="sales.create"><LoadingSheetCreate /></ProtectedRoute>} />
           <Route path="loading-sheets/:id" element={<ProtectedRoute permission={['sales.create','sales.view_own']}><LoadingSheetDetail /></ProtectedRoute>} />
           <Route path="free-items" element={<ProtectedRoute permission="sales.create"><FreeItems /></ProtectedRoute>} />
+          <Route path="driver-deductions" element={<ProtectedRoute permission="sales.approve"><DriverDeductions /></ProtectedRoute>} />
           <Route path="sales-returns" element={<ProtectedRoute permission="sales.create"><SalesReturns /></ProtectedRoute>} />
           <Route path="driver/deliveries" element={<ProtectedRoute permission={['sales.view_own','sales.create']}><DriverDeliveries /></ProtectedRoute>} />
           <Route path="driver/payments" element={<ProtectedRoute permission={['sales.view_own','sales.create']}><DriverPayments /></ProtectedRoute>} />

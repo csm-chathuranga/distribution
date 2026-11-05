@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const { sequelize } = require('./models');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
+const tenantMiddleware = require('./middleware/tenant');
 require('./firebase-admin'); // initialise Firebase Admin at startup
 
 const app = express();
@@ -30,6 +31,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(tenantMiddleware);
 app.use('/api', routes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

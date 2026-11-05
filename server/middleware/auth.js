@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const { User, Role, Permission, RolePermission, UserPermission } = require('../models');
 
 module.exports = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -10,7 +9,10 @@ module.exports = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { Branch, Warehouse } = require('../models');
+
+    // Use tenant-specific models set by tenantMiddleware; fall back to default models
+    const { User, Role, Permission, Branch, Warehouse } = req.db || require('../models');
+
     const user = await User.findByPk(decoded.id, {
       include: [
         {
@@ -37,7 +39,6 @@ module.exports = async (req, res, next) => {
     });
 
     req.user = user;
-    // Expose the single assigned warehouse (null for admins / unassigned users)
     req.user.assigned_warehouse = user.AssignedWarehouses?.[0] ?? null;
     req.permissions = rolePerms;
     next();

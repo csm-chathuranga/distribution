@@ -1,12 +1,12 @@
 const router = require('express').Router();
-const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, SalesOrder, OrderReturn, sequelize } = require('../models');
+const { LoadingSheet, LoadingSheetLine, Product, Warehouse, Route, User, Stock, StockMovement, Invoice, InvoiceLine, Customer, Vehicle, JournalEntry, JournalLine, Account, AccountingPeriod, SalesOrder, OrderReturn, DriverDeduction, sequelize } = require('../models');
 
 const notify = require('../notify');
 const { Op } = require('sequelize');
 const authorize = require('../middleware/authorize');
 
 const include = [
-  { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'selling_price', 'cost_price', 'case_size'] }] },
+  { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'short_code', 'selling_price', 'cost_price', 'case_size'] }] },
   { model: Warehouse, attributes: ['id', 'name'] },
   { model: Route, attributes: ['id', 'name'] },
   { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
@@ -109,7 +109,7 @@ router.get('/:id/route-sheet', async (req, res, next) => {
       : [];
     const products = await Prod.findAll({
       where: { is_active: true },
-      attributes: ['id', 'name', 'sku', 'case_size'],
+      attributes: ['id', 'name', 'sku', 'short_code', 'case_size'],
       include: [{ model: Category, attributes: ['id', 'name'] }],
       order: [['name', 'ASC']],
     });
@@ -392,6 +392,15 @@ router.put('/:id/close', authorize('sales.create'), async (req, res, next) => {
             quantity: lostQty, balance_after: curQty, unit_cost: line.unit_cost,
             created_by: req.user.id,
           }, { transaction: t });
+          if (sheet.driver_id) {
+            await DriverDeduction.create({
+              company_id: sheet.company_id, driver_id: sheet.driver_id,
+              loading_sheet_id: sheet.id, product_id: line.product_id,
+              quantity: lostQty, unit_cost: parseFloat(line.unit_cost) || 0,
+              amount: lostQty * (parseFloat(line.unit_cost) || 0),
+              status: 'PENDING', created_by: req.user.id,
+            }, { transaction: t });
+          }
         }
       }
 
