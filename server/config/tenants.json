@@ -7,6 +7,6 @@
     "db_name": "distribution_db"
   },
   "test-dist.lumac.cc": {
-    "db_name": "distribution_db"
+    "db_name": "distribution_stage"
   }
 }
