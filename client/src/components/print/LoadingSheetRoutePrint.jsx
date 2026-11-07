@@ -104,7 +104,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
   ];
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#000', background: '#fff', padding: '4mm 5mm', width: '100%' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#1d4ed8', background: '#fff', padding: '4mm 5mm', width: '100%' }}>
 
       {/* Company header */}
       <div style={{ textAlign: 'center', marginBottom: '5px' }}>
@@ -184,7 +184,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
                 const free = invoiceFree[cust.id]?.[p.id] || 0;
                 const isLoaded = loadedMap[p.id] > 0;
                 return (
-                  <td key={p.id} style={{ ...cell, background: isLoaded ? '#fff' : '#f9fafb', padding: '2px 1px', lineHeight: '1.3', color: sold > 0 ? '#1d4ed8' : 'inherit' }}>
+                  <td key={p.id} style={{ ...cell, background: isLoaded ? '#fff' : '#f9fafb', padding: '2px 1px', lineHeight: '1.3' }}>
                     {sold > 0 ? sold : ''}
                     {free > 0 && <div style={{ color: '#059669', fontSize: '8px', fontWeight: '600' }}>+{free}F</div>}
                   </td>
@@ -197,7 +197,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
         <tfoot>
           {footerRows.filter(({ always }) => always || isClosed).map(({ label, key, always, isFree }) => (
             <tr key={label}>
-              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px', color: label === 'Loaded' ? '#1d4ed8' : label === 'Free' ? '#059669' : '#000' }}>{label}</td>
+              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px', color: label === 'Free' ? '#059669' : '#1d4ed8' }}>{label}</td>
               {sortedProducts.map(p => {
                 let val = '';
                 if (isFree) {
@@ -207,7 +207,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
                   val = line && (always || isClosed) ? (parseFloat(line[key]) || 0) || '' : '';
                 }
                 const isLoaded = loadedMap[p.id] > 0;
-                const color = label === 'Loaded' ? '#1d4ed8' : label === 'Free' ? '#059669' : '#000';
+                const color = label === 'Free' ? '#059669' : '#1d4ed8';
                 return (
                   <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '8.5px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color }}>
                     {val}
