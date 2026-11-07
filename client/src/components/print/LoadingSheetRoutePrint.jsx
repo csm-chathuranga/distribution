@@ -43,10 +43,21 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
   const loadedMap = {};
   (sheet.Lines || []).forEach(l => { loadedMap[l.product_id] = parseFloat(l.loaded_quantity) || 0; });
 
-  // Sort all active products by size then name
+  // Fixed flavor order within each size group (matches physical sheet layout)
+  const CODE_ORDER = ['OR', 'NE', 'CS', 'CO', 'MP', 'GB', 'SO'];
+  const codeRank = (p) => {
+    const c = shortCode(p);
+    const i = CODE_ORDER.indexOf(c);
+    return i === -1 ? CODE_ORDER.length : i;
+  };
+
+  // Sort: by size first, then by fixed flavor order, then alphabetically for unknowns
   const sortedProducts = [...products].sort((a, b) => {
     const d = extractSizeMl(a.name) - extractSizeMl(b.name);
-    return d !== 0 ? d : a.name.localeCompare(b.name);
+    if (d !== 0) return d;
+    const ra = codeRank(a), rb = codeRank(b);
+    if (ra !== rb) return ra - rb;
+    return a.name.localeCompare(b.name);
   });
 
   // Group by size
@@ -94,13 +105,11 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
 
   const isClosed = sheet.status === 'CLOSED';
 
-  const footerRows = [
-    { label: 'Loaded',  key: 'loaded_quantity',    always: true },
-    { label: 'Free',    key: null,                  always: true,  isFree: true },
-    { label: 'Sold',    key: 'sold_quantity',        always: false },
-    { label: 'Return',  key: 'returned_quantity',    always: false },
-    { label: 'Damage',  key: 'damaged_quantity',     always: false },
-    { label: 'Lost',    key: 'lost_quantity',         always: false },
+  const closedFooterRows = [
+    { label: 'Sold',   key: 'sold_quantity'     },
+    { label: 'Return', key: 'returned_quantity' },
+    { label: 'Damage', key: 'damaged_quantity'  },
+    { label: 'Lost',   key: 'lost_quantity'     },
   ];
 
   return (
@@ -195,21 +204,35 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
         </tbody>
 
         <tfoot>
-          {footerRows.filter(({ always }) => always || isClosed).map(({ label, key, always, isFree }) => (
+          {/* Merged Loaded + Free row */}
+          <tr>
+            <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px', color: '#1d4ed8' }}>Loaded</td>
+            {sortedProducts.map(p => {
+              const line = (sheet.Lines || []).find(l => l.product_id === p.id);
+              const loaded = line ? (parseFloat(line.loaded_quantity) || 0) : 0;
+              const free = freeTotalByProduct[p.id] || 0;
+              const total = loaded + free;
+              const isLoaded = loadedMap[p.id] > 0;
+              return (
+                <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '8.5px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color: '#1d4ed8', lineHeight: '1.4', padding: '2px 1px' }}>
+                  {loaded > 0 ? loaded : ''}
+                  {free > 0 && <div style={{ color: '#059669', fontSize: '7.5px', fontWeight: '700', lineHeight: '1.2' }}>+{free}F</div>}
+                  {free > 0 && <div style={{ fontWeight: '800', borderTop: '1px solid #93c5fd', marginTop: '1px', lineHeight: '1.3' }}>{total}</div>}
+                </td>
+              );
+            })}
+          </tr>
+
+          {/* Sold / Return / Damage / Lost — only when sheet is closed */}
+          {isClosed && closedFooterRows.map(({ label, key }) => (
             <tr key={label}>
-              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px', color: label === 'Free' ? '#059669' : '#1d4ed8' }}>{label}</td>
+              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px', color: '#1d4ed8' }}>{label}</td>
               {sortedProducts.map(p => {
-                let val = '';
-                if (isFree) {
-                  val = freeTotalByProduct[p.id] || '';
-                } else {
-                  const line = (sheet.Lines || []).find(l => l.product_id === p.id);
-                  val = line && (always || isClosed) ? (parseFloat(line[key]) || 0) || '' : '';
-                }
+                const line = (sheet.Lines || []).find(l => l.product_id === p.id);
+                const val = line ? (parseFloat(line[key]) || 0) || '' : '';
                 const isLoaded = loadedMap[p.id] > 0;
-                const color = label === 'Free' ? '#059669' : '#1d4ed8';
                 return (
-                  <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '8.5px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color }}>
+                  <td key={p.id} style={{ ...cell, fontWeight: '600', fontSize: '8.5px', background: isLoaded ? '#f0f9ff' : '#f9fafb', color: '#1d4ed8' }}>
                     {val}
                   </td>
                 );
