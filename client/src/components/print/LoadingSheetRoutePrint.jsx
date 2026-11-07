@@ -184,7 +184,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
                 const free = invoiceFree[cust.id]?.[p.id] || 0;
                 const isLoaded = loadedMap[p.id] > 0;
                 return (
-                  <td key={p.id} style={{ ...cell, background: isLoaded ? '#fff' : '#f9fafb', padding: '2px 1px', lineHeight: '1.3' }}>
+                  <td key={p.id} style={{ ...cell, background: isLoaded ? '#fff' : '#f9fafb', padding: '2px 1px', lineHeight: '1.3', color: sold > 0 ? '#1d4ed8' : 'inherit' }}>
                     {sold > 0 ? sold : ''}
                     {free > 0 && <div style={{ color: '#059669', fontSize: '8px', fontWeight: '600' }}>+{free}F</div>}
                   </td>
@@ -197,7 +197,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
         <tfoot>
           {footerRows.filter(({ always }) => always || isClosed).map(({ label, key, always, isFree }) => (
             <tr key={label}>
-              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px' }}>{label}</td>
+              <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px', color: label === 'Loaded' ? '#1d4ed8' : label === 'Free' ? '#059669' : '#000' }}>{label}</td>
               {sortedProducts.map(p => {
                 let val = '';
                 if (isFree) {
