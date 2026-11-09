@@ -99,7 +99,7 @@ router.get('/:id/route-sheet', async (req, res, next) => {
     if (!sheet) return res.status(404).json({ message: 'Not found' });
     const customers = sheet.route_id
       ? await Customer.findAll({
-          where:      { route_id: sheet.route_id, is_active: true },
+          where:      { [Op.or]: [{ route_id: sheet.route_id }, { secondary_route_id: sheet.route_id }], is_active: true },
           attributes: ['id', 'name', 'code', 'address', 'visit_order'],
           order:      [['visit_order', 'ASC'], ['name', 'ASC']],
         })

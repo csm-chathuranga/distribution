@@ -94,7 +94,7 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
     const { Customer, Route, Branch, Account, sequelize } = req.db;
     const { search, page = 1, limit = 50, route_id, sales_rep_id } = req.query;
     const where = {};
-    if (route_id) where.route_id = route_id;
+    if (route_id) where[Op.or] = [{ route_id }, { secondary_route_id: route_id }];
     if (search) {
       where[Op.or] = ['name', 'code', 'phone'].map(f => ({ [f]: { [Op.like]: `%${search}%` } }));
     }

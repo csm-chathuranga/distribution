@@ -372,7 +372,7 @@ router.get('/customer-ranking', authorize('reports.sales'), async (req, res, nex
 router.get('/daily-collections', async (req, res, next) => {
   try {
     const { sequelize } = req.db;
-    const canViewAll = req.user?.permissions?.some(p => ['sales.view_all','reports.sales'].includes(p));
+    const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('reports.sales');
     const { date, sales_rep_id } = req.query;
     const targetDate = date || new Date().toLocaleDateString('en-CA');
     const repId = canViewAll ? (sales_rep_id || null) : req.user.id;
@@ -405,7 +405,7 @@ router.get('/daily-collections', async (req, res, next) => {
       WHERE DATE(r.receipt_date) = :date
         ${repId ? 'AND (i.sales_rep_id = :repId OR uc.id = :repId)' : ''}
       ORDER BY uc.name, r.id DESC
-    `, { type: QueryTypes.SELECT, replacements: { date: targetDate, repId } });
+    `, { type: QueryTypes.SELECT, replacements: repId ? { date: targetDate, repId } : { date: targetDate } });
 
     const uniqueReceipts = [...new Map(rows.map(r => [r.receipt_id, r])).values()];
     const totalCollected = uniqueReceipts.reduce((s, r) => s + parseFloat(r.collected_amount), 0);

@@ -6,6 +6,7 @@ module.exports = (sequelize) => {
     company_id: { type: DataTypes.INTEGER, allowNull: false },
     branch_id: DataTypes.INTEGER,
     route_id: DataTypes.INTEGER,
+    secondary_route_id: DataTypes.INTEGER,
     name: { type: DataTypes.STRING(255), allowNull: false },
     code: DataTypes.STRING(50),
     customer_type: {

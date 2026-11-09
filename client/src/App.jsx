@@ -226,7 +226,7 @@ export default function App() {
           <Route path="opening-stock" element={<ProtectedRoute permission="inventory.adjust"><OpeningStock /></ProtectedRoute>} />
 
           {/* Reports — canonical paths from sidebar/breadcrumb */}
-          <Route path="reports/daily-collections" element={<ProtectedRoute permission="sales.view_all"><DailyCollections /></ProtectedRoute>} />
+          <Route path="reports/daily-collections" element={<ProtectedRoute permission={['sales.view_all','sales.view_own']}><DailyCollections /></ProtectedRoute>} />
           <Route path="reports/sales-summary" element={<ProtectedRoute permission="reports.sales"><SalesSummary /></ProtectedRoute>} />
           <Route path="reports/aged-debtors" element={<ProtectedRoute permission="reports.finance"><AgedDebtors /></ProtectedRoute>} />
           <Route path="reports/aged-creditors" element={<ProtectedRoute permission="reports.finance"><AgedCreditors /></ProtectedRoute>} />

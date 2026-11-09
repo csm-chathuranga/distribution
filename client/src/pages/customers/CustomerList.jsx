@@ -77,6 +77,7 @@ const schema = yup.object({
   credit_limit:   yup.number().min(0).default(0).typeError('Enter amount'),
   account_id:     yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
   route_id:       yup.number().required('Route is required').typeError('Select a route'),
+  secondary_route_id: yup.number().nullable().transform((val, orig) => (orig === '' || orig == null) ? null : val),
 });
 
 function CustomerForm({ onClose, editing }) {
@@ -96,7 +97,8 @@ function CustomerForm({ onClose, editing }) {
       credit_days: editing.credit_days ?? 0, credit_limit: editing.credit_limit ?? 0,
       account_id: editing.account_id || '',
       route_id: editing.route_id || '',
-    } : { customer_type: 'RETAILER', credit_days: 0, credit_limit: 0, account_id: '', route_id: '' },
+      secondary_route_id: editing.secondary_route_id || '',
+    } : { customer_type: 'RETAILER', credit_days: 0, credit_limit: 0, account_id: '', route_id: '', secondary_route_id: '' },
   });
 
   const receivableAccounts = (Array.isArray(accountsData) ? accountsData : (accountsData?.data || []))
@@ -148,19 +150,32 @@ function CustomerForm({ onClose, editing }) {
           <TextField label="Credit Days" type="number" error={errors.credit_days?.message} {...register('credit_days')} />
           <TextField label="Credit Limit (LKR)" type="number" error={errors.credit_limit?.message} {...register('credit_limit')} />
         </div>
-        <Controller
-          control={control} name="route_id"
-          render={({ field, fieldState }) => (
-            <SelectField
-              label="Route"
-              required
-              placeholder="Select route…"
-              options={routeOptions}
-              value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur}
-              error={fieldState.error?.message}
-            />
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Controller
+            control={control} name="route_id"
+            render={({ field, fieldState }) => (
+              <SelectField
+                label="Primary Route"
+                required
+                placeholder="Select route…"
+                options={routeOptions}
+                value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur}
+                error={fieldState.error?.message}
+              />
+            )}
+          />
+          <Controller
+            control={control} name="secondary_route_id"
+            render={({ field }) => (
+              <SelectField
+                label="Secondary Route (optional)"
+                placeholder="None"
+                options={routeOptions}
+                value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur}
+              />
+            )}
+          />
+        </div>
         <Controller
           control={control} name="account_id"
           render={({ field, fieldState }) => (
@@ -403,6 +418,7 @@ export default function CustomerList() {
           <div className="hidden md:block space-y-2">
             {customers.map(c => {
               const routeName = c.route_id ? routeOptions.find(r => String(r.id) === String(c.route_id))?.name : null;
+              const secondaryRouteName = c.secondary_route_id ? routeOptions.find(r => String(r.id) === String(c.secondary_route_id))?.name : null;
               const desktopInitials = c.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
               return (
               <div key={c.id} className="card p-4 cursor-pointer active:opacity-80" onClick={() => navigate(`/customers/${c.id}`)}>
@@ -440,6 +456,11 @@ export default function CustomerList() {
                   {routeName && (
                     <span className="flex items-center gap-1 text-violet-600 font-medium">
                       <MapPin size={12} /> {routeName}
+                    </span>
+                  )}
+                  {secondaryRouteName && (
+                    <span className="flex items-center gap-1 text-indigo-500 font-medium">
+                      <MapPin size={12} /> {secondaryRouteName} <span className="text-xs text-gray-400">(2nd)</span>
                     </span>
                   )}
                 </div>
