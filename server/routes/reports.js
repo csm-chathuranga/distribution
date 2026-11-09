@@ -6,43 +6,60 @@ router.get('/sales-summary', authorize('reports.sales'), async (req, res, next) 
   try {
     const { sequelize } = req.db;
     const { from, to } = req.query;
-    const result = await sequelize.query(`
-      SELECT DATE(i.invoice_date) AS date,
-        COUNT(i.id) AS invoice_count,
-        SUM(i.subtotal) AS subtotal,
-        SUM(i.vat_amount) AS vat,
-        SUM(i.total_amount) AS total,
-        SUM(i.paid_amount) AS collected,
-        SUM(i.balance_due) AS outstanding
+    const rows = await sequelize.query(`
+      SELECT i.invoice_date, i.invoice_number,
+        c.name AS customer_name,
+        i.subtotal, i.vat_amount, i.total_amount, i.balance_due
+      FROM invoices i
+      JOIN customers c ON c.id = i.customer_id
+      WHERE i.status IN ('POSTED','PAID','PARTIAL')
+        ${from ? 'AND i.invoice_date >= :from' : ''}
+        ${to ? 'AND i.invoice_date <= :to' : ''}
+      ORDER BY i.invoice_date DESC
+    `, { type: QueryTypes.SELECT, replacements: { from, to } });
+
+    const [totals] = await sequelize.query(`
+      SELECT COUNT(i.id) AS invoice_count,
+        SUM(i.total_amount) AS total_sales,
+        SUM(i.vat_amount) AS total_vat,
+        SUM(i.paid_amount) AS total_collected
       FROM invoices i
       WHERE i.status IN ('POSTED','PAID','PARTIAL')
         ${from ? 'AND i.invoice_date >= :from' : ''}
         ${to ? 'AND i.invoice_date <= :to' : ''}
-      GROUP BY DATE(i.invoice_date)
-      ORDER BY date DESC
     `, { type: QueryTypes.SELECT, replacements: { from, to } });
-    res.json(result);
+
+    res.json({ rows, totals: totals || {} });
   } catch (err) { next(err); }
 });
 
 router.get('/aged-debtors', authorize('reports.finance'), async (req, res, next) => {
   try {
     const { sequelize } = req.db;
-    const result = await sequelize.query(`
-      SELECT c.id, c.name, c.code, c.credit_days,
-        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) <= 0 THEN i.balance_due ELSE 0 END) AS current_amount,
-        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) BETWEEN 1 AND 30 THEN i.balance_due ELSE 0 END) AS days_30,
-        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) BETWEEN 31 AND 60 THEN i.balance_due ELSE 0 END) AS days_60,
-        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) BETWEEN 61 AND 90 THEN i.balance_due ELSE 0 END) AS days_90,
+    const raw = await sequelize.query(`
+      SELECT c.id, c.name AS customer_name, c.code,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) <= 30 THEN i.balance_due ELSE 0 END) AS current,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) BETWEEN 31 AND 60 THEN i.balance_due ELSE 0 END) AS days_31_60,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) BETWEEN 61 AND 90 THEN i.balance_due ELSE 0 END) AS days_61_90,
         SUM(CASE WHEN DATEDIFF(CURDATE(), i.due_date) > 90 THEN i.balance_due ELSE 0 END) AS over_90,
-        SUM(i.balance_due) AS total_outstanding
+        SUM(i.balance_due) AS total
       FROM customers c
       JOIN invoices i ON i.customer_id = c.id
       WHERE i.status IN ('POSTED','PARTIAL','OVERDUE') AND i.balance_due > 0
       GROUP BY c.id
-      ORDER BY total_outstanding DESC
+      ORDER BY total DESC
     `, { type: QueryTypes.SELECT });
-    res.json(result);
+
+    const totals = raw.reduce((acc, r) => {
+      acc.current    += parseFloat(r.current    || 0);
+      acc.days_31_60 += parseFloat(r.days_31_60 || 0);
+      acc.days_61_90 += parseFloat(r.days_61_90 || 0);
+      acc.over_90    += parseFloat(r.over_90    || 0);
+      acc.total      += parseFloat(r.total      || 0);
+      return acc;
+    }, { current: 0, days_31_60: 0, days_61_90: 0, over_90: 0, total: 0 });
+
+    res.json({ rows: raw, totals });
   } catch (err) { next(err); }
 });
 
@@ -50,9 +67,10 @@ router.get('/stock-movement', authorize('reports.inventory'), async (req, res, n
   try {
     const { sequelize } = req.db;
     const { warehouse_id, product_id, from, to } = req.query;
-    const result = await sequelize.query(`
-      SELECT sm.created_at, sm.movement_type, sm.quantity, sm.balance_after, sm.unit_cost,
-        p.sku, p.name AS product_name, w.name AS warehouse_name, sm.source_type
+    const rows = await sequelize.query(`
+      SELECT sm.created_at AS movement_date, sm.movement_type, sm.quantity,
+        p.sku, p.name AS product_name, w.name AS warehouse_name,
+        CONCAT(sm.source_type, ' #', sm.source_id) AS reference
       FROM stock_movements sm
       JOIN products p ON p.id = sm.product_id
       JOIN warehouses w ON w.id = sm.warehouse_id
@@ -64,26 +82,44 @@ router.get('/stock-movement', authorize('reports.inventory'), async (req, res, n
       ORDER BY sm.created_at DESC
       LIMIT 500
     `, { type: QueryTypes.SELECT, replacements: { warehouse_id, product_id, from, to } });
-    res.json(result);
+    res.json({ rows });
   } catch (err) { next(err); }
 });
 
 router.get('/profit-loss', authorize('reports.finance'), async (req, res, next) => {
   try {
     const { sequelize } = req.db;
-    const { period_id } = req.query;
-    const result = await sequelize.query(`
+    const { from, to } = req.query;
+    const rows = await sequelize.query(`
       SELECT a.type, a.name, a.code,
         COALESCE(SUM(jl.debit),0) AS total_debit,
         COALESCE(SUM(jl.credit),0) AS total_credit
       FROM accounts a
       LEFT JOIN journal_lines jl ON jl.account_id = a.id
-      LEFT JOIN journal_entries je ON je.id = jl.journal_id ${period_id ? 'AND je.period_id = :period_id' : ''}
+      LEFT JOIN journal_entries je ON je.id = jl.journal_id
+        ${from ? 'AND DATE(je.entry_date) >= :from' : ''}
+        ${to   ? 'AND DATE(je.entry_date) <= :to'   : ''}
       WHERE a.type IN ('REVENUE','EXPENSE','COGS')
       GROUP BY a.id
       ORDER BY a.type, a.code
-    `, { type: QueryTypes.SELECT, replacements: { period_id } });
-    res.json(result);
+    `, { type: QueryTypes.SELECT, replacements: { from, to } });
+
+    const toAmount = (r) => {
+      if (r.type === 'REVENUE') return parseFloat(r.total_credit) - parseFloat(r.total_debit);
+      return parseFloat(r.total_debit) - parseFloat(r.total_credit);
+    };
+
+    const revenue  = rows.filter(r => r.type === 'REVENUE').map(r => ({ name: r.name, amount: toAmount(r) }));
+    const cogs     = rows.filter(r => r.type === 'COGS').map(r => ({ name: r.name, amount: toAmount(r) }));
+    const expenses = rows.filter(r => r.type === 'EXPENSE').map(r => ({ name: r.name, amount: toAmount(r) }));
+
+    const total_revenue  = revenue.reduce((s, r) => s + r.amount, 0);
+    const total_cogs     = cogs.reduce((s, r) => s + r.amount, 0);
+    const total_expenses = expenses.reduce((s, r) => s + r.amount, 0);
+    const gross_profit   = total_revenue - total_cogs;
+    const net_profit     = gross_profit - total_expenses;
+
+    res.json({ revenue, cogs, expenses, totals: { total_revenue, total_cogs, gross_profit, total_expenses, net_profit } });
   } catch (err) { next(err); }
 });
 
@@ -207,10 +243,10 @@ router.get('/reorder-suggestions', authorize('reports.inventory'), async (req, r
   try {
     const { sequelize } = req.db;
     const result = await sequelize.query(`
-      SELECT p.id AS product_id, p.sku, p.name, p.reorder_point, p.reorder_quantity, p.cost_price,
+      SELECT p.id AS product_id, p.sku, p.name, p.reorder_point, p.cost_price,
         s.quantity AS current_stock, w.id AS warehouse_id, w.name AS warehouse,
         COALESCE(sales.avg_monthly, 0) AS avg_monthly_sales,
-        GREATEST(p.reorder_quantity, ROUND(COALESCE(sales.avg_monthly, 0) * 3 - s.quantity, 0)) AS suggested_order
+        GREATEST(p.reorder_point, ROUND(COALESCE(sales.avg_monthly, 0) * 3 - s.quantity, 0)) AS suggested_order
       FROM stock s
       JOIN products p ON p.id = s.product_id
       JOIN warehouses w ON w.id = s.warehouse_id
@@ -236,6 +272,7 @@ router.get('/sales-rep-kpi', authorize('reports.sales'), async (req, res, next) 
     const currentDate = new Date();
     const y = year || currentDate.getFullYear();
     const m = month || (currentDate.getMonth() + 1);
+    const company_id = req.user.Branch?.company_id;
     const result = await sequelize.query(`
       SELECT u.id, u.name AS rep_name, u.email,
         COUNT(i.id) AS invoice_count,
@@ -243,14 +280,15 @@ router.get('/sales-rep-kpi', authorize('reports.sales'), async (req, res, next) 
         COALESCE(SUM(i.paid_amount), 0) AS collected,
         COUNT(DISTINCT i.customer_id) AS customers_served
       FROM users u
+      JOIN branches b ON b.id = u.branch_id
       LEFT JOIN invoices i ON i.sales_rep_id = u.id
         AND YEAR(i.invoice_date) = :year
         AND MONTH(i.invoice_date) = :month
         AND i.status IN ('POSTED','PARTIAL','PAID','OVERDUE')
-      WHERE u.company_id = :company_id
+      WHERE b.company_id = :company_id AND u.is_active = 1
       GROUP BY u.id
       ORDER BY total_sales DESC
-    `, { type: QueryTypes.SELECT, replacements: { year: y, month: m, company_id: 1 } });
+    `, { type: QueryTypes.SELECT, replacements: { year: y, month: m, company_id } });
     res.json(result);
   } catch (err) { next(err); }
 });
@@ -260,7 +298,7 @@ router.get('/stock-matrix', authorize('reports.inventory'), async (req, res, nex
     const { sequelize } = req.db;
     const rows = await sequelize.query(`
       SELECT p.id AS product_id, p.sku, p.name, p.selling_price, p.cost_price,
-             p.reorder_point, p.reorder_quantity, p.is_active,
+             p.reorder_point, p.is_active,
              w.id AS warehouse_id, w.name AS warehouse_name,
              COALESCE(s.quantity, 0) AS quantity
       FROM products p
@@ -357,7 +395,7 @@ router.get('/customer-ranking', authorize('reports.sales'), async (req, res, nex
         COALESCE(SUM(i.balance_due),0)  AS outstanding,
         MAX(i.invoice_date)             AS last_invoice_date
       FROM customers c
-      LEFT JOIN (SELECT id, name FROM routes) r ON r.id = c.route_id
+      LEFT JOIN (SELECT id, name AS route_name FROM routes) r ON r.id = c.route_id
       LEFT JOIN invoices i ON i.customer_id = c.id
         AND i.status IN ('POSTED','PARTIAL','PAID','OVERDUE')
         AND i.invoice_date >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
