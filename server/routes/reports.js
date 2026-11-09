@@ -374,7 +374,7 @@ router.get('/daily-collections', async (req, res, next) => {
     const { sequelize } = req.db;
     const canViewAll = req.user?.permissions?.some(p => ['sales.view_all','reports.sales'].includes(p));
     const { date, sales_rep_id } = req.query;
-    const targetDate = date || new Date().toISOString().slice(0, 10);
+    const targetDate = date || new Date().toLocaleDateString('en-CA');
     const repId = canViewAll ? (sales_rep_id || null) : req.user.id;
 
     const rows = await sequelize.query(`

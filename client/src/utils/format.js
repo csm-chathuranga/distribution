@@ -13,4 +13,7 @@ export const fmtTime = (d) =>
 export const fmtNumber = (n, decimals = 2) =>
   Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-export const today = () => new Date().toISOString().split('T')[0];
+export const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};

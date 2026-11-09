@@ -202,7 +202,8 @@ export default function DriverDeliveries() {
     const inv = isDeliverMode ? deliverTarget : collectTarget;
     if (!inv) return;
     setBusyId(inv.id);
-    const today = new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     try {
       if (isDeliverMode) {
         await deliverInvoice(inv.id).unwrap();

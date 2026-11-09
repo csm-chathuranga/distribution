@@ -25,7 +25,7 @@ function CollectModal({ customer, onClose }) {
         customer_id:    customer.id,
         amount:         amt,
         payment_method: method,
-        receipt_date:   new Date().toISOString().slice(0, 10),
+        receipt_date:   (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })(),
         notes:          note || undefined,
       }).unwrap();
       toast.success(`Payment of ${fmtCurrency(amt)} collected`);

@@ -4,7 +4,7 @@ import { ArrowLeft, Banknote, CreditCard, Building2, TrendingUp, Users } from 'l
 import { useGetMyCollectionsQuery } from '../../api/salesApi';
 import { fmtNumber, fmtDateTime } from '../../utils/format';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
 const METHOD_LABEL = { CASH: 'Cash', CHEQUE: 'Cheque', BANK_TRANSFER: 'Transfer' };
 const METHOD_COLOR = {
