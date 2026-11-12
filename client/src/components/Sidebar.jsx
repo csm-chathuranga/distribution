@@ -1,11 +1,11 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Package, Users, ShoppingCart, FileText, Truck,
   CreditCard, BarChart2, Settings, ChevronDown, Warehouse, BookOpen,
   Receipt, ArrowLeftRight, Building2, LogOut, MapPin, ClipboardList,
-  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car, DollarSign, Gift,
+  RotateCcw, Navigation, Tag, Scale, Calendar, TrendingUp, AlertTriangle, Zap, Car, DollarSign, Gift, X,
 } from 'lucide-react';
 import { logout, selectCurrentUser } from '../store/authSlice';
 import { usePermission, useCanAny } from '../hooks/usePermission';
@@ -54,9 +54,10 @@ function NavItem({ to, icon: Icon, label }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const location = useLocation();
   const { data: company } = useGetCompanyQuery();
   const canInventory = usePermission('inventory.view');
   const canPurchase = usePermission('purchase.view');
@@ -73,10 +74,27 @@ export default function Sidebar() {
 
   const initials = user?.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
+  // Close mobile sidebar on route change
+  useEffect(() => { onClose?.(); }, [location.pathname]);
+
   return (
-    <aside className="w-64 min-h-screen bg-sidebar text-sidebar-text flex flex-col flex-shrink-0">
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+    <aside className={`
+      fixed md:static inset-y-0 left-0 z-40
+      w-64 min-h-screen bg-sidebar text-sidebar-text flex flex-col flex-shrink-0
+      transition-transform duration-300
+      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-800">
+      <div className="px-5 py-5 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg">
             <Truck size={18} className="text-white" />
@@ -86,6 +104,12 @@ export default function Sidebar() {
             <p className="text-xs text-slate-300 mt-0.5">Distribution System</p>
           </div>
         </div>
+        <button
+          onClick={onClose}
+          className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {/* Nav */}
@@ -153,6 +177,7 @@ export default function Sidebar() {
             <NavItem to="/driver-deductions" icon={AlertTriangle} label="Driver Deductions" />
             <NavItem to="/tracking" icon={MapPin} label="Rep Tracking" />
             <NavItem to="/reports/daily-collections" icon={Zap} label="Daily Collections" />
+            <NavItem to="/daily-sheet" icon={FileText} label="Daily Sheet" />
           </>
         )}
 
@@ -237,5 +262,6 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

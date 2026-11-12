@@ -94,10 +94,10 @@ router.get('/', authorize.any('sales.view_own', 'sales.view_all'), async (req, r
     const { Customer, Route, Branch, Account, sequelize } = req.db;
     const { search, page = 1, limit = 50, route_id, sales_rep_id } = req.query;
     const where = {};
-    if (route_id) where[Op.or] = [{ route_id }, { secondary_route_id: route_id }];
-    if (search) {
-      where[Op.or] = ['name', 'code', 'phone'].map(f => ({ [f]: { [Op.like]: `%${search}%` } }));
-    }
+    const and = [];
+    if (route_id) and.push({ [Op.or]: [{ route_id }, { secondary_route_id: route_id }] });
+    if (search) and.push({ [Op.or]: ['name', 'code', 'phone'].map(f => ({ [f]: { [Op.like]: `%${search}%` } })) });
+    if (and.length) where[Op.and] = and;
 
     const isAdmin = ['super_admin', 'admin'].includes(req.user.Role?.name);
     const canViewAll = isAdmin || req.permissions?.has('sales.view_all');

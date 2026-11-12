@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck, Truck, X, RefreshCw, ArrowLeft, Printer } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, HelpCircle, Check, CheckCheck, Truck, X, RefreshCw, ArrowLeft, Printer, Menu } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,7 +16,7 @@ const PAGE_TITLES = {
   '/profile':    'Profile',
 };
 
-export default function Header({ minimal = false }) {
+export default function Header({ minimal = false, onMenuToggle }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -206,8 +206,17 @@ export default function Header({ minimal = false }) {
 
   return (
     <>
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
-      <Breadcrumb />
+    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </button>
+        <Breadcrumb />
+      </div>
 
       <div className="flex items-center gap-3">
         {/* Printer Settings — only in Electron desktop app */}

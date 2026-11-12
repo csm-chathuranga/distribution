@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import { useGetCustomersQuery, useCreateCustomerMutation, useUpdateCustomerMutation, useGetRoutesQuery } from '../../api/customersApi';
 import { useGetAccountsQuery } from '../../api/financeApi';
 import { useGetUsersForSelectQuery } from '../../api/settingsApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/authSlice';
 import { usePermission } from '../../hooks/usePermission';
 import Modal from '../../components/ui/Modal';
 import { TextField, TextareaField, SelectField } from '../../components/ui/FormField';
@@ -194,6 +196,7 @@ function CustomerForm({ onClose, editing }) {
 }
 
 export default function CustomerList() {
+  const user       = useSelector(selectCurrentUser);
   const canCreate  = usePermission('sales.create');
   const canViewAll = usePermission('sales.view_all');
   const navigate = useNavigate();
@@ -343,7 +346,9 @@ export default function CustomerList() {
                 )}
                 {routeOptions
                   .filter(r => {
-                    const matchesRep = !repFilter || String(r.sales_rep_id) === String(repFilter);
+                    const matchesRep = canViewAll
+                      ? (!repFilter || String(r.sales_rep_id) === String(repFilter))
+                      : String(r.sales_rep_id) === String(user?.id);
                     const matchesSearch = r.name.toLowerCase().includes(routeSearch.toLowerCase());
                     return matchesRep && matchesSearch;
                   })
@@ -354,7 +359,9 @@ export default function CustomerList() {
                     >{r.name}</button>
                   ))}
                 {routeOptions.filter(r => {
-                  const matchesRep = !repFilter || String(r.sales_rep_id) === String(repFilter);
+                  const matchesRep = canViewAll
+                    ? (!repFilter || String(r.sales_rep_id) === String(repFilter))
+                    : String(r.sales_rep_id) === String(user?.id);
                   return matchesRep && r.name.toLowerCase().includes(routeSearch.toLowerCase());
                 }).length === 0 && (
                   <p className="px-4 py-3 text-sm text-gray-400">No routes found</p>

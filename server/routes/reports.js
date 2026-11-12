@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const authorize = require('../middleware/authorize');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, Op } = require('sequelize');
 
 router.get('/sales-summary', authorize('reports.sales'), async (req, res, next) => {
   try {
@@ -459,6 +459,102 @@ router.get('/daily-collections', async (req, res, next) => {
       },
       rows,
     });
+  } catch (err) { next(err); }
+});
+
+router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.sales', 'sales.create'), async (req, res, next) => {
+  try {
+    const { LoadingSheet, LoadingSheetLine, Product, Invoice, Customer, Receipt, User, Route, Vehicle } = req.db;
+    const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('reports.sales');
+    const { date, sales_rep_id } = req.query;
+    const targetDate = date || new Date().toLocaleDateString('en-CA');
+    const repId = canViewAll ? (sales_rep_id || null) : req.user.id;
+
+    // Allow ±1 day on sheet_date so receipt date and loading sheet date can differ
+    const d = new Date(targetDate);
+    const dayBefore = new Date(d); dayBefore.setDate(d.getDate() - 1);
+    const fmtD = dt => dt.toLocaleDateString('en-CA');
+    const sheetWhere = { sheet_date: { [Op.between]: [fmtD(dayBefore), targetDate] } };
+    if (repId) sheetWhere[Op.or] = [{ sales_rep_id: repId }, { driver_id: repId }];
+
+    const sheets = await LoadingSheet.findAll({
+      where: sheetWhere,
+      include: [
+        { model: LoadingSheetLine, as: 'Lines', include: [{ model: Product, attributes: ['id', 'name', 'sku', 'short_code', 'case_size'] }] },
+        { model: Route,   attributes: ['id', 'name'] },
+        { model: User, as: 'SalesRep', attributes: ['id', 'name'] },
+        { model: User, as: 'Driver',   attributes: ['id', 'name'] },
+        { model: Vehicle, attributes: ['id', 'registration_number'] },
+        { model: Invoice, as: 'Invoices',
+          attributes: ['id', 'invoice_number', 'total_amount', 'paid_amount', 'balance_due', 'status', 'customer_id'],
+          include: [{ model: Customer, attributes: ['id', 'name', 'phone'] }],
+        },
+      ],
+      order: [['sheet_date', 'DESC']],
+    });
+
+    const result = await Promise.all(sheets.map(async (sheet) => {
+      const validInvoices = (sheet.Invoices || []).filter(i => ['POSTED', 'PAID', 'PARTIAL', 'DELIVERED'].includes(i.status));
+      const customerIds   = [...new Set(validInvoices.map(i => i.customer_id))];
+
+      // Find receipts collected by repId on targetDate (created_by = the collector)
+      const receiptWhere = {
+        receipt_date: { [Op.between]: [`${targetDate} 00:00:00`, `${targetDate} 23:59:59`] },
+        status: { [Op.ne]: 'CANCELLED' },
+      };
+      if (repId) {
+        // Show receipts created_by this person, OR for customers on this sheet
+        const orClauses = [{ created_by: repId }];
+        if (customerIds.length > 0) orClauses.push({ customer_id: { [Op.in]: customerIds } });
+        receiptWhere[Op.or] = orClauses;
+      } else if (customerIds.length > 0) {
+        receiptWhere.customer_id = { [Op.in]: customerIds };
+      }
+      const receipts = await Receipt.findAll({
+        where: receiptWhere,
+        include: [{ model: Customer, attributes: ['id', 'name'] }],
+      });
+
+      const daySale     = validInvoices.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0);
+      const cashTotal   = receipts.filter(r => r.payment_method === 'CASH').reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+      const chequeTotal = receipts.filter(r => r.payment_method === 'CHEQUE').reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+      const bankTotal   = receipts.filter(r => r.payment_method === 'BANK_TRANSFER').reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+      const outstanding = validInvoices.reduce((s, i) => s + parseFloat(i.balance_due || 0), 0);
+
+      const creditBill = validInvoices.map(inv => {
+        const collected = receipts.filter(r => r.customer_id === inv.customer_id).reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+        return {
+          customer_name:  inv.Customer?.name,
+          invoice_number: inv.invoice_number,
+          invoice_total:  parseFloat(inv.total_amount || 0),
+          collected,
+          balance:        parseFloat(inv.balance_due || 0),
+        };
+      });
+
+      const inventory = (sheet.Lines || []).map(l => ({
+        product_id:   l.product_id,
+        product_name: l.Product?.name,
+        short_code:   l.Product?.short_code || l.Product?.sku,
+        case_size:    l.Product?.case_size,
+        loaded:       parseFloat(l.loaded_quantity   || 0),
+        sold:         parseFloat(l.sold_quantity      || 0),
+        returned:     parseFloat(l.returned_quantity  || 0),
+        damaged:      parseFloat(l.damaged_quantity   || 0),
+        lost:         parseFloat(l.lost_quantity      || 0),
+      }));
+
+      return {
+        sheet_id: sheet.id, sheet_number: sheet.sheet_number, sheet_status: sheet.status,
+        sales_rep: sheet.SalesRep, driver: sheet.Driver,
+        route: sheet.Route, vehicle: sheet.Vehicle,
+        day_sale: daySale, total_collected: cashTotal + chequeTotal + bankTotal,
+        cash_total: cashTotal, cheque_total: chequeTotal, bank_total: bankTotal,
+        outstanding, credit_bill: creditBill, inventory,
+      };
+    }));
+
+    res.json({ date: targetDate, sheets: result });
   } catch (err) { next(err); }
 });
 

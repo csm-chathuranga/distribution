@@ -240,7 +240,7 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
             </tr>
           ))}
 
-          {/* Cases row — one merged cell per size group: total units / case size = cases */}
+          {/* Cases row — merged per size group, nested table gives each product its own cell */}
           <tr>
             <td colSpan={2} style={{ ...hCell, textAlign: 'right', fontSize: '8.5px' }}>Cases</td>
             {sizeGroups.map(([ml, prods]) => {
@@ -255,9 +255,40 @@ export default function LoadingSheetRoutePrint({ sheet, customers = [], products
                 ? (fullCases > 0 ? `${fullCases}cs${rem > 0 ? `+${rem}u` : ''}` : `${rem}u`)
                 : (totalUnits > 0 ? `${totalUnits}u` : '');
               return (
-                <td key={ml} colSpan={prods.length} style={{ ...cell, fontWeight: '700', background: '#ede9fe', color: '#6d28d9', textAlign: 'center', lineHeight: '1.4' }}>
-                  <div style={{ fontSize: '9.5px' }}>{casesLabel}</div>
-                  {csNum && <div style={{ fontSize: '7.5px', color: '#7c3aed', fontWeight: '400' }}>{totalUnits}u ÷ {csNum}</div>}
+                <td key={ml} colSpan={prods.length} style={{ ...cell, background: '#ede9fe', color: '#6d28d9', padding: 0, verticalAlign: 'middle' }}>
+                  {/* Per-product row — fixed layout so cells align with outer columns */}
+                  <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                    <colgroup>
+                      {prods.map(p => <col key={p.id} style={{ width: `${100 / prods.length}%` }} />)}
+                    </colgroup>
+                    <tbody>
+                      <tr>
+                        {prods.map(p => {
+                          const pLoaded = loadedMap[p.id] || 0;
+                          const pFree = freeTotalByProduct[p.id] || 0;
+                          const pTotal = pLoaded + pFree;
+                          const pCs = p.case_size && parseInt(p.case_size) > 1 ? parseInt(p.case_size) : null;
+                          const pFull = pCs ? Math.floor(pTotal / pCs) : 0;
+                          const pRem = pCs ? pTotal % pCs : 0;
+                          const csLine = pTotal === 0 ? ' ' : pCs && pFull > 0 ? `${pFull}cs` : ' ';
+                          const uLine  = pTotal === 0 ? ' ' : pCs ? (pRem > 0 ? `${pRem}u` : ' ') : `${pTotal}u`;
+                          return (
+                            <td key={p.id} style={{ borderRight: B, borderBottom: '1px solid #555', textAlign: 'center', verticalAlign: 'middle', fontSize: '8px', fontWeight: '600', color: '#5b21b6', padding: '1px 0', overflow: 'hidden', whiteSpace: 'nowrap', lineHeight: '1.2' }}>
+                              <div>{csLine}</div>
+                              <div>{uLine}</div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                  {/* Group total */}
+                  <div style={{ textAlign: 'center', fontWeight: '700', fontSize: '9.5px', lineHeight: '1.4', padding: '1px 2px' }}>
+                    {casesLabel || ' '}
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: '7.5px', color: '#7c3aed', fontWeight: '400', lineHeight: '1.3', paddingBottom: '1px' }}>
+                    {csNum && totalUnits > 0 ? `${totalUnits}u ÷ ${csNum}` : ' '}
+                  </div>
                 </td>
               );
             })}

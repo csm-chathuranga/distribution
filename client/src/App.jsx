@@ -119,6 +119,7 @@ import PeriodsManagement from './pages/settings/PeriodsManagement';
 
 // Reports
 import DailyCollections from './pages/reports/DailyCollections';
+import DailySheet from './pages/reports/DailySheet';
 import SalesSummary from './pages/reports/SalesSummary';
 import AgedDebtors from './pages/reports/AgedDebtors';
 import AgedCreditors from './pages/reports/AgedCreditors';
@@ -227,6 +228,7 @@ export default function App() {
 
           {/* Reports — canonical paths from sidebar/breadcrumb */}
           <Route path="reports/daily-collections" element={<ProtectedRoute permission={['sales.view_all','sales.view_own']}><DailyCollections /></ProtectedRoute>} />
+          <Route path="daily-sheet" element={<ProtectedRoute permission={['sales.view_all','sales.create']}><DailySheet /></ProtectedRoute>} />
           <Route path="reports/sales-summary" element={<ProtectedRoute permission="reports.sales"><SalesSummary /></ProtectedRoute>} />
           <Route path="reports/aged-debtors" element={<ProtectedRoute permission="reports.finance"><AgedDebtors /></ProtectedRoute>} />
           <Route path="reports/aged-creditors" element={<ProtectedRoute permission="reports.finance"><AgedCreditors /></ProtectedRoute>} />

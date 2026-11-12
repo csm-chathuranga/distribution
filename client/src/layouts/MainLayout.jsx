@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
@@ -13,6 +14,7 @@ export default function MainLayout() {
   const user       = useSelector(selectCurrentUser);
   const role       = user?.Role?.name;
   const useBottomNav = BOTTOM_NAV_ROLES.includes(role);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   useFirestoreSync();
 
   if (useBottomNav) {
@@ -30,9 +32,9 @@ export default function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Header onMenuToggle={() => setSidebarOpen(v => !v)} />
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <Outlet />
         </main>
