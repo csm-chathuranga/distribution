@@ -464,7 +464,7 @@ router.get('/daily-collections', async (req, res, next) => {
 
 router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.sales', 'sales.create'), async (req, res, next) => {
   try {
-    const { LoadingSheet, LoadingSheetLine, Product, Invoice, Customer, Receipt, User, Route, Vehicle } = req.db;
+    const { LoadingSheet, LoadingSheetLine, Product, Invoice, Customer, Receipt, Cheque, User, Route, Vehicle } = req.db;
     const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('reports.sales');
     const { date, sales_rep_id } = req.query;
     const targetDate = date || new Date().toLocaleDateString('en-CA');
@@ -515,6 +515,12 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
         include: [{ model: Customer, attributes: ['id', 'name'] }],
       });
 
+      const receiptIds = receipts.map(r => r.id);
+      const cheques = receiptIds.length > 0 ? await Cheque.findAll({
+        where: { receipt_id: { [Op.in]: receiptIds }, status: { [Op.ne]: 'CANCELLED' } },
+        include: [{ model: Receipt, attributes: ['id', 'customer_id'], include: [{ model: Customer, attributes: ['id', 'name'] }] }],
+      }) : [];
+
       const daySale     = validInvoices.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0);
       const cashTotal   = receipts.filter(r => r.payment_method === 'CASH').reduce((s, r) => s + parseFloat(r.amount || 0), 0);
       const chequeTotal = receipts.filter(r => r.payment_method === 'CHEQUE').reduce((s, r) => s + parseFloat(r.amount || 0), 0);
@@ -551,6 +557,15 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
         day_sale: daySale, total_collected: cashTotal + chequeTotal + bankTotal,
         cash_total: cashTotal, cheque_total: chequeTotal, bank_total: bankTotal,
         outstanding, credit_bill: creditBill, inventory,
+        cheques: cheques.map(ch => ({
+          id: ch.id,
+          cheque_number: ch.cheque_number,
+          bank_name: ch.bank_name,
+          cheque_date: ch.cheque_date,
+          amount: parseFloat(ch.amount || 0),
+          status: ch.status,
+          customer_name: ch.Receipt?.Customer?.name || '—',
+        })),
       };
     }));
 

@@ -34,10 +34,11 @@ const fmt = v => fmtCurrency(v || 0);
 function SheetPrint({ sheet, date, company, type }) {
   const isDriver = type === 'driver';
 
-  const afterCredit = sheet.day_sale - sheet.outstanding;
-  const afterCheque = afterCredit - sheet.cheque_total;
-  const afterBank   = afterCheque - sheet.bank_total;
-  const excessShort = sheet.cash_total - afterBank;
+  const afterCredit   = sheet.day_sale + sheet.total_collected - sheet.outstanding;
+  const afterCheque   = afterCredit - sheet.cheque_total;
+  const afterPCash    = afterCheque; // P/Cash not tracked — placeholder
+  const afterBank     = afterPCash - sheet.bank_total;
+  const excessShort   = sheet.cash_total - afterBank;
 
   const inventory = [...(sheet.inventory || [])].sort((a, b) => extractMl(a.product_name) - extractMl(b.product_name));
   const sizeGroups = inventory.reduce((acc, p) => {
@@ -78,34 +79,32 @@ function SheetPrint({ sheet, date, company, type }) {
       <div style={{ display: 'flex', gap: '5mm', alignItems: 'flex-start' }}>
         {/* LEFT */}
         <div style={{ flex: '0 0 85mm' }}>
-          {/* Day Summary — rep only */}
-          {!isDriver && (
-            <>
-              <div style={{ fontWeight: '700', fontSize: '9.5px', marginBottom: '2px' }}>Day Summary</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
-                <tbody>
-                  {[
-                    ['Day Sale', fmt(sheet.day_sale), true],
-                    ['Credit Collection (+)', fmt(sheet.total_collected), false],
-                    ['Total', fmt(sheet.day_sale + sheet.total_collected), true, true],
-                    ['Credit ( − )', fmt(sheet.outstanding), false, false, true],
-                    ['Total', fmt(afterCredit), true, true],
-                    ['Cheque ( − )', fmt(sheet.cheque_total), false, false, true],
-                    ['Total', fmt(afterCheque), true, true],
-                    ['Bank Transfer ( − )', fmt(sheet.bank_total), false, false, true],
-                    ['Total', fmt(afterBank), true, true],
-                    ['Cash', fmt(sheet.cash_total), true],
-                    ['Excess / Short', fmt(excessShort), true, true],
-                  ].map(([lbl, val, bold, bTop, indent], i) => (
-                    <tr key={i} style={bTop ? { borderTop: B } : {}}>
-                      <td style={{ ...td, paddingLeft: indent ? 14 : 5, fontWeight: bold ? '700' : '400', width: '58%' }}>{lbl}</td>
-                      <td style={{ ...tdR, fontWeight: bold ? '700' : '400' }}>{val}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
+          {/* Day Summary */}
+          <div style={{ fontWeight: '700', fontSize: '9.5px', marginBottom: '2px' }}>Day Summary</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
+            <tbody>
+              {[
+                ['Day Sale',              fmt(sheet.day_sale),                                    true,  false, false],
+                ['Credit Collection (+)', fmt(sheet.total_collected),                             false, false, false],
+                ['Total',                 fmt(sheet.day_sale + sheet.total_collected),            true,  true,  false],
+                ['Credit ( − )',          fmt(sheet.outstanding),                                 false, false, true ],
+                ['Total',                 fmt(afterCredit),                                       true,  true,  false],
+                ['Cheque ( − )',          sheet.cheque_total > 0 ? fmt(sheet.cheque_total) : '—', false, false, true ],
+                ['Total',                 fmt(afterCheque),                                       true,  true,  false],
+                ['P/Cash ( + )',          '—',                                                    false, false, true ],
+                ['Total',                 fmt(afterPCash),                                        true,  true,  false],
+                ['Bank Deposit ( − )',    sheet.bank_total > 0   ? fmt(sheet.bank_total)   : '—', false, false, true ],
+                ['Total',                 fmt(afterBank),                                         true,  true,  false],
+                ['Cash',                  fmt(sheet.cash_total),                                  true,  false, false],
+                ['Excess / Short',        fmt(excessShort),                                       true,  true,  false],
+              ].map(([lbl, val, bold, bTop, indent], i) => (
+                <tr key={i} style={bTop ? { borderTop: B } : {}}>
+                  <td style={{ ...td, paddingLeft: indent ? 14 : 5, fontWeight: bold ? '700' : '400', width: '58%' }}>{lbl}</td>
+                  <td style={{ ...tdR, fontWeight: bold ? '700' : '400' }}>{val}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
           {/* Inventory Stock */}
           <div style={{ fontWeight: '700', fontSize: '9.5px', marginBottom: '2px' }}>Inventory Stock</div>
@@ -188,6 +187,37 @@ function SheetPrint({ sheet, date, company, type }) {
               </tr>
             </tbody>
           </table>
+
+          {/* Cheques */}
+          {(sheet.cheques || []).length > 0 && (
+            <>
+              <div style={{ fontWeight: '700', fontSize: '9.5px', marginBottom: '2px', marginTop: '5px' }}>Cheques Collected</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
+                <thead>
+                  <tr>
+                    <th style={{ ...th, width: '22%' }}>Cheque #</th>
+                    <th style={{ ...th, width: '30%' }}>Customer</th>
+                    <th style={{ ...th, width: '24%' }}>Bank</th>
+                    <th style={{ ...th, width: '24%', textAlign: 'right' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(sheet.cheques || []).map((ch, i) => (
+                    <tr key={i}>
+                      <td style={td}>{ch.cheque_number}</td>
+                      <td style={td}>{ch.customer_name}</td>
+                      <td style={td}>{ch.bank_name || '—'}</td>
+                      <td style={tdR}>{fmt(ch.amount)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop: B }}>
+                    <td colSpan={3} style={{ ...td, fontWeight: '700' }}>Total Cheques</td>
+                    <td style={{ ...tdR, fontWeight: '700' }}>{fmt((sheet.cheques || []).reduce((s, ch) => s + ch.amount, 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </>
+          )}
 
           {/* Cash denomination */}
           <div style={{ fontWeight: '700', fontSize: '9.5px', marginBottom: '2px' }}>Cash</div>
@@ -350,7 +380,49 @@ export default function DailySheet() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400">{s.credit_bill?.length || 0} customers · {s.inventory?.length || 0} products loaded</p>
+                  <p className="text-xs text-gray-400">{s.credit_bill?.length || 0} customers · {s.inventory?.length || 0} products loaded · {s.cheques?.length || 0} cheques</p>
+
+                  {/* Cheques collected */}
+                  {s.cheques?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-1.5">Cheques Collected</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="border border-gray-200 px-2 py-1 text-left">Cheque #</th>
+                              <th className="border border-gray-200 px-2 py-1 text-left">Customer</th>
+                              <th className="border border-gray-200 px-2 py-1 text-left">Bank</th>
+                              <th className="border border-gray-200 px-2 py-1 text-left">Cheque Date</th>
+                              <th className="border border-gray-200 px-2 py-1 text-right">Amount</th>
+                              <th className="border border-gray-200 px-2 py-1 text-center">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {s.cheques.map(ch => (
+                              <tr key={ch.id}>
+                                <td className="border border-gray-100 px-2 py-1 font-mono">{ch.cheque_number}</td>
+                                <td className="border border-gray-100 px-2 py-1">{ch.customer_name}</td>
+                                <td className="border border-gray-100 px-2 py-1 text-gray-500">{ch.bank_name || '—'}</td>
+                                <td className="border border-gray-100 px-2 py-1">{fmtDate(ch.cheque_date)}</td>
+                                <td className="border border-gray-100 px-2 py-1 text-right font-semibold text-emerald-700">{fmt(ch.amount)}</td>
+                                <td className="border border-gray-100 px-2 py-1 text-center">
+                                  <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${ch.status === 'CLEARED' ? 'bg-green-100 text-green-700' : ch.status === 'BOUNCED' ? 'bg-red-100 text-red-700' : ch.status === 'DEPOSITED' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {ch.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                            <tr className="border-t-2 border-gray-300 font-semibold">
+                              <td colSpan={4} className="border border-gray-100 px-2 py-1">Total</td>
+                              <td className="border border-gray-100 px-2 py-1 text-right text-emerald-700">{fmt(s.cheques.reduce((sum, ch) => sum + ch.amount, 0))}</td>
+                              <td className="border border-gray-100 px-2 py-1" />
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 

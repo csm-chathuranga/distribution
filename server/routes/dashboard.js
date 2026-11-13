@@ -4,7 +4,7 @@ const { QueryTypes } = require('sequelize');
 router.get('/', async (req, res, next) => {
   try {
     const { sequelize } = req.db;
-    const [sales, collections, stock, topProducts, statusDist, monthlyTrend] = await Promise.all([
+    const [sales, collections, stock, topProducts, statusDist, monthlyTrend, overdueCheques] = await Promise.all([
       sequelize.query(`
         SELECT
           SUM(CASE WHEN DATE(invoice_date) = CURDATE() THEN total_amount ELSE 0 END) AS today,
@@ -63,6 +63,18 @@ router.get('/', async (req, res, next) => {
         ) c ON c.month = m.month
         ORDER BY m.month ASC
       `, { type: QueryTypes.SELECT }),
+
+      sequelize.query(`
+        SELECT ch.id, ch.cheque_number, ch.cheque_date, ch.amount, ch.bank_name, ch.status,
+          DATEDIFF(CURDATE(), ch.cheque_date) AS days_overdue,
+          cu.name AS customer_name
+        FROM cheques ch
+        JOIN receipts r ON r.id = ch.receipt_id
+        JOIN customers cu ON cu.id = r.customer_id
+        WHERE ch.status = 'RECEIVED' AND ch.cheque_date < CURDATE()
+        ORDER BY ch.cheque_date ASC
+        LIMIT 10
+      `, { type: QueryTypes.SELECT }),
     ]);
 
     res.json({
@@ -72,6 +84,7 @@ router.get('/', async (req, res, next) => {
       top_products: topProducts,
       status_dist: statusDist,
       monthly_trend: monthlyTrend,
+      overdue_cheques: overdueCheques,
     });
   } catch (err) { next(err); }
 });

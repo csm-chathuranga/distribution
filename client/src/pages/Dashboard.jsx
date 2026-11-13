@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { TrendingUp, Users, AlertTriangle, DollarSign, BarChart2, PieChart as PieIcon, ChevronRight } from 'lucide-react';
+import { TrendingUp, Users, AlertTriangle, DollarSign, BarChart2, PieChart as PieIcon, ChevronRight, CreditCard } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
@@ -38,7 +38,7 @@ export default function Dashboard() {
   const { data: trend, isLoading: trendLoading } = useGetDashboardTrendQuery(30);
   const { data: outstandingCustomers = [], isLoading: outLoading } = useGetOutstandingCustomersQuery(10);
 
-  const { sales, collections, stock, top_products, status_dist, monthly_trend } = data || {};
+  const { sales, collections, stock, top_products, status_dist, monthly_trend, overdue_cheques } = data || {};
 
   const trendData = (trend || []).map(r => ({
     date: r.date?.slice(5),  // MM-DD
@@ -305,6 +305,45 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Overdue Cheques */}
+      {!isLoading && overdue_cheques?.length > 0 && (
+        <div className="card">
+          <div className="card-header flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <CreditCard size={16} className="text-amber-500" />
+              Overdue Cheques
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">{overdue_cheques.length}</span>
+            </h3>
+            <Link to="/cheques" className="text-xs text-primary-600 hover:underline flex items-center gap-0.5">
+              View all <ChevronRight size={12} />
+            </Link>
+          </div>
+          <div className="card-body p-0">
+            <div className="divide-y divide-gray-50">
+              {overdue_cheques.map(ch => (
+                <div key={ch.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                      <CreditCard size={14} className="text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{ch.customer_name}</p>
+                      <p className="text-xs text-gray-400">
+                        #{ch.cheque_number}{ch.bank_name ? ` · ${ch.bank_name}` : ''} · {fmtDate(ch.cheque_date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-gray-800">{fmtCurrency(ch.amount)}</p>
+                    <span className="text-xs font-medium text-red-500">{ch.days_overdue}d overdue</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Performance summary */}
       <div className="card">
