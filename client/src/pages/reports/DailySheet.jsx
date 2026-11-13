@@ -28,7 +28,7 @@ const fmtCs = (q, cs) => {
   const cases = Math.floor(q / cs); const rem = q % cs;
   return cases > 0 ? (rem > 0 ? `${cases}cs+${rem}u` : `${cases}cs`) : `${rem}u`;
 };
-const fmt = v => fmtCurrency(v || 0);
+const fmt = v => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /* ─── Print layout ─────────────────────────────────────────── */
 function SheetPrint({ sheet, date, company, type }) {
