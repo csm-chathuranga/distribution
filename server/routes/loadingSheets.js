@@ -27,11 +27,12 @@ function getInclude(db) {
 router.get('/', async (req, res, next) => {
   try {
     const { LoadingSheet, User, Route, Vehicle } = req.db;
-    const { status, from, to, route_id, sales_rep_id, page = 1, limit = 20 } = req.query;
+    const { status, from, to, route_id, sales_rep_id, driver_id, page = 1, limit = 20 } = req.query;
     const where = {};
     if (status)       where.status       = status;
     if (route_id)     where.route_id     = route_id;
     if (sales_rep_id) where.sales_rep_id = sales_rep_id;
+    if (driver_id)    where.driver_id    = driver_id;
     if (from || to) {
       where.sheet_date = {};
       if (from) where.sheet_date[Op.gte] = from;

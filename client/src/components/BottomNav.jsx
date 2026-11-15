@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Truck, Users, ClipboardList, User, RotateCcw, Gift, CreditCard, Package, Wallet } from 'lucide-react';
+import { Truck, Users, ClipboardList, User, RotateCcw, Gift, CreditCard, Package, Wallet, CalendarDays } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../store/authSlice';
 
@@ -12,11 +12,12 @@ const SALES_TABS = [
 ];
 
 const DRIVER_TABS = [
-  { to: '/driver/deliveries',  icon: Truck,      label: 'Deliveries', color: '#10b981' },
-  { to: '/driver/collections', icon: Wallet,     label: 'My Coll.',   color: '#f59e0b' },
-  { to: '/driver/stock',       icon: Package,    label: 'Van Stock',  color: '#6366f1' },
-  { to: '/customer-returns',   icon: RotateCcw,  label: 'Returns',    color: '#ef4444' },
-  { to: '/profile',            icon: User,       label: 'Profile',    color: '#64748b' },
+  { to: '/driver/deliveries',   icon: Truck,        label: 'Deliveries', color: '#10b981' },
+  { to: '/driver/daily-sheet',  icon: CalendarDays, label: 'Sheet',      color: '#0ea5e9' },
+  { to: '/driver/collections',  icon: Wallet,       label: 'My Coll.',   color: '#f59e0b' },
+  { to: '/driver/stock',        icon: Package,      label: 'Van Stock',  color: '#6366f1' },
+  { to: '/customer-returns',    icon: RotateCcw,    label: 'Returns',    color: '#ef4444' },
+  { to: '/profile',             icon: User,         label: 'Profile',    color: '#64748b' },
 ];
 
 function Tab({ to, icon: Icon, label, color }) {

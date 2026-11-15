@@ -462,7 +462,7 @@ router.get('/daily-collections', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.sales', 'sales.create'), async (req, res, next) => {
+router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.sales', 'sales.create', 'sales.view_own'), async (req, res, next) => {
   try {
     const { LoadingSheet, LoadingSheetLine, Product, Invoice, Customer, Receipt, Cheque, User, Route, Vehicle } = req.db;
     const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('reports.sales');
