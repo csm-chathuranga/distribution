@@ -111,13 +111,13 @@ function SheetPrint({ sheet, date, company, type }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
             <thead>
               <tr>
-                <th style={{ ...th, width: '20%' }}>Size</th>
+                <th style={{ ...th, width: '14%' }}>Size</th>
+                <th style={{ ...th, width: '20%' }}>Item</th>
                 <th style={{ ...th, width: '13%', textAlign: 'center' }}>Loaded</th>
                 <th style={{ ...th, width: '13%', textAlign: 'center' }}>Sold</th>
                 <th style={{ ...th, width: '13%', textAlign: 'center' }}>Return</th>
                 <th style={{ ...th, width: '13%', textAlign: 'center' }}>Damage</th>
                 <th style={{ ...th, width: '13%', textAlign: 'center' }}>Lost</th>
-                <th style={{ ...th, width: '15%', textAlign: 'center' }}>Balance</th>
               </tr>
             </thead>
             <tbody>
@@ -128,12 +128,12 @@ function SheetPrint({ sheet, date, company, type }) {
                   return (
                     <tr key={p.product_id}>
                       {i === 0 && <td style={{ ...td, fontWeight: '600' }} rowSpan={prods.length}>{lbl}</td>}
+                      <td style={{ ...td, fontSize: '8px' }}>{p.short_code || ''}</td>
                       <td style={tdC}>{fmtCs(p.loaded, cs)}</td>
-                      <td style={tdC}>{p.sold     > 0 ? fmtCs(p.sold, cs)     : '—'}</td>
-                      <td style={tdC}>{p.returned > 0 ? fmtCs(p.returned, cs) : '—'}</td>
-                      <td style={tdC}>{p.damaged  > 0 ? fmtCs(p.damaged, cs)  : '—'}</td>
-                      <td style={tdC}>{p.lost     > 0 ? fmtCs(p.lost, cs)     : '—'}</td>
-                      <td style={{ ...tdC, fontWeight: '600' }}>{bal > 0 ? fmtCs(bal, cs) : '0'}</td>
+                      <td style={tdC}>{p.sold     > 0 ? fmtCs(p.sold, cs)     : ''}</td>
+                      <td style={tdC}>{p.returned > 0 ? fmtCs(p.returned, cs) : ''}</td>
+                      <td style={tdC}>{p.damaged  > 0 ? fmtCs(p.damaged, cs)  : ''}</td>
+                      <td style={tdC}>{p.lost     > 0 ? fmtCs(p.lost, cs)     : ''}</td>
                     </tr>
                   );
                 })
@@ -274,6 +274,8 @@ export default function DailySheet() {
   const { data: company }   = useGetCompanyQuery();
   const { data: usersData } = useGetUsersQuery({ limit: 200 }, { skip: !canUsers });
   const salesReps = usersData?.data || [];
+  const selectedUser = salesReps.find(u => String(u.id) === String(repId));
+  const isDriverSelected = (selectedUser?.Role?.display_name || selectedUser?.role || '').toLowerCase().includes('driver');
 
   const handleFetch = async () => {
     setLoading(true);
@@ -355,12 +357,16 @@ export default function DailySheet() {
                   <p className="text-xs text-gray-400">Route: {sheetData.sheets[0]?.route?.name || '—'} · Sheet: {sheetData.sheets[0]?.sheet_number || '—'}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => doPrint('rep')} className="btn btn-primary flex items-center gap-2">
-                    <Printer size={15} /> Print Rep Sheet
-                  </button>
-                  <button onClick={() => doPrint('driver')} className="btn-secondary flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium">
-                    <Printer size={15} /> Print Driver Sheet
-                  </button>
+                  {!isDriverSelected && (
+                    <button onClick={() => doPrint('rep')} className="btn btn-primary flex items-center gap-2">
+                      <Printer size={15} /> Print Rep Sheet
+                    </button>
+                  )}
+                  {isDriverSelected && (
+                    <button onClick={() => doPrint('driver')} className="btn-secondary flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium">
+                      <Printer size={15} /> Print Driver Sheet
+                    </button>
+                  )}
                 </div>
               </div>
 
