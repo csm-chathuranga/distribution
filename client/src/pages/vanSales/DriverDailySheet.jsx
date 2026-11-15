@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { CalendarDays, Printer, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectToken } from '../../store/authSlice';
-import { useGetCompanyQuery } from '../../api/reportsApi';
 import { fmtDate, today } from '../../utils/format';
 
 /* ─── Print styles ───────────────────────────────────────────── */
@@ -286,9 +285,8 @@ export default function DriverDailySheet() {
   const [date, setDate] = useState(today());
   const [loading, setLoading] = useState(false);
   const [sheet, setSheet] = useState(null);
+  const [company, setCompany] = useState(null);
   const printRef = useRef(null);
-
-  const { data: company } = useGetCompanyQuery();
 
   const fetchSheet = async (d) => {
     setLoading(true);
@@ -299,6 +297,7 @@ export default function DriverDailySheet() {
       });
       const json = await res.json();
       setSheet(json.sheets?.[0] ?? null);
+      if (json.company) setCompany(json.company);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };

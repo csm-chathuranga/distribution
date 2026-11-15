@@ -464,8 +464,10 @@ router.get('/daily-collections', async (req, res, next) => {
 
 router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.sales', 'sales.create', 'sales.view_own'), async (req, res, next) => {
   try {
-    const { LoadingSheet, LoadingSheetLine, Product, Invoice, Customer, Receipt, Cheque, User, Route, Vehicle } = req.db;
+    const { LoadingSheet, LoadingSheetLine, Product, Invoice, Customer, Receipt, Cheque, User, Route, Vehicle, Company } = req.db;
     const canViewAll = req.permissions?.has('sales.view_all') || req.permissions?.has('reports.sales');
+    const companyId  = req.user.Branch?.company_id ?? req.user.company_id;
+    const company    = companyId ? await Company.findByPk(companyId, { attributes: ['id', 'name', 'address', 'phone'] }) : null;
     const { date, sales_rep_id } = req.query;
     const targetDate = date || new Date().toLocaleDateString('en-CA');
     const repId = canViewAll ? (sales_rep_id || null) : req.user.id;
@@ -569,7 +571,7 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
       };
     }));
 
-    res.json({ date: targetDate, sheets: result });
+    res.json({ date: targetDate, company: company ? { name: company.name, address: company.address, phone: company.phone } : null, sheets: result });
   } catch (err) { next(err); }
 });
 
