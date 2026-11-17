@@ -29,8 +29,8 @@ function buildPosHtml(bodyHtml, widthMm = 80) {
   <meta charset="utf-8">
   <title>POS Print</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff; width: ${widthMm}mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: none; font-smooth: never; }
+    body { background: #fff; width: ${widthMm}mm; font-family: "Courier New", Courier, monospace; }
     @media print {
       @page { size: ${widthMm}mm auto; margin: 0mm 2mm; }
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; width: ${widthMm}mm; }

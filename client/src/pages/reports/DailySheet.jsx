@@ -8,10 +8,13 @@ import { useSelector } from 'react-redux';
 import { selectToken } from '../../store/authSlice';
 
 /* ─── helpers ─────────────────────────────────────────────── */
-const B  = '1px solid #333';
-const BL = '1px solid #bbb';
-const th = { border: B, padding: '3px 5px', background: '#e5e7eb', fontWeight: '700', fontSize: '9px', textAlign: 'left', whiteSpace: 'nowrap' };
-const td = { border: BL, padding: '3px 5px', fontSize: '9px' };
+const BLUE  = '#1e3a8a';
+const BLUEL = '#3b6fd4';
+const B     = `1px solid ${BLUE}`;
+const BL    = `1px solid ${BLUEL}`;
+const BASE  = { color: BLUE, fontSize: '9px' };
+const th    = { ...BASE, border: B, padding: '5px 8px', background: '#dbeafe', fontWeight: '700', textAlign: 'left', whiteSpace: 'nowrap' };
+const td    = { ...BASE, border: BL, padding: '5px 8px' };
 const tdR = { ...td, textAlign: 'right' };
 const tdC = { ...td, textAlign: 'center' };
 
@@ -49,7 +52,7 @@ function SheetPrint({ sheet, date, company, type }) {
   }, {});
 
   return (
-    <div style={{ pageBreakAfter: 'always', fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#111', padding: '8mm 10mm', width: '190mm', boxSizing: 'border-box' }}>
+    <div style={{ pageBreakAfter: 'always', fontFamily: 'Arial, sans-serif', fontSize: '9px', color: BLUE, padding: '8mm 10mm', width: '190mm', boxSizing: 'border-box' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '4px' }}>
         <div style={{ fontSize: '14px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
@@ -175,7 +178,7 @@ function SheetPrint({ sheet, date, company, type }) {
                   <td style={td}>{cb.customer_name}</td>
                   <td style={tdR}>{fmt(cb.invoice_total)}</td>
                   <td style={{ ...tdR, color: '#059669', fontWeight: '600' }}>{cb.collected > 0 ? fmt(cb.collected) : '—'}</td>
-                  <td style={{ ...tdR, color: cb.balance > 0 ? '#dc2626' : '#111' }}>{cb.balance > 0 ? fmt(cb.balance) : '—'}</td>
+                  <td style={{ ...tdR, color: cb.balance > 0 ? '#dc2626' : BLUE }}>{cb.balance > 0 ? fmt(cb.balance) : '—'}</td>
                 </tr>
               ))}
               {!(sheet.credit_bill || []).length && <tr><td colSpan={4} style={{ ...tdC, color: '#999' }}>No invoices</td></tr>}

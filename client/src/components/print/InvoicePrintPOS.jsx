@@ -1,7 +1,7 @@
 import { fmtDate } from '../../utils/format';
 
 const W = '76mm';
-const receiptFont = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+const receiptFont = '"Courier New", Courier, monospace';
 
 function fmtAmt(val) {
   return parseFloat(val || 0).toFixed(2);
@@ -45,7 +45,7 @@ export default function InvoicePrintPOS({ invoice, company }) {
   const root = {
     fontFamily: receiptFont,
     fontSize: '14px',
-    fontWeight: '500',
+    fontWeight: '400',
     color: '#000',
     background: '#fff',
     width: W,
