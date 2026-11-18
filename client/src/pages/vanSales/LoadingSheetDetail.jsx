@@ -16,6 +16,7 @@ import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
 import { printComponent, printPOS, printPOSAll } from '../../utils/print';
 import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 import { usePermission } from '../../hooks/usePermission';
+import { useQZTray, DEFAULT_PRINTER } from '../../hooks/useQZTray';
 
 const fmtQty = v => { const n = parseFloat(v) || 0; return n % 1 === 0 ? String(n) : n.toFixed(2); };
 const extractSizeMl = (name = '') => {
@@ -320,6 +321,7 @@ export default function LoadingSheetDetail() {
   const navigate  = useNavigate();
   const canCreate = usePermission('sales.create');
   const canLoadVan = usePermission('sales.approve');
+  const qz = useQZTray();
 
   const { data: sheet, isLoading } = useGetLoadingSheetQuery(id);
   const { data: routeSheetData }   = useGetLoadingSheetRouteSheetQuery(id);
@@ -374,9 +376,18 @@ export default function LoadingSheetDetail() {
   const handlePOSPrintInvoices = async () => {
     const sheetInvoices = (sheet.Invoices || []).filter(i => ['POSTED','DELIVERED','PAID','PARTIAL'].includes(i.status));
     if (!sheetInvoices.length) return;
-    await printPOSAll(
-      sheetInvoices.map(inv => <InvoicePrintPOS key={inv.id} invoice={inv} company={company} />)
-    );
+
+    // Try QZ Tray ESC/POS first; fall back to browser popup on failure
+    for (const inv of sheetInvoices) {
+      const ok = await qz.printInvoice(inv, company, DEFAULT_PRINTER);
+      if (!ok) {
+        // QZ failed — fall back to browser print for all remaining
+        await printPOSAll(
+          sheetInvoices.map(i => <InvoicePrintPOS key={i.id} invoice={i} company={company} />)
+        );
+        return;
+      }
+    }
   };
 
   if (isLoading) return <div className="text-center py-20 text-gray-400">Loading...</div>;

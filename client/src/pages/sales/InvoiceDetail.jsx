@@ -11,6 +11,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import InvoicePrintPOS from '../../components/print/InvoicePrintPOS';
 import { printPOS } from '../../utils/print';
+import { useQZTray, DEFAULT_PRINTER } from '../../hooks/useQZTray';
 import { fmtCurrency, fmtDate, fmtDateTime, today } from '../../utils/format';
 
 function CollectPaymentModal({ invoice, onClose }) {
@@ -136,6 +137,7 @@ export default function InvoiceDetail() {
   const { id }    = useParams();
   const navigate  = useNavigate();
   const [searchParams] = useSearchParams();
+  const qz = useQZTray();
   const canCreate = usePermission('sales.create');
   const canPost   = usePermission('sales.approve');
   const [confirmPost,   setConfirmPost]   = useState(false);
@@ -151,7 +153,10 @@ export default function InvoiceDetail() {
   const [postInvoice,    { isLoading: posting }]    = usePostInvoiceMutation();
   const [allocateReceipt, { isLoading: allocating }] = useAllocateReceiptMutation();
   const [deliverInvoice,  { isLoading: delivering }] = useDeliverInvoiceMutation();
-  const handlePrint = () => printPOS(<InvoicePrintPOS invoice={invoice} company={company} />);
+  const handlePrint = async () => {
+    const ok = await qz.printInvoice(invoice, company, DEFAULT_PRINTER);
+    if (!ok) printPOS(<InvoicePrintPOS invoice={invoice} company={company} />);
+  };
 
   const handleDeliver = async () => {
     try {
