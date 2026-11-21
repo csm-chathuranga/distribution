@@ -179,8 +179,8 @@ function SheetPrint({ sheet, date, company }) {
               <tr style={{ borderTop: B }}>
                 <td style={{ ...td, fontWeight: '700' }}>Total</td>
                 <td style={{ ...tdR, fontWeight: '700' }}>{fmt((sheet.credit_bill || []).reduce((s, c) => s + c.invoice_total, 0))}</td>
-                <td style={{ ...tdR, fontWeight: '700', color: '#059669' }}>{fmt(sheet.total_collected)}</td>
-                <td style={{ ...tdR, fontWeight: '700', color: '#dc2626' }}>{fmt(sheet.outstanding)}</td>
+                <td style={{ ...tdR, fontWeight: '700', color: '#059669' }}>{fmt(sheet.credit_collected)}</td>
+                <td style={{ ...tdR, fontWeight: '700', color: '#dc2626' }}>{fmt(sheet.credit_outstanding)}</td>
               </tr>
             </tbody>
           </table>
@@ -210,6 +210,37 @@ function SheetPrint({ sheet, date, company }) {
                   <tr style={{ borderTop: B }}>
                     <td colSpan={3} style={{ ...td, fontWeight: '700' }}>Total Cheques</td>
                     <td style={{ ...tdR, fontWeight: '700' }}>{fmt(sheet.cheques.reduce((s, ch) => s + ch.amount, 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </>
+          )}
+
+          {/* Bank Transfers */}
+          {(sheet.bank_transfers || []).length > 0 && (
+            <>
+              <div style={{ fontWeight: '700', fontSize: '9.5px', marginBottom: '2px', marginTop: '5px' }}>Bank Transfers</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
+                <thead>
+                  <tr>
+                    <th style={{ ...th, width: '22%' }}>Receipt #</th>
+                    <th style={{ ...th, width: '30%' }}>Customer</th>
+                    <th style={{ ...th, width: '24%' }}>Reference</th>
+                    <th style={{ ...th, width: '24%', textAlign: 'right' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sheet.bank_transfers.map((bt, i) => (
+                    <tr key={i}>
+                      <td style={td}>{bt.receipt_number}</td>
+                      <td style={td}>{bt.customer_name}</td>
+                      <td style={td}>{bt.reference}</td>
+                      <td style={tdR}>{fmt(bt.amount)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop: B }}>
+                    <td colSpan={3} style={{ ...td, fontWeight: '700' }}>Total Bank Transfers</td>
+                    <td style={{ ...tdR, fontWeight: '700' }}>{fmt(sheet.bank_transfers.reduce((s, bt) => s + bt.amount, 0))}</td>
                   </tr>
                 </tbody>
               </table>

@@ -529,16 +529,39 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
       const bankTotal   = receipts.filter(r => r.payment_method === 'BANK_TRANSFER').reduce((s, r) => s + parseFloat(r.amount || 0), 0);
       const outstanding = validInvoices.reduce((s, i) => s + parseFloat(i.balance_due || 0), 0);
 
-      const creditBill = validInvoices.map(inv => {
-        const collected = receipts.filter(r => r.customer_id === inv.customer_id).reduce((s, r) => s + parseFloat(r.amount || 0), 0);
-        return {
-          customer_name:  inv.Customer?.name,
-          invoice_number: inv.invoice_number,
-          invoice_total:  parseFloat(inv.total_amount || 0),
-          collected,
-          balance:        parseFloat(inv.balance_due || 0),
-        };
-      });
+      // Credit bill: previously outstanding invoices for customers who paid today
+      const receiptCustomerIds = [...new Set(receipts.map(r => r.customer_id))];
+      let creditBill = [];
+      if (receiptCustomerIds.length > 0) {
+        const creditInvoices = await Invoice.findAll({
+          where: {
+            customer_id: { [Op.in]: receiptCustomerIds },
+            status: { [Op.in]: ['POSTED', 'PARTIAL', 'DELIVERED', 'OVERDUE'] },
+            [Op.or]: [
+              { loading_sheet_id: null },
+              { loading_sheet_id: { [Op.ne]: sheet.id } },
+            ],
+          },
+          include: [{ model: Customer, attributes: ['id', 'name'] }],
+          order: [['invoice_date', 'ASC']],
+        });
+        creditBill = creditInvoices.map(inv => {
+          const collected = receipts
+            .filter(r => r.customer_id === inv.customer_id)
+            .reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+          return {
+            customer_name:  inv.Customer?.name,
+            invoice_number: inv.invoice_number,
+            invoice_total:  parseFloat(inv.total_amount || 0),
+            collected,
+            balance:        parseFloat(inv.balance_due || 0),
+          };
+        });
+      }
+      const creditCollected   = receipts
+        .filter(r => receiptCustomerIds.includes(r.customer_id))
+        .reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+      const creditOutstanding = creditBill.reduce((s, c) => s + c.balance, 0);
 
       const inventory = (sheet.Lines || []).map(l => ({
         product_id:   l.product_id,
@@ -558,7 +581,8 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
         route: sheet.Route, vehicle: sheet.Vehicle,
         day_sale: daySale, total_collected: cashTotal + chequeTotal + bankTotal,
         cash_total: cashTotal, cheque_total: chequeTotal, bank_total: bankTotal,
-        outstanding, credit_bill: creditBill, inventory,
+        outstanding, credit_bill: creditBill,
+        credit_collected: creditCollected, credit_outstanding: creditOutstanding, inventory,
         cheques: cheques.map(ch => ({
           id: ch.id,
           cheque_number: ch.cheque_number,
@@ -568,6 +592,14 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
           status: ch.status,
           customer_name: ch.Receipt?.Customer?.name || '—',
         })),
+        bank_transfers: receipts
+          .filter(r => r.payment_method === 'BANK_TRANSFER')
+          .map(r => ({
+            receipt_number: r.receipt_number,
+            reference: r.reference || '—',
+            amount: parseFloat(r.amount || 0),
+            customer_name: r.Customer?.name || '—',
+          })),
       };
     }));
 
