@@ -582,13 +582,16 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
           const collected = receipts
             .filter(r => r.customer_id === inv.customer_id)
             .reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+          const invoiceTotal = parseFloat(inv.total_amount || 0);
+          const paidAmount = parseFloat(inv.paid_amount || 0);
+          const balanceDue = invoiceTotal - paidAmount;
           return {
             invoice_id: inv.id,
             invoice_number: inv.invoice_number,
             customer_name: inv.Customer?.name || '—',
-            invoice_total: parseFloat(inv.total_amount || 0),
-            paid_amount: parseFloat(inv.paid_amount || 0),
-            balance_due: parseFloat(inv.balance_due || 0),
+            invoice_total: invoiceTotal,
+            paid_amount: paidAmount,
+            balance_due: balanceDue,
             today_collected: collected,
             status: inv.status,
           };

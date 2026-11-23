@@ -187,8 +187,8 @@ function SheetPrint({ sheet, date, company, type }) {
               <tr style={{ borderTop: B }}>
                 <td style={{ ...td, fontWeight: '700' }}>Total</td>
                 <td style={{ ...tdR, fontWeight: '700' }}>{fmt((sheet.credit_bill || []).reduce((s, c) => s + c.invoice_total, 0))}</td>
-                <td style={{ ...tdR, fontWeight: '700', color: '#059669' }}>{fmt(sheet.total_collected)}</td>
-                <td style={{ ...tdR, fontWeight: '700', color: '#dc2626' }}>{fmt(sheet.outstanding)}</td>
+                <td style={{ ...tdR, fontWeight: '700', color: '#059669' }}>{fmt((sheet.credit_bill || []).reduce((s, c) => s + (c.collected || 0), 0))}</td>
+                <td style={{ ...tdR, fontWeight: '700', color: '#dc2626' }}>{fmt((sheet.credit_bill || []).reduce((s, c) => s + (c.balance || 0), 0))}</td>
               </tr>
             </tbody>
           </table>
