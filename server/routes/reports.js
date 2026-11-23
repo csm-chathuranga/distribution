@@ -575,13 +575,32 @@ router.get('/daily-collections-print', authorize.any('sales.view_all', 'reports.
         lost:         parseFloat(l.lost_quantity      || 0),
       }));
 
+      // All loaded invoices (not just those with collections today)
+      const allLoadedInvoices = (sheet.Invoices || [])
+        .filter(i => ['POSTED', 'PAID', 'PARTIAL', 'DELIVERED'].includes(i.status))
+        .map(inv => {
+          const collected = receipts
+            .filter(r => r.customer_id === inv.customer_id)
+            .reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+          return {
+            invoice_id: inv.id,
+            invoice_number: inv.invoice_number,
+            customer_name: inv.Customer?.name || '—',
+            invoice_total: parseFloat(inv.total_amount || 0),
+            paid_amount: parseFloat(inv.paid_amount || 0),
+            balance_due: parseFloat(inv.balance_due || 0),
+            today_collected: collected,
+            status: inv.status,
+          };
+        });
+
       return {
         sheet_id: sheet.id, sheet_number: sheet.sheet_number, sheet_status: sheet.status,
         sales_rep: sheet.SalesRep, driver: sheet.Driver,
         route: sheet.Route, vehicle: sheet.Vehicle,
         day_sale: daySale, total_collected: cashTotal + chequeTotal + bankTotal,
         cash_total: cashTotal, cheque_total: chequeTotal, bank_total: bankTotal,
-        outstanding, credit_bill: creditBill,
+        outstanding, credit_bill: creditBill, loaded_invoices: allLoadedInvoices,
         credit_collected: creditCollected, credit_outstanding: creditOutstanding, inventory,
         cheques: cheques.map(ch => ({
           id: ch.id,

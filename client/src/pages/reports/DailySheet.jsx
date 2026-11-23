@@ -52,32 +52,34 @@ function SheetPrint({ sheet, date, company, type }) {
   }, {});
 
   return (
-    <div style={{ pageBreakAfter: 'always', fontFamily: 'Arial, sans-serif', fontSize: '9px', color: BLUE, padding: '8mm 10mm', width: '190mm', boxSizing: 'border-box' }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '4px' }}>
-        <div style={{ fontSize: '14px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
-        <div style={{ fontSize: '11px', fontWeight: '700' }}>
-          {isDriver ? 'DRIVER DAILY SHEET' : 'SALES REP DAILY COLLECTION SHEET'}
+    <>
+      {/* PAGE 1: Daily Summary */}
+      <div style={{ pageBreakAfter: 'always', fontFamily: 'Arial, sans-serif', fontSize: '9px', color: BLUE, padding: '8mm 10mm', width: '190mm', boxSizing: 'border-box' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+          <div style={{ fontSize: '14px', fontWeight: '700' }}>{company?.name || 'Lanka Distribution'}</div>
+          <div style={{ fontSize: '11px', fontWeight: '700' }}>
+            {isDriver ? 'DRIVER DAILY SHEET' : 'SALES REP DAILY COLLECTION SHEET'}
+          </div>
         </div>
-      </div>
 
-      {/* Info */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
-        <tbody>
-          <tr>
-            <td style={th}>Date</td><td style={{ ...td, minWidth: '25mm' }}>{fmtDate(date)}</td>
-            <td style={th}>{isDriver ? 'Driver' : 'Sales Rep'}</td><td style={{ ...td, minWidth: '35mm' }}>{isDriver ? sheet.driver?.name : sheet.sales_rep?.name || '—'}</td>
-            <td style={th}>Route</td><td style={{ ...td, minWidth: '28mm' }}>{sheet.route?.name || '—'}</td>
-            <td style={th}>Sheet No.</td><td style={{ ...td, minWidth: '18mm' }}>{sheet.sheet_number || '—'}</td>
-          </tr>
-          <tr>
-            <td style={th}>Vehicle</td><td style={td}>{sheet.vehicle?.registration_number || '—'}</td>
-            <td style={th}>{isDriver ? 'Sales Rep' : 'Driver'}</td>
-            <td style={td}>{isDriver ? sheet.sales_rep?.name : sheet.driver?.name || '—'}</td>
-            <td style={th}>Status</td><td colSpan={3} style={td}>{sheet.sheet_status || '—'}</td>
-          </tr>
-        </tbody>
-      </table>
+        {/* Info */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
+          <tbody>
+            <tr>
+              <td style={th}>Date</td><td style={{ ...td, minWidth: '25mm' }}>{fmtDate(date)}</td>
+              <td style={th}>{isDriver ? 'Driver' : 'Sales Rep'}</td><td style={{ ...td, minWidth: '35mm' }}>{isDriver ? sheet.driver?.name : sheet.sales_rep?.name || '—'}</td>
+              <td style={th}>Route</td><td style={{ ...td, minWidth: '28mm' }}>{sheet.route?.name || '—'}</td>
+              <td style={th}>Sheet No.</td><td style={{ ...td, minWidth: '18mm' }}>{sheet.sheet_number || '—'}</td>
+            </tr>
+            <tr>
+              <td style={th}>Vehicle</td><td style={td}>{sheet.vehicle?.registration_number || '—'}</td>
+              <td style={th}>{isDriver ? 'Sales Rep' : 'Driver'}</td>
+              <td style={td}>{isDriver ? sheet.sales_rep?.name : sheet.driver?.name || '—'}</td>
+              <td style={th}>Status</td><td colSpan={3} style={td}>{sheet.sheet_status || '—'}</td>
+            </tr>
+          </tbody>
+        </table>
 
       <div style={{ display: 'flex', gap: '5mm', alignItems: 'flex-start' }}>
         {/* LEFT */}
@@ -257,7 +259,62 @@ function SheetPrint({ sheet, date, company, type }) {
           </tr>
         </tbody>
       </table>
-    </div>
+      </div>
+
+      {/* PAGE 2: Loaded Invoices */}
+      <div style={{ pageBreakAfter: 'always', fontFamily: 'Arial, sans-serif', fontSize: '8px', color: BLUE, padding: '8mm 10mm', width: '190mm', boxSizing: 'border-box' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '6px' }}>
+          <div style={{ fontSize: '12px', fontWeight: '700' }}>Loaded Invoices Details</div>
+          <div style={{ fontSize: '9px', color: '#666' }}>
+            {sheet.sales_rep?.name || sheet.driver?.name || '—'} · {fmtDate(date)}
+          </div>
+        </div>
+
+        {/* Invoices table */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#dbeafe' }}>
+              <th style={{ ...th, width: '18%', whiteSpace: 'nowrap' }}>Invoice #</th>
+              <th style={{ ...th, width: '18%' }}>Customer</th>
+              <th style={{ ...th, width: '10%', textAlign: 'center' }}>Status</th>
+              <th style={{ ...th, width: '13%', textAlign: 'right' }}>Invoice Total</th>
+              <th style={{ ...th, width: '13%', textAlign: 'right' }}>Paid Amount</th>
+              <th style={{ ...th, width: '13%', textAlign: 'right' }}>Balance Due</th>
+              <th style={{ ...th, width: '15%', textAlign: 'right' }}>Today Collected</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(sheet.loaded_invoices || []).length > 0 ? (
+              <>
+                {sheet.loaded_invoices?.map((inv, i) => (
+                  <tr key={i}>
+                    <td style={{ ...td, whiteSpace: 'nowrap' }}>{inv.invoice_number || '—'}</td>
+                    <td style={td}>{inv.customer_name}</td>
+                    <td style={{ ...tdC, fontSize: '7px' }}>{inv.status || '—'}</td>
+                    <td style={{ ...tdR }}>{fmt(inv.invoice_total)}</td>
+                    <td style={{ ...tdR }}>{fmt(inv.paid_amount || 0)}</td>
+                    <td style={{ ...tdR, color: inv.balance_due > 0 ? '#dc2626' : BLUE }}>{inv.balance_due > 0 ? fmt(inv.balance_due) : '—'}</td>
+                    <td style={{ ...tdR, color: '#059669', fontWeight: '600' }}>{inv.today_collected > 0 ? fmt(inv.today_collected) : '—'}</td>
+                  </tr>
+                ))}
+                <tr style={{ borderTop: B, fontWeight: '700', backgroundColor: '#f0f9ff' }}>
+                  <td colSpan={3} style={{ ...td, fontWeight: '700' }}>Total</td>
+                  <td style={{ ...tdR, fontWeight: '700' }}>{fmt((sheet.loaded_invoices || []).reduce((s, inv) => s + inv.invoice_total, 0))}</td>
+                  <td style={{ ...tdR, fontWeight: '700' }}>{fmt((sheet.loaded_invoices || []).reduce((s, inv) => s + (inv.paid_amount || 0), 0))}</td>
+                  <td style={{ ...tdR, fontWeight: '700' }}>{fmt((sheet.loaded_invoices || []).reduce((s, inv) => s + (inv.balance_due || 0), 0))}</td>
+                  <td style={{ ...tdR, fontWeight: '700', color: '#059669' }}>{fmt((sheet.loaded_invoices || []).reduce((s, inv) => s + (inv.today_collected || 0), 0))}</td>
+                </tr>
+              </>
+            ) : (
+              <tr>
+                <td colSpan={7} style={{ ...tdC, color: '#999', padding: '10px' }}>No invoice data</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

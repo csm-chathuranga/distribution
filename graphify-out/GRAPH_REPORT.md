@@ -1,50 +1,50 @@
-# Graph Report - Distribution  (2026-10-24)
+# Graph Report - Distribution  (2026-11-24)
 
 ## Corpus Check
-- 300 files · ~169,616 words
+- 325 files · ~203,545 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1487 nodes · 3345 edges · 186 communities (90 shown, 96 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.77)
+- 1521 nodes · 3113 edges · 225 communities (116 shown, 109 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 51 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ae773f36`
+- Built from commit: `238fde4f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- usePermission.js
-- MainLayout.jsx
+- format.js
+- selectCurrentUser
 - dependencies
-- models/index.js
-- App.jsx
+- purchaseOrders.js
+- reportsApi.js
 - Analytics.jsx
 - devDependencies
-- Account
+- accountController.js
 - FormField.jsx
 - WarehouseList.jsx
 - Inventory Management
-- authorize.js
+- roleController.js
 - invoiceController.js
-- fmtCurrency
+- App.jsx
 - productsApi.js
-- sequelize
+- commission.js
 - server/index.js
 - salesOrders.js
-- format.js
-- User
+- LoadingSheetDetail.jsx
+- userController.js
 - receipts.js
 - authController.js
-- useOfflineSync.js
+- DailySheet.jsx
 - NotificationContext.jsx
 - seedDemoData.js
 - manifest.json
-- customersApi.js
+- fmtCurrency
 - workbox-290dd570.js
 - A2. Backend
-- notify.test.js
+- notify.js
 - Modules & Files
 - deliveries.js
 - dependencies
@@ -58,27 +58,27 @@
 - baseApi.js
 - CustomerList.jsx
 - runner.js
-- selectCurrentUser
+- fmtNumber
 - GettingStartedGuide.jsx
-- Company
+- models/index.js
 - SalesRepMap.jsx
 - salesOrders.test.js
 - Lanka Dist PWA Icon 192x192
-- scripts
-- waitUntil
+- authorize.js
+- NetworkFirst
 - socket.js
 - authStore.js
-- SelectField
+- InvoiceDetail.jsx
 - VanStock.jsx
 - Header.jsx
 - Router
 - CacheTimestampsModel
 - firebase-messaging-sw.js
 - User.js
-- axios
+- InvoiceCreate.jsx
 - @capacitor/android
 - AccountList.jsx
-- @capacitor/core
+- @capacitor/app
 - @capacitor/geolocation
 - @capacitor/push-notifications
 - @capacitor/splash-screen
@@ -87,7 +87,7 @@
 - firebase
 - @fontsource/inter
 - @hookform/resolvers
-- leaflet
+- @capacitor/core
 - NavigationRoute
 - stockTransfers.js
 - react-dom
@@ -98,9 +98,9 @@
 - react-redux
 - react-router-dom
 - react-to-print
-- recharts
+- SalesOrderCreate
 - socket.io-client
-- LoadingSheetPrint.jsx
+- tenantDb.js
 - zustand
 - crudFactory.js
 - Account.js
@@ -210,60 +210,92 @@
   useGetCompanyQuery, useUpdateCompanyMutation,
   useGetCommissionsQuery, useGenerateCommissionMutation, useApproveCommissionMutation, usePayCommissionMutation, useCancelCommissionMutation,
 }
-- {
-  useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
-  useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation, useDeliverInvoiceMutation,
-  useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetMyCollectionsQuery, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
-  useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation,
-  useGetPaymentsQuery, useCreatePaymentMutation,
-  useGetExpensesQuery, useCreateExpenseMutation,
-  useGetDeliveriesQuery, useGetDeliveryQuery, useCreateDeliveryMutation, useDispatchDeliveryMutation, useDeliverDeliveryMutation, useReturnDeliveryMutation,
-  useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetAvailableInvoicesQuery, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation,
-  useGetFreeAllocationsQuery, useCreateFreeAllocationMutation, useTopupFreeAllocationMutation, useDistributeFreeItemsMutation, useGetFreeAllocationHistoryQuery,
-  useGetCustomerReturnsQuery, useGetCustomerReturnQuery, useCreateCustomerReturnMutation, useConfirmCustomerReturnMutation, useCancelCustomerReturnMutation,
-  useCancelInvoiceMutation,
-}
+- authSlice.js
 - {
   useLoginMutation, useMeQuery, useChangePasswordMutation,
   useGetUsersQuery, useGetUsersForSelectQuery, useGetUserQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation, useSetUserPermissionsMutation,
   useGetRolesQuery, useGetRoleQuery, useCreateRoleMutation, useUpdateRoleMutation, useSetRolePermissionsMutation, useGetAllPermissionsQuery,
   useGetBranchesQuery, useCreateBranchMutation, useUpdateBranchMutation,
 }
+- Config
+- expenses.js
+- customerReturns.js
+- seed.js
+- freeAllocations.js
+- loadingSheets.js
+- payments.js
+- warehouses.js
+- VanDamageLoss.jsx
+- CommissionList.jsx
+- customers.js
+- invoices.js
+- products.js
+- stock.js
+- supplierReturns.js
+- Route
+- branches.js
+- categories.js
+- cheques.js
+- driverDeductions.js
+- journals.js
+- reports.js
+- suppliers.js
+- vehicles.js
+- dashboard.js
+- notifications.js
+- @capacitor/status-bar
+- lucide-react
+- qz-tray
+- react
+- react-hot-toast
+- react-is
+- @tanstack/react-query
+- yup
+- DriverDeduction.js
+- { useGetDriverDeductionsQuery, useSettleDeductionMutation, useFoundDeductionMutation }
+- {
+  useGetSalesOrdersQuery, useGetSalesOrderQuery, useCreateSalesOrderMutation, useUpdateSalesOrderMutation, useCancelSalesOrderMutation, useConfirmSalesOrderMutation, useInvoiceSalesOrderMutation,
+  useGetInvoicesQuery, useGetInvoiceQuery, useCreateInvoiceMutation, usePostInvoiceMutation, useDeliverInvoiceMutation,
+  useGetReceiptsQuery, useGetReceiptQuery, useCreateReceiptMutation, useGetMyCollectionsQuery, useGetCustomerAdvanceQuery, useAllocateReceiptMutation,
+  useGetChequesQuery, useDepositChequeMutation, useClearChequeMutation, useBounceChequesMutation, useReceiveChequeMutation,
+  useGetPaymentsQuery, useCreatePaymentMutation,
+  useGetExpensesQuery, useCreateExpenseMutation,
+  useGetDeliveriesQuery, useGetDeliveryQuery, useCreateDeliveryMutation, useDispatchDeliveryMutation, useDeliverDeliveryMutation, useReturnDeliveryMutation,
+  useGetLoadingSheetsQuery, useGetLoadingSheetQuery, useGetActiveSheetQuery, useGetVanStockQuery, useGetLoadingSheetRouteSheetQuery, useCreateLoadingSheetMutation, useLoadLoadingSheetMutation, useCloseLoadingSheetMutation, useDeleteLoadingSheetMutation, useGetAvailableInvoicesQuery, useGetAvailableInvoicesForNewQuery, useAddInvoicesToSheetMutation, useRemoveInvoiceFromSheetMutation, useUpdateLoadingSheetMutation,
+  useGetFreeAllocationsQuery, useCreateFreeAllocationMutation, useTopupFreeAllocationMutation, useDistributeFreeItemsMutation, useGetFreeAllocationHistoryQuery,
+  useGetCustomerReturnsQuery, useGetCustomerReturnQuery, useCreateCustomerReturnMutation, useConfirmCustomerReturnMutation, useCancelCustomerReturnMutation,
+  useCancelInvoiceMutation,
+}
 - {
   useGetWarehousesQuery, useGetWarehouseQuery, useGetWarehouseStockQuery,
   useCreateWarehouseMutation, useUpdateWarehouseMutation, useDeleteWarehouseMutation,
+  useToggleWarehouseActiveMutation,
   useGetWarehouseUsersQuery, useAssignWarehouseUserMutation, useRemoveWarehouseUserMutation,
 }
-- VehicleList.jsx
-- StockAdjustmentCreate.jsx
-- ProfitLoss.jsx
-- RouteList.jsx
-- OpeningBalance.jsx
-- PrecacheCacheKeyPlugin
 
 ## God Nodes (most connected - your core abstractions)
-1. `fmtCurrency()` - 136 edges
-2. `fmtDate()` - 105 edges
-3. `usePermission()` - 93 edges
-4. `today()` - 43 edges
-5. `selectCurrentUser()` - 39 edges
-6. `User` - 32 edges
-7. `Table()` - 29 edges
-8. `sequelize` - 29 edges
-9. `StatusBadge()` - 28 edges
-10. `PageHeader()` - 26 edges
+1. `fmtCurrency()` - 145 edges
+2. `fmtDate()` - 120 edges
+3. `usePermission()` - 97 edges
+4. `today()` - 48 edges
+5. `selectCurrentUser()` - 45 edges
+6. `Table()` - 29 edges
+7. `StatusBadge()` - 28 edges
+8. `PageHeader()` - 26 edges
+9. `ConfirmDialog()` - 23 edges
+10. `TextField` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Lanka Dist Client Entry Point (index.html)` --conceptually_related_to--> `Lanka Dist Brand Identity`  [INFERRED]
   client/index.html → client/public/logo.svg
 - `Lanka Dist PWA Icon 192x192` --conceptually_related_to--> `Lanka Dist Progressive Web App`  [INFERRED]
   client/public/icons/icon-192.svg → client/index.html
+- `seedDemo()` --references--> `Route`  [EXTRACTED]
+  server/seeders/seed_demo.js → client/dev-dist/workbox-290dd570.js
 - `AuthRefresher()` --indirect_call--> `selectToken()`  [INFERRED]
   client/src/App.jsx → client/src/store/authSlice.js
 - `HomeRedirect()` --indirect_call--> `selectCurrentUser()`  [INFERRED]
   client/src/App.jsx → client/src/store/authSlice.js
-- `BottomNav()` --indirect_call--> `selectCurrentUser()`  [INFERRED]
-  client/src/components/BottomNav.jsx → client/src/store/authSlice.js
 
 ## Import Cycles
 - None detected.
@@ -275,99 +307,99 @@
 - **Lanka Dist Visual Brand System** — client_public_icons_icon_192, client_public_logo, lanka_dist_brand_identity [INFERRED 0.90]
 - **Lanka Dist PWA Entry Stack** — client_index, client_public_icons_icon_192, lanka_dist_pwa [INFERRED 0.75]
 
-## Communities (186 total, 96 thin omitted)
+## Communities (225 total, 109 thin omitted)
 
-### Community 0 - "usePermission.js"
-Cohesion: 0.12
-Nodes (25): inventoryApi, purchasingApi, ConfirmDialog(), VARIANTS, EmptyState(), getPages(), Pagination(), CONTEXT_MAP (+17 more)
+### Community 0 - "format.js"
+Cohesion: 0.15
+Nodes (21): purchasingApi, ConfirmDialog(), VARIANTS, EmptyState(), getPages(), Pagination(), CONTEXT_MAP, LABEL_MAP (+13 more)
 
-### Community 1 - "MainLayout.jsx"
-Cohesion: 0.20
-Nodes (9): BottomNav(), DRIVER_TABS, SALES_TABS, LocationTracker(), TYPE_CONFIG, useFirestoreSync(), useLocationTracking(), BOTTOM_NAV_ROLES (+1 more)
+### Community 1 - "selectCurrentUser"
+Cohesion: 0.18
+Nodes (13): HomeRedirect(), BottomNav(), DRIVER_TABS, SALES_TABS, LocationTracker(), TYPE_CONFIG, useFirestoreSync(), useLocationTracking() (+5 more)
 
 ### Community 2 - "dependencies"
 Cohesion: 0.05
 Nodes (42): bcryptjs, cors, dotenv, express, express-validator, firebase-admin, helmet, jest (+34 more)
 
-### Community 3 - "models/index.js"
-Cohesion: 0.08
-Nodes (29): Notification, PriceList, PriceListItem, PurchaseOrder, PurchaseOrderLine, Supplier, SupplierReturn, SupplierReturnLine (+21 more)
+### Community 3 - "purchaseOrders.js"
+Cohesion: 0.33
+Nodes (4): authorize, crud, { Op }, router
 
-### Community 4 - "App.jsx"
-Cohesion: 0.12
-Nodes (17): reportsApi, PageHeader(), DeliveryCreate(), schema, UnitList(), AgedDebtors(), CustomerStatement(), LowStockReport() (+9 more)
+### Community 4 - "reportsApi.js"
+Cohesion: 0.10
+Nodes (21): reportsApi, Modal(), PageHeader(), Table(), schema, JournalForm(), lineSchema, schema (+13 more)
 
 ### Community 5 - "Analytics.jsx"
-Cohesion: 0.07
-Nodes (21): SkeletonTable(), COLOR_MAP, StatsCard(), Dashboard(), STATUS_COLORS, AmtCell(), fmt(), TrialBalance() (+13 more)
+Cohesion: 0.08
+Nodes (18): SkeletonTable(), COLOR_MAP, StatsCard(), STATUS_COLORS, AmtCell(), fmt(), TrialBalance(), TYPE_LABELS (+10 more)
 
 ### Community 6 - "devDependencies"
-Cohesion: 0.13
-Nodes (15): autoprefixer, devDependencies, autoprefixer, postcss, tailwindcss, @types/react, vite, vite-plugin-pwa (+7 more)
+Cohesion: 0.07
+Nodes (26): autoprefixer, devDependencies, autoprefixer, postcss, tailwindcss, @types/react, vite, vite-plugin-pwa (+18 more)
 
-### Community 7 - "Account"
-Cohesion: 0.06
-Nodes (40): { Account, JournalEntry, JournalLine, AccountingPeriod, sequelize }, create(), get(), ledger(), list(), { Op, QueryTypes }, openingBalance(), update() (+32 more)
+### Community 7 - "accountController.js"
+Cohesion: 0.15
+Nodes (4): { Op, QueryTypes }, authorize, c, router
 
 ### Community 8 - "FormField.jsx"
-Cohesion: 0.15
-Nodes (13): suppliersApi, CheckboxField, FormField(), TextareaField, TextField, lineSchema, schema, schema (+5 more)
+Cohesion: 0.11
+Nodes (21): CheckboxField, SearchableSelectField(), SelectField, TextareaField, TextField, itemSchema, PriceListCreate(), schema (+13 more)
 
 ### Community 9 - "WarehouseList.jsx"
-Cohesion: 0.14
-Nodes (10): Modal(), ProductForm(), schema, UNIT_OPTIONS, MODULE_LABELS, RoleList(), ROLE_COLOR, ROLE_LABEL (+2 more)
+Cohesion: 0.15
+Nodes (8): settingsApi, GRNCreate(), lineSchema, schema, ROLE_COLOR, ROLE_LABEL, schema, StockView()
 
 ### Community 10 - "Inventory Management"
 Cohesion: 0.15
 Nodes (24): Back-Order (Items Not on Van), Cheque Tracking, Credit Note, Day-End Close, Delivery, Distribution App, Finance Module, Goods Received Note (GRN) (+16 more)
 
-### Community 11 - "authorize.js"
-Cohesion: 0.08
-Nodes (20): Category, Vehicle, authorize, c, router, authorize, { Category }, crud (+12 more)
+### Community 11 - "roleController.js"
+Cohesion: 0.22
+Nodes (6): create(), setPermissions(), update(), authorize, c, router
 
 ### Community 12 - "invoiceController.js"
-Cohesion: 0.10
-Nodes (35): create(), generateInvoiceNumber(), get(), include, { Invoice, InvoiceLine, Customer, Product, JournalEntry, JournalLine, Account, AccountingPeriod, Stock, StockMovement, LoadingSheetLine, LoadingSheet, FreeItemAllocation, FreeItemUsage, User, SalesOrder, OrderReturn, Route, sequelize }, list(), notify, { Op } (+27 more)
+Cohesion: 0.38
+Nodes (8): create(), generateInvoiceNumber(), get(), getInclude(), notify, { Op }, performPost(), post()
 
-### Community 13 - "fmtCurrency"
+### Community 13 - "App.jsx"
 Cohesion: 0.07
-Nodes (49): GRNPrint(), InvoicePrint(), bold, LoadingSheetPrintPOS(), mono, PurchaseOrderPrint(), METHOD_LABEL, ReceiptPrint() (+41 more)
+Nodes (53): usePermission(), CategoryList(), CustomerProfile(), TYPE_COLORS, Dashboard(), DeliveryDetail(), DeliveryList(), JournalList() (+45 more)
 
 ### Community 14 - "productsApi.js"
-Cohesion: 0.14
-Nodes (14): productsApi, warehousesApi, SearchableSelect(), OpeningStock(), lineSchema, schema, StockTransferCreate(), lineSchema (+6 more)
+Cohesion: 0.15
+Nodes (11): inventoryApi, productsApi, warehousesApi, OpeningStock(), lineSchema, REASONS, schema, StockAdjustmentCreate() (+3 more)
 
-### Community 15 - "sequelize"
-Cohesion: 0.11
-Nodes (15): SalesCommission, sequelize, authorize, include, { Op }, router, { SalesCommission, Invoice, InvoiceLine, User, Branch, sequelize }, { QueryTypes } (+7 more)
+### Community 15 - "commission.js"
+Cohesion: 0.40
+Nodes (3): authorize, { Op, QueryTypes }, router
 
 ### Community 16 - "server/index.js"
-Cohesion: 0.17
-Nodes (9): ALLOWED_ORIGINS, app, cors, errorHandler, express, helmet, morgan, routes (+1 more)
+Cohesion: 0.15
+Nodes (10): ALLOWED_ORIGINS, app, cors, errorHandler, express, helmet, morgan, routes (+2 more)
 
 ### Community 17 - "salesOrders.js"
-Cohesion: 0.10
-Nodes (22): CustomerReturn, CustomerReturnLine, SalesOrder, SalesOrderLine, { db, messaging }, getModels(), notify(), authorize (+14 more)
+Cohesion: 0.29
+Nodes (4): authorize, notify, { Op }, router
 
-### Community 18 - "format.js"
-Cohesion: 0.11
-Nodes (26): MapModal(), DeliveryNotePrint(), fmtAmt(), InvoicePrintPOS(), now, STATUS_BADGE, thisYear, CollectPaymentModal() (+18 more)
+### Community 18 - "LoadingSheetDetail.jsx"
+Cohesion: 0.05
+Nodes (54): CustomerReturnPrintPOS(), fmtAmt(), REASON_LABEL, fmtAmt(), InvoicePrintPOS(), cellStyle, fmtCases(), labelStyle (+46 more)
 
-### Community 19 - "User"
-Cohesion: 0.06
-Nodes (50): allPermissions(), create(), get(), list(), { Role, Permission, RolePermission }, setPermissions(), update(), create() (+42 more)
+### Community 19 - "userController.js"
+Cohesion: 0.18
+Nodes (6): { Op }, remove(), update(), authorize, c, router
 
 ### Community 20 - "receipts.js"
-Cohesion: 0.11
-Nodes (17): Cheque, Receipt, authorize, { Cheque, Receipt, Customer }, crud, router, authorize, crud (+9 more)
+Cohesion: 0.33
+Nodes (4): authorize, crud, { Op }, router
 
 ### Community 21 - "authController.js"
-Cohesion: 0.17
-Nodes (12): changePassword(), jwt, login(), { Op }, refresh(), signAccess(), signRefresh(), { User, Role, Permission } (+4 more)
+Cohesion: 0.14
+Nodes (12): jwt, login(), { Op }, refresh(), signAccess(), signRefresh(), jwt, auth (+4 more)
 
-### Community 22 - "useOfflineSync.js"
-Cohesion: 0.31
-Nodes (12): OfflineBanner(), fetchWithTimeout(), getErrorMessage(), readResponseBody(), useOfflineSync(), selectRefreshToken(), enqueueRequest(), getQueue() (+4 more)
+### Community 22 - "DailySheet.jsx"
+Cohesion: 0.08
+Nodes (38): AuthRefresher(), OfflineBanner(), ProtectedRoute(), fetchWithTimeout(), getErrorMessage(), readResponseBody(), useOfflineSync(), BASE (+30 more)
 
 ### Community 23 - "NotificationContext.jsx"
 Cohesion: 0.31
@@ -381,65 +413,65 @@ Nodes (10): bcrypt, createJE(), ensure(), log(), nextJE(), { QueryTypes }, rawIn
 Cohesion: 0.20
 Nodes (9): background_color, description, display, icons, name, orientation, short_name, start_url (+1 more)
 
-### Community 26 - "customersApi.js"
-Cohesion: 0.17
-Nodes (7): customersApi, TYPE_COLORS, CREDIT_BADGE(), RouteDetail(), CollectModal(), DriverPayments(), METHODS
+### Community 26 - "fmtCurrency"
+Cohesion: 0.07
+Nodes (28): CustomerReturnPrint(), GRNPrint(), InvoicePrint(), PurchaseOrderPrint(), SupplierReturnPrint(), CREDIT_BADGE(), RouteDetail(), OpeningBalance() (+20 more)
 
 ### Community 27 - "workbox-290dd570.js"
-Cohesion: 0.08
-Nodes (27): addRoute(), cacheDonePromiseForTransaction(), cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, get() (+19 more)
+Cohesion: 0.07
+Nodes (30): addRoute(), cacheDonePromiseForTransaction(), cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), cleanupOutdatedCaches(), copyResponse(), Deferred (+22 more)
 
 ### Community 28 - "A2. Backend"
 Cohesion: 0.08
 Nodes (25): A1. Database — New Junction Table, A2. Backend, A2a. New Model — `server/models/WarehouseUser.js`, A2b. Update `server/models/index.js`, A2c. Update `server/routes/auth.js` — `/auth/me`, A2d. Update `server/routes/warehouses.js`, A2e. Scope inventory routes, A3. Frontend (+17 more)
 
-### Community 29 - "notify.test.js"
-Cohesion: 0.29
-Nodes (5): { db, messaging }, mockNotifCreate, mockRoleFindOne, mockUserFindAll, notify
+### Community 29 - "notify.js"
+Cohesion: 0.22
+Nodes (8): { db, messaging }, getModels(), notify(), { db, messaging }, mockNotifCreate, mockRoleFindOne, mockUserFindAll, notify
 
 ### Community 30 - "Modules & Files"
 Cohesion: 0.08
-Nodes (23): 10. Van Damage & Loss — P&L Write-off, 11. Free Item Allocations (Promotional Quota), 12. Route Expenses (linked to Loading Sheet), 13. Customer GPS & Directions, 14. Free Issue via GRN (Bulk Topup), 15. My Collections (Driver Self-View), 16. Electron Desktop App + Silent POS Print, 1. Sales Order (+15 more)
+Nodes (24): 10. Van Damage & Loss — P&L Write-off, 11. Free Item Allocations (Promotional Quota), 12. Route Expenses (linked to Loading Sheet), 13. Customer GPS & Directions, 14. Free Issue via GRN (Bulk Topup), 15. My Collections (Driver Self-View), 16. Electron Desktop App + Silent POS Print, 1. Sales Order (+16 more)
 
 ### Community 31 - "deliveries.js"
-Cohesion: 0.12
-Nodes (14): DeliveryNote, Route, authorize, { DeliveryNote, Invoice, Customer, User, Route }, include, includeDetail, { InvoiceLine, Product }, notify (+6 more)
+Cohesion: 0.29
+Nodes (4): authorize, notify, { Op }, router
 
 ### Community 32 - "dependencies"
-Cohesion: 0.11
-Nodes (19): @capacitor/app, @capacitor/cli, @capacitor/status-bar, dependencies, @capacitor/app, @capacitor/cli, @capacitor/status-bar, lucide-react (+11 more)
+Cohesion: 0.22
+Nodes (9): axios, @capacitor/cli, dependencies, axios, @capacitor/cli, leaflet, recharts, leaflet (+1 more)
 
 ### Community 33 - "scripts"
 Cohesion: 0.22
 Nodes (8): name, scripts, build, dev:client, dev:server, install:all, seed, version
 
 ### Community 34 - "StrategyHandler"
-Cohesion: 0.23
-Nodes (5): executeQuotaErrorCallbacks(), PrecacheStrategy, StrategyHandler, timeout(), toRequest()
+Cohesion: 0.26
+Nodes (3): PrecacheStrategy, StrategyHandler, toRequest()
 
 ### Community 35 - "today"
-Cohesion: 0.09
-Nodes (23): JournalForm(), lineSchema, schema, GRNCreate(), PurchaseOrderCreate(), SupplierReturnCreate(), firstDayOfMonth(), SalesSummary() (+15 more)
+Cohesion: 0.18
+Nodes (12): FormField(), DeliveryCreate(), schema, schema, SupplierReturnCreate(), CreditNoteCreate(), schema, ExpenseForm() (+4 more)
 
 ### Community 36 - "stockAdjustments.js"
-Cohesion: 0.14
-Nodes (14): StockAdjustment, StockAdjustmentLine, StockMovement, authorize, { Op }, router, SCOPED_ROLES, { Stock, StockMovement, Product, Category, Unit, Warehouse, sequelize } (+6 more)
+Cohesion: 0.40
+Nodes (5): authorize, nextAdjNumber(), { Op }, pad(), router
 
 ### Community 37 - ".constructor"
 Cohesion: 0.24
-Nodes (4): CacheExpiration, dontWaitFor(), ExpirationPlugin, has()
+Nodes (5): CacheExpiration, dontWaitFor(), ExpirationPlugin, has(), waitUntil()
 
 ### Community 38 - "SalesReturns.jsx"
 Cohesion: 0.22
 Nodes (8): CustomerReturnsTab(), DamagesTab(), REASON_BADGE, REASON_OPTS, SalesReturns(), STATUS_ICON, STATUS_STYLE, TABS
 
 ### Community 39 - "PrecacheController"
-Cohesion: 0.16
-Nodes (5): createCacheKey(), generateURLVariations(), PrecacheController, PrecacheRoute, removeIgnoredSearchParams()
+Cohesion: 0.13
+Nodes (7): createCacheKey(), generateURLVariations(), _nestedGroup(), PrecacheController, PrecacheRoute, printInstallDetails(), removeIgnoredSearchParams()
 
 ### Community 40 - "baseApi.js"
-Cohesion: 0.19
-Nodes (10): authApi, baseApi, baseQueryWithReauth(), QUEUEABLE_PATHS, rawBaseQuery, financeApi, notificationsApi, vehiclesApi (+2 more)
+Cohesion: 0.15
+Nodes (12): authApi, baseApi, baseQueryWithReauth(), QUEUEABLE_PATHS, rawBaseQuery, driverDeductionsApi, financeApi, notificationsApi (+4 more)
 
 ### Community 41 - "CustomerList.jsx"
 Cohesion: 0.24
@@ -449,17 +481,23 @@ Nodes (8): CARD_TINTS, cardGradient(), CUSTOMER_TYPES, CustomerList(), NAME_GRAD
 Cohesion: 0.29
 Nodes (4): { Sequelize }, fs, path, sequelize
 
-### Community 43 - "selectCurrentUser"
-Cohesion: 0.07
-Nodes (29): settingsApi, AuthRefresher(), HomeRedirect(), ProtectedRoute(), Sidebar(), useCanAny(), DeliveryList(), STATUS_BORDER (+21 more)
+### Community 43 - "fmtNumber"
+Cohesion: 0.15
+Nodes (13): firstDayOfMonth(), MOVEMENT_COLORS, StockMovement(), DriverStock(), StockRow(), fmtCases(), FreeItems(), HistoryModal() (+5 more)
 
 ### Community 44 - "GettingStartedGuide.jsx"
 Cohesion: 0.16
 Nodes (5): C, GettingStartedGuide(), ROLES, SIZES, SlideOver()
 
-### Community 45 - "Company"
+### Community 45 - "models/index.js"
 Cohesion: 0.17
-Nodes (10): Company, authorize, { Branch, Company }, crud, router, auth, router, CHART_OF_ACCOUNTS (+2 more)
+Nodes (9): initModels, sequelize, { sequelize, Role, Permission }, CHART_OF_ACCOUNTS, { sequelize, Company, Account, AccountingPeriod }, {
+  sequelize, Company, Branch, Warehouse, User, Account,
+  Category, Unit, Product, Stock,
+  Supplier, Route, Customer,
+  GoodsReceived, GoodsReceivedLine,
+  Invoice, InvoiceLine, Receipt, ReceiptAllocation, Expense,
+}, bcrypt, { sequelize, User, Role, Branch } (+1 more)
 
 ### Community 46 - "SalesRepMap.jsx"
 Cohesion: 0.53
@@ -473,17 +511,13 @@ Nodes (13): buildApp(), express, mockBulkCreate, mockCustomerFindByPk, mockNotif
 Cohesion: 0.60
 Nodes (5): Lanka Dist Client Entry Point (index.html), Lanka Dist PWA Icon 192x192, Lanka Dist Logo 512x512, Lanka Dist Brand Identity, Lanka Dist Progressive Web App
 
-### Community 49 - "scripts"
-Cohesion: 0.17
-Nodes (11): name, scripts, android, build, build:mobile, cap:open, cap:sync, dev (+3 more)
+### Community 49 - "authorize.js"
+Cohesion: 0.12
+Nodes (11): authorize, { Op }, router, authorize, router, authorize, router, authorize (+3 more)
 
-### Community 50 - "waitUntil"
-Cohesion: 0.24
-Nodes (5): cleanupOutdatedCaches(), _nestedGroup(), NetworkFirst, printInstallDetails(), waitUntil()
-
-### Community 53 - "SelectField"
-Cohesion: 0.20
-Nodes (7): SelectField, CategoryList(), schema, itemSchema, PriceListCreate(), schema, TYPE_OPTS
+### Community 53 - "InvoiceDetail.jsx"
+Cohesion: 0.19
+Nodes (9): MapModal(), DeliveryNotePrint(), METHOD_LABEL, ReceiptPrint(), CollectPaymentModal(), InvoiceDetail(), METHOD_BADGE, ReceiptList() (+1 more)
 
 ### Community 54 - "VanStock.jsx"
 Cohesion: 0.83
@@ -493,13 +527,17 @@ Nodes (3): fmtQty(), pillStyle(), VanStock()
 Cohesion: 0.21
 Nodes (9): FloatingNotification(), Header(), PAGE_TITLES, PrintSettingsModal(), WIDTH_OPTIONS, Breadcrumb(), CRUMBS, GROUPS (+1 more)
 
+### Community 60 - "InvoiceCreate.jsx"
+Cohesion: 0.21
+Nodes (9): customersApi, SearchableSelect(), BLANK_LINE, getLocation(), InvoiceCreate(), lineSchema, schema, fmtCases() (+1 more)
+
 ### Community 62 - "AccountList.jsx"
 Cohesion: 0.20
 Nodes (9): ACCOUNT_TYPES, AccountList(), AccountNode(), countDescendants(), LedgerView(), schema, TYPE_BG, TYPE_LABELS (+1 more)
 
 ### Community 74 - "stockTransfers.js"
-Cohesion: 0.28
-Nodes (8): StockTransfer, StockTransferLine, authorize, nextTrfNumber(), { Op }, pad(), router, { StockTransfer, StockTransferLine, Warehouse, Product, Stock, StockMovement, sequelize }
+Cohesion: 0.40
+Nodes (5): authorize, nextTrfNumber(), { Op }, pad(), router
 
 ### Community 76 - "Login.jsx"
 Cohesion: 0.32
@@ -509,45 +547,117 @@ Nodes (5): useInstallPWA(), isAndroid, isIOS, Login(), schema
 Cohesion: 0.29
 Nodes (5): DriverDeliveries(), methodLabel(), METHODS, PaymentRow(), STATUS_BADGE
 
-### Community 85 - "LoadingSheetPrint.jsx"
-Cohesion: 0.40
-Nodes (5): cellStyle, labelStyle, LoadingSheetPrint(), qty(), tableStyle
+### Community 83 - "SalesOrderCreate"
+Cohesion: 0.24
+Nodes (7): fmtCases(), StockOverview(), Profile(), CustomerReturnCreate(), captureOrderLocation(), SalesOrderCreate(), selectAssignedWarehouse()
 
-### Community 179 - "VehicleList.jsx"
+### Community 85 - "tenantDb.js"
+Cohesion: 0.24
+Nodes (8): { getDb }, { DataTypes }, getDb(), initModels, pool, resolveConfig(), { Sequelize }, tenantMap
+
+### Community 168 - "authSlice.js"
+Cohesion: 0.24
+Nodes (4): Sidebar(), useCanAny(), authSlice, selectPermissions()
+
+### Community 179 - "expenses.js"
+Cohesion: 0.25
+Nodes (6): authorize, CATEGORY_ACCOUNT, crud, { Op }, PAYMENT_ACCOUNT_SUBTYPE, router
+
+### Community 181 - "customerReturns.js"
+Cohesion: 0.29
+Nodes (4): authorize, notify, { Op }, router
+
+### Community 182 - "seed.js"
+Cohesion: 0.29
+Nodes (5): bcrypt, CHART_OF_ACCOUNTS, PERMISSIONS, ROLE_PERMISSIONS, { sequelize, Company, Branch, Role, Permission, RolePermission, User, Account, AccountingPeriod, Unit, Warehouse }
+
+### Community 184 - "loadingSheets.js"
 Cohesion: 0.33
-Nodes (4): schema, STATUS_BADGE, STATUS_OPTS, VehicleList()
+Nodes (4): authorize, notify, { Op }, router
 
-### Community 181 - "StockAdjustmentCreate.jsx"
-Cohesion: 0.40
-Nodes (4): lineSchema, REASONS, schema, StockAdjustmentCreate()
+### Community 185 - "payments.js"
+Cohesion: 0.33
+Nodes (4): authorize, notify, { Op, QueryTypes }, router
 
-### Community 182 - "ProfitLoss.jsx"
-Cohesion: 0.83
-Nodes (3): firstDayOfMonth(), ProfitLoss(), today()
+### Community 186 - "warehouses.js"
+Cohesion: 0.33
+Nodes (4): authorize, crud, router, SCOPED_ROLES
 
-### Community 184 - "OpeningBalance.jsx"
+### Community 187 - "VanDamageLoss.jsx"
 Cohesion: 0.50
-Nodes (3): OpeningBalance(), TYPE_LABELS, TYPE_ORDER
+Nodes (4): firstDayOfMonth(), REASON_LABEL, SOURCE_BADGE, VanDamageLoss()
+
+### Community 188 - "CommissionList.jsx"
+Cohesion: 0.40
+Nodes (4): CommissionList(), now, STATUS_BADGE, thisYear
+
+### Community 189 - "customers.js"
+Cohesion: 0.40
+Nodes (4): authorize, crud, { Op }, router
+
+### Community 190 - "invoices.js"
+Cohesion: 0.40
+Nodes (4): authorize, c, notify, router
+
+### Community 191 - "products.js"
+Cohesion: 0.40
+Nodes (4): authorize, crud, { Op }, router
+
+### Community 192 - "stock.js"
+Cohesion: 0.40
+Nodes (4): authorize, { Op }, router, SCOPED_ROLES
+
+### Community 193 - "supplierReturns.js"
+Cohesion: 0.40
+Nodes (3): authorize, { Op }, router
+
+### Community 195 - "branches.js"
+Cohesion: 0.50
+Nodes (3): authorize, crud, router
+
+### Community 196 - "categories.js"
+Cohesion: 0.50
+Nodes (3): authorize, crud, router
+
+### Community 197 - "cheques.js"
+Cohesion: 0.50
+Nodes (3): authorize, crud, router
+
+### Community 199 - "journals.js"
+Cohesion: 0.50
+Nodes (3): authorize, { Op }, router
+
+### Community 200 - "reports.js"
+Cohesion: 0.50
+Nodes (3): authorize, { QueryTypes, Op }, router
+
+### Community 201 - "suppliers.js"
+Cohesion: 0.50
+Nodes (3): authorize, crud, router
+
+### Community 202 - "vehicles.js"
+Cohesion: 0.50
+Nodes (3): authorize, crud, router
 
 ## Knowledge Gaps
-- **555 isolated node(s):** `name`, `version`, `type`, `dev`, `build` (+550 more)
+- **540 isolated node(s):** `name`, `version`, `type`, `dev`, `build` (+535 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **96 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **109 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `seedDemoData.js` to `waitUntil`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **Why does `waitUntil()` connect `waitUntil` to `Router`, `workbox-290dd570.js`, `.constructor`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `sequelize` connect `sequelize` to `models/index.js`, `stockAdjustments.js`, `Account`, `stockTransfers.js`, `invoiceController.js`, `Company`, `server/index.js`, `salesOrders.js`, `User`, `receipts.js`, `seedDemoData.js`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `fmtCurrency()` connect `fmtCurrency` to `format.js`, `selectCurrentUser`, `today`, `reportsApi.js`, `Analytics.jsx`, `FormField.jsx`, `CustomerList.jsx`, `WarehouseList.jsx`, `fmtNumber`, `App.jsx`, `InvoiceCreate.jsx`, `LoadingSheetDetail.jsx`, `SalesOrderCreate`, `InvoiceDetail.jsx`, `DailySheet.jsx`, `VanDamageLoss.jsx`, `CommissionList.jsx`, `AccountList.jsx`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `fmtDate()` connect `App.jsx` to `format.js`, `reportsApi.js`, `Analytics.jsx`, `SalesReturns.jsx`, `fmtNumber`, `InvoiceCreate.jsx`, `LoadingSheetDetail.jsx`, `InvoiceDetail.jsx`, `DailySheet.jsx`, `VanStock.jsx`, `fmtCurrency`, `VanDamageLoss.jsx`, `CommissionList.jsx`, `AccountList.jsx`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `selectCurrentUser()` connect `selectCurrentUser` to `format.js`, `SalesReturns.jsx`, `authSlice.js`, `CustomerList.jsx`, `FormField.jsx`, `fmtNumber`, `App.jsx`, `SalesOrderCreate`, `Header.jsx`, `DailySheet.jsx`, `NotificationContext.jsx`, `InvoiceDetail.jsx`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `usePermission()` (e.g. with `selectCurrentUser()` and `selectPermissions()`) actually correct?**
   _`usePermission()` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 19 inferred relationships involving `selectCurrentUser()` (e.g. with `HomeRedirect()` and `BottomNav()`) actually correct?**
-  _`selectCurrentUser()` has 19 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 22 inferred relationships involving `selectCurrentUser()` (e.g. with `HomeRedirect()` and `BottomNav()`) actually correct?**
+  _`selectCurrentUser()` has 22 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `name`, `version`, `type` to the rest of the system?**
-  _555 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `usePermission.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.1243885394828791 - nodes in this community are weakly interconnected._
+  _540 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `dependencies` be split into smaller, more focused modules?**
+  _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._
